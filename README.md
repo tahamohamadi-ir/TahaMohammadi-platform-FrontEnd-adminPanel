@@ -5,7 +5,7 @@ Greenfield administration frontend for the platform CMS. This repository is inde
 ## Current state
 
 - Repository governance and delivery baseline: ready.
-- Runtime scaffold: pending accepted framework and authentication ADRs.
+- Runtime scaffold: pending implementation; the accepted baseline is React, TypeScript, and Vite, while authentication details still require an ADR.
 - Canonical contracts: `../../Docs/` in the local workspace.
 - Execution plan: [ROADMAP.md](ROADMAP.md) and [TASK-LIST.md](TASK-LIST.md).
 

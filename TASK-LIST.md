@@ -6,7 +6,8 @@
 - [x] Define ownership, agent rules, workflow contracts, roadmap, and quality baseline.
 - [x] Record legacy implementation rejection.
 - [x] Publish the greenfield documentation baseline to `origin/main`.
-- [ ] Accept framework, auth, state, editor, and deployment ADRs.
+- [x] Accept the React, TypeScript, and Vite architecture.
+- [ ] Accept auth, state, editor, testing, and deployment ADRs.
 - [ ] Scaffold runtime and CI with locked dependencies.
 
 ## Foundation and access

@@ -5,10 +5,11 @@
 | Repository | `tahamohamadi-ir/TahaMohammadi-platform-FrontEnd-adminPanel` |
 | Local path | `D:\Project\tahamohammadi-platform\Front-End\admin-panel` |
 | Product role | Authenticated CMS administration frontend |
-| Status | Documentation baseline; runtime scaffold pending ADR |
+| Status | Documentation baseline; React/Vite runtime scaffold pending implementation |
 | Primary upstream | Backend admin API at `/api/v1/admin/` |
 | Canonical shared docs | `D:\Project\tahamohammadi-platform\Docs` |
 | Legacy source policy | Workflow evidence only; code reuse prohibited |
+| Accepted stack | React, TypeScript, Vite |
 
 ## Owned outcomes
 
