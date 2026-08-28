@@ -1,0 +1,6 @@
+---
+description: Admin-panel repository rules
+alwaysApply: true
+---
+
+Read AGENTS.md and PROJECT-MANIFEST.md before editing. This is a greenfield privileged frontend. Do not copy the legacy admin, invent permissions or mutation behavior, or omit security, accessibility, conflict, and failure-state tests.
