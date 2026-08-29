@@ -10,6 +10,7 @@
 6. `../../Docs/03-contracts/ERROR-COMPATIBILITY-MATRIX.md`
 7. `../../Docs/references/frontend-design-authority/README.md`
 8. `TASK-LIST.md`
+9. `../../Docs/05-delivery/MULTI-AGENT-TASK-BOARD.md` (pick one `ADMIN-*` task)
 
 ## Rules
 

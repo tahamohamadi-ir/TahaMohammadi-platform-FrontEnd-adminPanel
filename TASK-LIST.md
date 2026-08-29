@@ -1,47 +1,70 @@
 # Admin Panel Task List
 
-## Baseline
+Detailed execution queue. Cross-repo board: `../../Docs/05-delivery/MULTI-AGENT-TASK-BOARD.md` (IDs prefixed `ADMIN-`).
 
-- [x] Connect the independent Git repository.
-- [x] Define ownership, agent rules, workflow contracts, roadmap, and quality baseline.
-- [x] Record legacy implementation rejection.
-- [x] Publish the greenfield documentation baseline to `origin/main`.
-- [x] Accept the React, TypeScript, and Vite architecture.
-- [ ] Accept auth, state, editor, testing, and deployment ADRs.
-- [ ] Scaffold runtime and CI with locked dependencies.
-- [x] Read the tracked frontend design authority and admin graph-editor reference boundary.
+Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
-## Foundation and access
+---
 
-- [ ] Validate environment and API base configuration.
-- [ ] Confirm same-origin reverse-proxy topology before any session client implementation.
-- [ ] Generate or verify typed client from the accepted admin OpenAPI (`Docs/03-contracts/OPENAPI-ACCEPTANCE.md`).
-- [x] PS-05 accepted admin OpenAPI artifact exists; type generation is unblocked for scaffold foundation work.
-- [ ] Implement normalized server, validation, permission, conflict, and network errors.
-- [ ] Cover current admin `code/message/fields`, public `detail`, contact `ok/error`, and unknown framework forms according to the central compatibility matrix.
-- [ ] Implement sign-in, sign-out, session expiry, CSRF, MFA, and re-authentication.
-- [ ] Implement permission-aware shell without treating UI visibility as authorization.
-- [ ] Add accessible table, form, dialog, notice, upload, and destructive-action primitives.
+## ADM-0 — Scaffold and toolchain
 
-## Workflows
+- [ ] **ADMIN-010** Init React 19 + Vite + TypeScript 5.9; lockfile; `npm run build` green.
+- [ ] **ADMIN-011** ESLint + Prettier + Vitest baseline.
+- [ ] **ADMIN-012** GitHub Actions: install, typecheck, unit tests, build.
+- [ ] **ADMIN-013** ADRs: auth, state, editor, testing, deployment.
 
-- [ ] Dashboard and health/degraded feedback.
-- [ ] Content collections, filters, pagination, and bulk archive.
-- [ ] Create/edit, locale completeness, rich content, revisions, scheduling, preview, publish.
-- [ ] Media upload, metadata, replacement, usage, and deletion protection.
-- [ ] Home-module composition and ordering.
-- [ ] Timeline editing and validation.
-- [ ] Graph node/edge editing and validation.
-- [ ] Map each admin workflow to endpoint, method, permission, lifecycle state, error mapping, audit expectation, and acceptance evidence before implementation.
-- [ ] Site/profile configuration and contact settings.
-- [ ] Rebuild feedback without false success.
+## ADM-1 — Auth and API client
 
-## Release evidence
+- [x] PS-05 admin OpenAPI accepted; type generation unblocked.
+- [ ] **ADMIN-030** Env schema (`VITE_API_BASE`, proxy assumptions).
+- [ ] **ADMIN-040** Same-origin dev proxy documented and working.
+- [ ] **ADMIN-050** Generate admin types from accepted OpenAPI hash.
+- [ ] **ADMIN-060** API client with CSRF hooks and cookie credentials.
+- [ ] **ADMIN-070** Error normalizer (`code/message/fields`, network, 403, 409).
+- [ ] **ADMIN-080** Sign-in flow.
+- [ ] **ADMIN-090** MFA / OTP challenge.
+- [ ] **ADMIN-100** Sign-out, session expiry, re-authentication.
+- [ ] **ADMIN-110** CSRF on all mutations; regression test without token.
 
-- [ ] Authentication and authorization threat review.
-- [ ] Mutation failure, conflict, retry, and duplicate-submit tests.
-- [ ] Keyboard, screen-reader, zoom, focus, RTL text-entry, and long-content review.
-- [ ] Supported browser and responsive-layout review.
-- [ ] Sensitive-data/logging review.
-- [ ] E2E test against a disposable backend database.
-- [ ] Preview deployment, rollback drill, and owner acceptance.
+## ADM-2 — Design system and shell
+
+- [ ] **ADMIN-120** Admin tokens + table, form, dialog, notice, upload primitives.
+- [ ] **ADMIN-130** Permission-aware nav; forbidden/unauthorized states.
+- [ ] **ADMIN-131** RTL text entry and long-content layout checks.
+
+## ADM-3 — Core workflows
+
+- [ ] **ADMIN-140** Dashboard + backend health/degraded status.
+- [ ] **ADMIN-150** Profile + site settings.
+- [ ] **ADMIN-160** Articles/series CRUD, filters, pagination.
+- [ ] **ADMIN-170** Research, publications, projects collections.
+- [ ] **ADMIN-171** Books, talks, downloads, courses, creative work.
+- [ ] **ADMIN-180** Media library: upload, metadata, usage, delete protection.
+- [ ] **ADMIN-190** Home module composition and ordering.
+- [ ] **ADMIN-200** Timeline editor + validation.
+- [ ] **ADMIN-210** Graph editor (nodes, edges, groups) per reference boundary.
+- [ ] **ADMIN-220** Preview-share tokens.
+- [ ] **ADMIN-230** Revision history + restore + conflict UI.
+- [ ] **ADMIN-240** Schedule, publish, archive, bulk actions.
+
+## ADM-4 — Seed supplement and approval queue
+
+- [ ] **ADMIN-260** Surface `admin.*` supplement records (verification checklists).
+- [ ] **ADMIN-270** Owner approval queue UI from `owner-approval-queue.json`.
+- [ ] **ADMIN-280** Enforce publication gate in UI (no publish without approval).
+- [ ] **ADMIN-281** Apply `seed-settings.json` defaults in site settings admin.
+
+## ADM-5 — Quality and release
+
+- [ ] **ADMIN-250** Complete `WORKFLOW-API-MAP.md` — every mutation mapped to permission test.
+- [ ] **ADMIN-290** Browser matrix CI (signed out, MFA, forbidden, validation, stale revision).
+- [ ] **ADMIN-300** Integrated staging smoke with backend.
+- [ ] **ADMIN-320** Release evidence (`R6` + `R8` admin).
+
+---
+
+## Completed baseline
+
+- [x] Repository connected; legacy rejection documented.
+- [x] React/Vite architecture accepted (ADR-0003).
+- [x] Design authority + graph-editor boundary read.
