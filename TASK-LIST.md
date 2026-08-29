@@ -10,7 +10,7 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
 - [x] **ADMIN-010** Init React 19 + Vite + TypeScript 5.9; lockfile; `npm run build` green.
 - [x] **ADMIN-011** ESLint + Prettier + Vitest baseline.
-- [ ] **ADMIN-012** GitHub Actions: install, typecheck, unit tests, build.
+- [x] **ADMIN-012** GitHub Actions: install, typecheck, unit tests, build.
 - [ ] **ADMIN-013** ADRs: auth, state, editor, testing, deployment.
 
 ## ADM-1 — Auth and API client

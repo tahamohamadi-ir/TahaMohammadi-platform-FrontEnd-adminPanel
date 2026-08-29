@@ -55,4 +55,23 @@ describe('adminFetch', () => {
     const headers = new Headers(init.headers)
     expect(headers.has(CSRF_HEADER_NAME)).toBe(false)
   })
+
+  it('surfaces CSRF failures from the backend (ADMIN-110)', async () => {
+    vi.mocked(fetch).mockResolvedValueOnce(
+      new Response(
+        JSON.stringify({
+          code: 'CSRF_FAILED',
+          message: 'CSRF token missing or invalid.',
+        }),
+        { status: 403 },
+      ),
+    )
+
+    const response = await adminFetch('/auth/logout', { method: 'POST' })
+    expect(response.status).toBe(403)
+    await expect(response.json()).resolves.toEqual({
+      code: 'CSRF_FAILED',
+      message: 'CSRF token missing or invalid.',
+    })
+  })
 })

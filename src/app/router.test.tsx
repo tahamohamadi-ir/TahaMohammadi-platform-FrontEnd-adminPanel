@@ -1,19 +1,35 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
-import { describe, expect, it } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppRouter } from '@/app/router'
+import { AuthProvider } from '@/lib/auth/AuthProvider'
 
 describe('AppRouter', () => {
-  it('renders the dashboard placeholder at /dashboard', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        new Response(null, {
+          status: 401,
+        }),
+      ),
+    )
+  })
+
+  it('redirects unauthenticated users from dashboard to sign-in', async () => {
     render(
       <MemoryRouter initialEntries={['/dashboard']}>
-        <AppRouter />
+        <AuthProvider>
+          <AppRouter />
+        </AuthProvider>
       </MemoryRouter>,
     )
 
-    expect(
-      screen.getByRole('heading', { name: 'Dashboard' }),
-    ).toBeInTheDocument()
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Sign in' }),
+      ).toBeInTheDocument()
+    })
   })
 })

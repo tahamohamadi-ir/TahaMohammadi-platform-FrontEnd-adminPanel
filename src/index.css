@@ -76,3 +76,30 @@ a {
   cursor: not-allowed;
   opacity: 0.7;
 }
+
+.auth-form {
+  display: grid;
+  gap: 0.75rem;
+  max-width: 24rem;
+}
+
+.auth-form label {
+  display: grid;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.auth-form input,
+.auth-form button {
+  font: inherit;
+  padding: 0.5rem 0.75rem;
+}
+
+.auth-form button {
+  cursor: pointer;
+}
+
+.form-error {
+  margin: 0;
+  color: #b3261e;
+}
