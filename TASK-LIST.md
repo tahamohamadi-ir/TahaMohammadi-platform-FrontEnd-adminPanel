@@ -19,12 +19,12 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 - [x] **ADMIN-030** Env schema (`VITE_API_BASE`, proxy assumptions).
 - [x] **ADMIN-040** Same-origin dev proxy documented and working.
 - [x] **ADMIN-050** Generate admin types from accepted OpenAPI hash.
-- [~] **ADMIN-060** API client with CSRF hooks and cookie credentials.
-- [ ] **ADMIN-070** Error normalizer (`code/message/fields`, network, 403, 409).
-- [ ] **ADMIN-080** Sign-in flow.
-- [ ] **ADMIN-090** MFA / OTP challenge.
-- [ ] **ADMIN-100** Sign-out, session expiry, re-authentication.
-- [ ] **ADMIN-110** CSRF on all mutations; regression test without token.
+- [x] **ADMIN-060** API client with CSRF hooks and cookie credentials.
+- [x] **ADMIN-070** Error normalizer (`code/message/fields`, network, 403, 409).
+- [x] **ADMIN-080** Sign-in flow.
+- [x] **ADMIN-090** MFA / OTP challenge.
+- [x] **ADMIN-100** Sign-out, session expiry, re-authentication.
+- [x] **ADMIN-110** CSRF on all mutations; regression test without token.
 
 ## ADM-2 — Design system and shell
 
