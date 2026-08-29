@@ -8,6 +8,8 @@
 | Status | Documentation baseline; React/Vite runtime scaffold pending implementation |
 | Primary upstream | Backend admin API at `/api/v1/admin/` |
 | Canonical shared docs | `D:\Project\tahamohammadi-platform\Docs` |
+| Design authority | `D:\Project\tahamohammadi-platform\Docs\references\frontend-design-authority` |
+| Local intake policy | `..\Assets` is ignored input only; imports and implementation decisions are prohibited |
 | Legacy source policy | Workflow evidence only; code reuse prohibited |
 | Accepted stack | React, TypeScript, Vite |
 
