@@ -5,7 +5,7 @@
 | Repository | `tahamohamadi-ir/TahaMohammadi-platform-FrontEnd-adminPanel` |
 | Local path | `D:\Project\tahamohammadi-platform\Front-End\admin-panel` |
 | Product role | Authenticated CMS administration frontend |
-| Status | Documentation baseline; React/Vite runtime scaffold pending implementation |
+| Status | Wave 0 runtime scaffold implemented (auth and workflows pending) |
 | Primary upstream | Backend admin API at `/api/v1/admin/` |
 | Canonical shared docs | `D:\Project\tahamohammadi-platform\Docs` |
 | Design authority | `D:\Project\tahamohammadi-platform\Docs\references\frontend-design-authority` |

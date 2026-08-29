@@ -8,16 +8,16 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
 ## ADM-0 — Scaffold and toolchain
 
-- [ ] **ADMIN-010** Init React 19 + Vite + TypeScript 5.9; lockfile; `npm run build` green.
-- [ ] **ADMIN-011** ESLint + Prettier + Vitest baseline.
+- [x] **ADMIN-010** Init React 19 + Vite + TypeScript 5.9; lockfile; `npm run build` green.
+- [x] **ADMIN-011** ESLint + Prettier + Vitest baseline.
 - [ ] **ADMIN-012** GitHub Actions: install, typecheck, unit tests, build.
 - [ ] **ADMIN-013** ADRs: auth, state, editor, testing, deployment.
 
 ## ADM-1 — Auth and API client
 
 - [x] PS-05 admin OpenAPI accepted; type generation unblocked.
-- [ ] **ADMIN-030** Env schema (`VITE_API_BASE`, proxy assumptions).
-- [ ] **ADMIN-040** Same-origin dev proxy documented and working.
+- [x] **ADMIN-030** Env schema (`VITE_API_BASE`, proxy assumptions).
+- [x] **ADMIN-040** Same-origin dev proxy documented and working.
 - [ ] **ADMIN-050** Generate admin types from accepted OpenAPI hash.
 - [ ] **ADMIN-060** API client with CSRF hooks and cookie credentials.
 - [ ] **ADMIN-070** Error normalizer (`code/message/fields`, network, 403, 409).
