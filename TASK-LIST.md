@@ -56,7 +56,7 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
 ## ADM-5 — Quality and release
 
-- [ ] **ADMIN-250** Complete `WORKFLOW-API-MAP.md` — every mutation mapped to permission test.
+- [x] **ADMIN-250** Complete `WORKFLOW-API-MAP.md` — every mutation mapped to permission test (BACKEND-190 gap list recorded).
 - [ ] **ADMIN-290** Browser matrix CI (signed out, MFA, forbidden, validation, stale revision).
 - [ ] **ADMIN-300** Integrated staging smoke with backend.
 - [ ] **ADMIN-320** Release evidence (`R6` + `R8` admin).
