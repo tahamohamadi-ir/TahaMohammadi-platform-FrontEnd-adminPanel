@@ -27,6 +27,11 @@ import {
   useRestoreContentRevision,
 } from '@/lib/api/hooks/useContentRevisions'
 import { useMediaList } from '@/lib/api/hooks/useMedia'
+import {
+  entitySupportsPreview,
+  createPreviewLink,
+  type PreviewLinkOut,
+} from '@/lib/api/preview'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { entityLabel } from '@/pages/ContentListPage'
 
@@ -136,6 +141,9 @@ export function ContentEditPage({ entity }: { entity: string }) {
   const [snapshotNote, setSnapshotNote] = useState('')
   const [restoreTarget, setRestoreTarget] = useState<number | null>(null)
   const [historyError, setHistoryError] = useState<string | null>(null)
+  const [previewLink, setPreviewLink] = useState<PreviewLinkOut | null>(null)
+  const [previewError, setPreviewError] = useState<string | null>(null)
+  const [creatingPreview, setCreatingPreview] = useState(false)
   const busy =
     create.isPending ||
     update.isPending ||
@@ -288,6 +296,24 @@ export function ContentEditPage({ entity }: { entity: string }) {
     }
   }
 
+  async function handleCreatePreviewLink() {
+    if (!data) return
+    setPreviewError(null)
+    setCreatingPreview(true)
+    try {
+      setPreviewLink(await createPreviewLink(entity, data.id))
+    } catch (error) {
+      setPreviewLink(null)
+      setPreviewError(
+        error instanceof AdminApiError
+          ? error.message
+          : 'Creating the preview link failed. Try again.',
+      )
+    } finally {
+      setCreatingPreview(false)
+    }
+  }
+
   return (
     <main className="page">
       <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
@@ -428,6 +454,36 @@ export function ContentEditPage({ entity }: { entity: string }) {
               Archive
             </button>
           </div>
+        </section>
+      ) : null}
+
+      {isEdit && data && entitySupportsPreview(entity) ? (
+        <section aria-labelledby="share-title">
+          <h2 id="share-title">Share preview</h2>
+          <p className="muted">
+            Short-lived public link to the draft; it expires automatically.
+          </p>
+          {previewError ? (
+            <Notice tone="error" title="Preview link failed">
+              {previewError}
+            </Notice>
+          ) : null}
+          {previewLink ? (
+            <div>
+              <p>
+                <a href={previewLink.url}>{previewLink.url}</a>
+              </p>
+              <p className="muted">Expires {previewLink.expiresAt}</p>
+            </div>
+          ) : null}
+          <button
+            type="button"
+            className="admin-button admin-button--secondary"
+            disabled={creatingPreview}
+            onClick={() => void handleCreatePreviewLink()}
+          >
+            {creatingPreview ? 'Creating…' : 'Create preview link'}
+          </button>
         </section>
       ) : null}
 

@@ -43,7 +43,7 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 - [x] **ADMIN-190** Home module composition and ordering.
 - [x] **ADMIN-200** Timeline editor + validation.
 - [ ] **ADMIN-210** Graph editor (nodes, edges, groups) per reference boundary.
-- [ ] **ADMIN-220** Preview-share tokens.
+- [x] **ADMIN-220** Preview-share tokens.
 - [x] **ADMIN-230** Revision history + restore + conflict UI.
 - [ ] **ADMIN-240** Schedule, publish, archive, bulk actions.
 

@@ -117,12 +117,22 @@ function stubDefault() {
         if (url.includes('/api/v1/admin/media')) {
           return Promise.resolve(jsonResponse(MEDIA_LIST))
         }
+        if (url.includes('/preview-link')) {
+          return Promise.resolve(
+            jsonResponse({
+              url: 'http://testserver/pv/article/7?token=abc',
+              path: '/pv/article/7?token=abc',
+              expiresAt: '2026-09-04T12:00:00Z',
+              ttlSeconds: 900,
+            }),
+          )
+        }
         return Promise.resolve(jsonResponse(DETAIL))
       }),
   )
 }
 
-function renderEdit(route: string) {
+function renderEdit(route: string, entity = 'article') {
   return render(
     <QueryClientProvider client={createTestQueryClient()}>
       <MemoryRouter initialEntries={[route]}>
@@ -130,11 +140,11 @@ function renderEdit(route: string) {
           <Routes>
             <Route
               path="content/:entity/new"
-              element={<ContentEditPage entity="article" />}
+              element={<ContentEditPage entity={entity} />}
             />
             <Route
               path="content/:entity/:id"
-              element={<ContentEditPage entity="article" />}
+              element={<ContentEditPage entity={entity} />}
             />
           </Routes>
         </AuthProvider>
@@ -250,10 +260,9 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     expect(await screen.findByLabelText(/excerpt/i)).toBeInTheDocument()
     const mediaSelect = screen.getByLabelText(/featured media/i)
     expect(mediaSelect.tagName).toBe('SELECT')
-    const option = await within(mediaSelect.closest('.admin-field')!).findByRole(
-      'option',
-      { name: /cover image/i },
-    )
+    const option = await within(
+      mediaSelect.closest('.admin-field')!,
+    ).findByRole('option', { name: /cover image/i })
     expect(option).toBeInTheDocument()
   })
 
@@ -314,5 +323,32 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
           ),
       ).toBe(true)
     })
+  })
+
+  it('creates a preview share link and shows url + expiry (ADMIN-220)', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    fireEvent.click(
+      await screen.findByRole('button', { name: /create preview link/i }),
+    )
+    expect(await screen.findByText(/\/pv\/article\/7/)).toBeInTheDocument()
+    expect(screen.getByText(/2026-09-04T12:00:00Z/)).toBeInTheDocument()
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(
+          ([input, init]) =>
+            String(input).includes('/content/article/7/preview-link') &&
+            (init as RequestInit | undefined)?.method === 'POST',
+        ),
+    ).toBe(true)
+  })
+
+  it('hides preview share for unsupported entities', () => {
+    stubDefault()
+    renderEdit('/content/project/1', 'project')
+    expect(
+      screen.queryByRole('button', { name: /create preview link/i }),
+    ).not.toBeInTheDocument()
   })
 })
