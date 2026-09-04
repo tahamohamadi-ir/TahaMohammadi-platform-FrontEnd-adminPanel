@@ -52,7 +52,7 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 - [x] **ADMIN-260** Surface `admin.*` supplement records (verification checklists).
 - [x] **ADMIN-270** Owner approval queue UI from `owner-approval-queue.json` (served live from seed records via `GET /api/v1/admin/approval-queue`, BACKEND-210).
 - [x] **ADMIN-280** Enforce publication gate in UI (no publish without approval; server-enforced via `409 APPROVAL_REQUIRED`, BACKEND-210).
-- [ ] **ADMIN-281** Apply `seed-settings.json` defaults in site settings admin.
+- [x] **ADMIN-281** Apply `seed-settings.json` defaults in site settings admin (seedPolicy served from `GET /api/v1/admin/site`, BACKEND-211; read-only panel labels seed-managed surfaces).
 
 ## ADM-5 — Quality and release
 

@@ -4,6 +4,7 @@ import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
   CheckboxField,
   Notice,
+  Table,
   TextareaField,
   TextField,
   ValidationSummary,
@@ -169,6 +170,34 @@ export function SettingsPage() {
         <p className="muted">
           Profile facts come from the session and are read-only here.
         </p>
+      </section>
+
+      <section aria-labelledby="seed-policy-title">
+        <h2 id="seed-policy-title">Seed policy</h2>
+        {data?.seedPolicy ? (
+          <>
+            <p className="muted">
+              Owner policy from the seed package (read-only; applied server-side
+              at import). Surfaces it withholds show as empty in the form.
+            </p>
+            <Table
+              caption="Seed policy decisions"
+              columns={[
+                { key: 'key', header: 'Policy key' },
+                { key: 'value', header: 'Value' },
+              ]}
+              rows={Object.entries(data.seedPolicy).map(([key, value]) => ({
+                key,
+                value: String(value),
+              }))}
+              rowKey={(row: { key: string }) => row.key}
+            />
+          </>
+        ) : (
+          <p role="status" className="muted">
+            No seed policy recorded (site settings were not seeded).
+          </p>
+        )}
       </section>
 
       <section aria-labelledby="settings-form-title">

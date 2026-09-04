@@ -2000,6 +2000,10 @@ export interface components {
             navLinks: components["schemas"]["NavLinkOut"][];
             /** Primarycolor */
             primaryColor: string;
+            /** Seedpolicy */
+            seedPolicy?: {
+                [key: string]: unknown;
+            } | null;
             /** Seodefaultdescription */
             seoDefaultDescription: string;
             /** Seodefaulttitle */
