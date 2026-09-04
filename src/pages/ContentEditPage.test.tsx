@@ -56,6 +56,28 @@ const REVISIONS = {
   ],
 }
 
+const MEDIA_LIST = {
+  items: [
+    {
+      id: 9,
+      title: 'Cover image',
+      mime: 'image/png',
+      size: 12345,
+      url: '/media/cover.png',
+      altText: '',
+      altTextEn: '',
+      altTextFa: '',
+      isActive: true,
+      usageCount: 0,
+      createdAt: '2026-09-01T00:00:00.000Z',
+      updatedAt: '2026-09-01T00:00:00.000Z',
+    },
+  ],
+  page: 1,
+  pageSize: 100,
+  total: 1,
+}
+
 const DETAIL = {
   id: 7,
   locale: 'en',
@@ -91,6 +113,9 @@ function stubDefault() {
             return Promise.resolve(jsonResponse(REVISIONS.items[0]))
           }
           return Promise.resolve(jsonResponse(REVISIONS))
+        }
+        if (url.includes('/api/v1/admin/media')) {
+          return Promise.resolve(jsonResponse(MEDIA_LIST))
         }
         return Promise.resolve(jsonResponse(DETAIL))
       }),
@@ -219,15 +244,17 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     })
   })
 
-  it('renders schema-driven fields and disables media fields honestly', async () => {
+  it('renders schema-driven fields with a media picker for media fields', async () => {
     stubDefault()
     renderEdit('/content/article/7')
     expect(await screen.findByLabelText(/excerpt/i)).toBeInTheDocument()
-    const mediaField = screen.getByLabelText(/featured media/i)
-    expect(mediaField).toBeDisabled()
-    expect(
-      screen.getByText(/media library workflow pending/i),
-    ).toBeInTheDocument()
+    const mediaSelect = screen.getByLabelText(/featured media/i)
+    expect(mediaSelect.tagName).toBe('SELECT')
+    const option = await within(mediaSelect.closest('.admin-field')!).findByRole(
+      'option',
+      { name: /cover image/i },
+    )
+    expect(option).toBeInTheDocument()
   })
 
   it('lists revision history with notes and timestamps (ADMIN-230)', async () => {

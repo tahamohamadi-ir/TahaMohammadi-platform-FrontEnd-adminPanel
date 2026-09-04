@@ -38,6 +38,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: 'Creative work',
     requiresStaff: true,
   },
+  { to: '/media', label: 'Media', requiresStaff: true },
   { to: '/settings', label: 'Settings', requiresStaff: true },
 ]
 

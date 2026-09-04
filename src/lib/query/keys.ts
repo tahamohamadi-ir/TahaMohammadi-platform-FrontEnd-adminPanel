@@ -15,7 +15,7 @@ export const queryKeys = {
       ['content', entity, 'detail', id] as const,
   },
   media: {
-    list: (params?: Record<string, string>) =>
+    list: (params?: Record<string, string | number | undefined>) =>
       ['media', 'list', params ?? {}] as const,
   },
   site: {

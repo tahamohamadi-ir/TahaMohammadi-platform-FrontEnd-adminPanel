@@ -4,6 +4,7 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ContentEditPage } from '@/pages/ContentEditPage'
 import { ContentListPage } from '@/pages/ContentListPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { MediaPage } from '@/pages/MediaPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
@@ -36,6 +37,14 @@ export function AppRouter() {
         element={
           <ProtectedRoute requireStaff>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="media"
+        element={
+          <ProtectedRoute requireStaff>
+            <MediaPage />
           </ProtectedRoute>
         }
       />

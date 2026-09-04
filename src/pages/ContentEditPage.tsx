@@ -26,8 +26,50 @@ import {
   useCreateContentRevision,
   useRestoreContentRevision,
 } from '@/lib/api/hooks/useContentRevisions'
+import { useMediaList } from '@/lib/api/hooks/useMedia'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { entityLabel } from '@/pages/ContentListPage'
+
+/** Media-typed schema field backed by the media library (ADMIN-180):
+ * pick an existing library item; uploads happen on the Media page. */
+function MediaPickerField({
+  spec,
+  value,
+}: {
+  spec: ContentFieldSpecOut
+  value: unknown
+}) {
+  const id = `field-${spec.key}`
+  const list = useMediaList({ pageSize: 100 })
+  const current = value === undefined || value === null ? '' : String(value)
+  return (
+    <div>
+      <SelectField
+        id={id}
+        label={spec.label}
+        defaultValue={current || ''}
+        description="Choose from the media library; upload new files on the Media page."
+        options={[
+          { value: '', label: '(none)' },
+          ...(list.data?.items ?? []).map((item) => ({
+            value: String(item.id),
+            label: `${item.title} (${item.mime})`,
+          })),
+        ]}
+      />
+      {list.isPending ? (
+        <p role="status" className="muted">
+          Loading media options…
+        </p>
+      ) : null}
+      {list.error ? (
+        <p role="alert" className="muted">
+          Media list unavailable — type the id manually.
+        </p>
+      ) : null}
+    </div>
+  )
+}
 
 function SchemaField({
   spec,
@@ -39,15 +81,7 @@ function SchemaField({
   const id = `field-${spec.key}`
   const asText = value === undefined || value === null ? '' : String(value)
   if (spec.type === 'media') {
-    return (
-      <TextField
-        id={id}
-        label={spec.label}
-        defaultValue={asText}
-        disabled
-        description="Media library workflow pending (ADMIN-180) — read-only here."
-      />
-    )
+    return <MediaPickerField spec={spec} value={value} />
   }
   if (spec.type === 'textarea') {
     return <TextareaField id={id} label={spec.label} defaultValue={asText} />
@@ -152,10 +186,13 @@ export function ContentEditPage({ entity }: { entity: string }) {
 
     const fields: Record<string, unknown> = { ...(data?.fields ?? {}) }
     for (const spec of entityFields) {
-      if (spec.type === 'media') continue
       const raw = form.get(`field-${spec.key}`)
       if (raw === null) continue
-      if (spec.type === 'number') {
+      // Diff against the loaded value: untouched schema fields stay out of
+      // the payload so explicit-null clears cannot wipe them by accident.
+      const initial = String(data?.fields[spec.key] ?? '')
+      if (String(raw) === initial) continue
+      if (spec.type === 'media' || spec.type === 'number') {
         fields[spec.key] = raw === '' ? null : Number(raw)
       } else if (spec.type === 'boolean') {
         fields[spec.key] = raw === 'true'
