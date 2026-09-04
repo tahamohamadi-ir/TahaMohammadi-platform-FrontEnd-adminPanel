@@ -15,6 +15,15 @@ export interface NavItem {
  * never a bare <Link> elsewhere — so authorization stays in one place. */
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', requiresStaff: true },
+  { to: '/content/article', label: 'Articles', requiresStaff: true },
+  { to: '/content/series', label: 'Series', requiresStaff: true },
+  {
+    to: '/content/research-topic',
+    label: 'Research topics',
+    requiresStaff: true,
+  },
+  { to: '/content/project', label: 'Projects', requiresStaff: true },
+  { to: '/content/publication', label: 'Publications', requiresStaff: true },
   { to: '/settings', label: 'Settings', requiresStaff: true },
 ]
 

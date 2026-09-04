@@ -127,6 +127,7 @@ interface TextFieldProps {
   onChange?: (value: string) => void
   type?: string
   name?: string
+  disabled?: boolean
 }
 
 export function TextField({ onChange, ...props }: TextFieldProps) {
@@ -140,6 +141,7 @@ export function TextField({ onChange, ...props }: TextFieldProps) {
           type={props.type ?? 'text'}
           defaultValue={props.defaultValue}
           value={props.value}
+          disabled={props.disabled}
           aria-invalid={invalid}
           aria-describedby={describedBy}
           onChange={
@@ -161,6 +163,8 @@ interface SelectFieldProps {
   options: { value: string; label: string }[]
   defaultValue?: string
   name?: string
+  value?: string
+  onChange?: (value: string) => void
 }
 
 export function SelectField(props: SelectFieldProps) {
@@ -172,8 +176,14 @@ export function SelectField(props: SelectFieldProps) {
           id={id}
           name={props.name ?? id}
           defaultValue={props.defaultValue}
+          value={props.value}
           aria-invalid={invalid}
           aria-describedby={describedBy}
+          onChange={
+            props.onChange
+              ? (event) => props.onChange?.(event.currentTarget.value)
+              : undefined
+          }
         >
           {props.options.map((option) => (
             <option key={option.value} value={option.value}>

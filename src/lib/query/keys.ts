@@ -7,8 +7,10 @@ export const queryKeys = {
     contentHealth: ['dashboard', 'content-health'] as const,
   },
   content: {
-    list: (entity: string, params?: Record<string, string>) =>
-      ['content', entity, 'list', params ?? {}] as const,
+    list: (
+      entity: string,
+      params?: Record<string, string | number | undefined>,
+    ) => ['content', entity, 'list', params ?? {}] as const,
     detail: (entity: string, id: number) =>
       ['content', entity, 'detail', id] as const,
   },

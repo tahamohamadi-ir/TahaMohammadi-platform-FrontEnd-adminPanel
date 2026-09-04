@@ -58,14 +58,12 @@ describe('ProtectedRoute authorization (ADMIN-130)', () => {
   it('shows a forbidden state for non-staff users instead of the page', async () => {
     vi.stubGlobal(
       'fetch',
-      vi
-        .fn()
-        .mockResolvedValue(
-          new Response(JSON.stringify({ ...staffMe(), isStaff: false }), {
-            status: 200,
-            headers: { 'Content-Type': 'application/json' },
-          }),
-        ),
+      vi.fn().mockResolvedValue(
+        new Response(JSON.stringify({ ...staffMe(), isStaff: false }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }),
+      ),
     )
     renderRoute(
       <ProtectedRoute requireStaff>

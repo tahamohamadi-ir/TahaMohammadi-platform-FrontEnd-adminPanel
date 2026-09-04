@@ -44,7 +44,10 @@ describe('loginAdmin', () => {
     expect(user.email).toBe('admin@example.com')
     expect(fetch).toHaveBeenCalledTimes(2)
 
-    const [, loginInit] = vi.mocked(fetch).mock.calls[1] as [string, RequestInit]
+    const [, loginInit] = vi.mocked(fetch).mock.calls[1] as [
+      string,
+      RequestInit,
+    ]
     const headers = new Headers(loginInit.headers)
     expect(headers.get(CSRF_HEADER_NAME)).toBe('csrf-token')
     expect(loginInit.credentials).toBe('include')

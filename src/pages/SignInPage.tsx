@@ -55,9 +55,15 @@ export function SignInPage() {
   return (
     <main className="page">
       <h1>Sign in</h1>
-      <p className="muted">Session cookie authentication with CSRF protection.</p>
+      <p className="muted">
+        Session cookie authentication with CSRF protection.
+      </p>
       <section className="card">
-        <form className="auth-form" aria-label="Sign in" onSubmit={handleSubmit}>
+        <form
+          className="auth-form"
+          aria-label="Sign in"
+          onSubmit={handleSubmit}
+        >
           <label>
             Email
             <input

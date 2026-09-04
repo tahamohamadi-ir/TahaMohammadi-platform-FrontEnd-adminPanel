@@ -107,17 +107,18 @@ describe('SettingsPage (ADMIN-150)', () => {
   })
 
   it('shows a conflict state with reload when settings changed elsewhere', async () => {
-    vi.mocked(fetch).mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
-      const url = String(input)
-      if (url.includes('/auth/me'))
-        return Promise.resolve(jsonResponse(ME))
-      if (init?.method === 'PUT') {
-        return Promise.resolve(
-          jsonResponse({ code: 'CONFLICT', message: 'Stale settings' }, 409),
-        )
-      }
-      return Promise.resolve(jsonResponse(SETTINGS))
-    })
+    vi.mocked(fetch).mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
+        if (init?.method === 'PUT') {
+          return Promise.resolve(
+            jsonResponse({ code: 'CONFLICT', message: 'Stale settings' }, 409),
+          )
+        }
+        return Promise.resolve(jsonResponse(SETTINGS))
+      },
+    )
     renderSettings()
     const input = await screen.findByLabelText(/brand name/i)
     fireEvent.change(input, { target: { value: 'New name' } })

@@ -16,7 +16,9 @@ function isMutationMethod(method: string): boolean {
   return !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())
 }
 
-async function resolveCsrfHeaders(method: string): Promise<Record<string, string>> {
+async function resolveCsrfHeaders(
+  method: string,
+): Promise<Record<string, string>> {
   if (!isMutationMethod(method) || csrfTokenProvider === null) {
     return {}
   }

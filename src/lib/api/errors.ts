@@ -87,8 +87,7 @@ export function normalizeNetworkError(error: unknown): NormalizedAdminError {
   return {
     kind: 'network',
     code: 'NETWORK_ERROR',
-    message:
-      error instanceof Error ? error.message : 'Network request failed',
+    message: error instanceof Error ? error.message : 'Network request failed',
     fieldErrors: {},
   }
 }

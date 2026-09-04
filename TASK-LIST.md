@@ -36,8 +36,8 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
 - [x] **ADMIN-140** Dashboard + backend health/degraded status.
 - [x] **ADMIN-150** Profile + site settings.
-- [ ] **ADMIN-160** Articles/series CRUD, filters, pagination.
-- [ ] **ADMIN-170** Research, publications, projects collections.
+- [x] **ADMIN-160** Articles/series CRUD, filters, pagination.
+- [x] **ADMIN-170** Research, publications, projects collections.
 - [ ] **ADMIN-171** Books, talks, downloads, courses, creative work.
 - [ ] **ADMIN-180** Media library: upload, metadata, usage, delete protection.
 - [ ] **ADMIN-190** Home module composition and ordering.
