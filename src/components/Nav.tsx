@@ -42,6 +42,7 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: '/graph', label: 'Graph editor', requiresStaff: true },
   { to: '/home', label: 'Home composition', requiresStaff: true },
   { to: '/timeline', label: 'Timeline', requiresStaff: true },
+  { to: '/approvals', label: 'Approval queue', requiresStaff: true },
   { to: '/settings', label: 'Settings', requiresStaff: true },
 ]
 

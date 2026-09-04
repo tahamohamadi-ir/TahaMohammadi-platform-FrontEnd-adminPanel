@@ -135,6 +135,8 @@ export function ContentEditPage({ entity }: { entity: string }) {
 
   const data = isEdit && detail.isSuccess ? detail.data : undefined
   const entityFields = schema.data?.entities[entity]?.fields ?? []
+  const approvalBlocked =
+    data?.approvalState != null && data.approvalState !== 'approved'
   const revisions = useContentRevisions(entity, idFromRoute ?? 0)
   const createRevision = useCreateContentRevision(entity, idFromRoute ?? 0)
   const restoreRevision = useRestoreContentRevision(entity, idFromRoute ?? 0)
@@ -144,6 +146,8 @@ export function ContentEditPage({ entity }: { entity: string }) {
   const [previewLink, setPreviewLink] = useState<PreviewLinkOut | null>(null)
   const [previewError, setPreviewError] = useState<string | null>(null)
   const [creatingPreview, setCreatingPreview] = useState(false)
+  const [confirmSchedule, setConfirmSchedule] = useState(false)
+  const [scheduledFor, setScheduledFor] = useState('')
   const busy =
     create.isPending ||
     update.isPending ||
@@ -367,6 +371,7 @@ export function ContentEditPage({ entity }: { entity: string }) {
         <p>
           Status: <strong>{data.status}</strong>
           {data.publishedAt ? ` · published ${data.publishedAt}` : ''}
+          {data.approvalState ? ` · approval: ${data.approvalState}` : ''}
         </p>
       ) : null}
 
@@ -437,13 +442,27 @@ export function ContentEditPage({ entity }: { entity: string }) {
             >
               Submit for review
             </button>
+            {approvalBlocked ? (
+              <Notice tone="warning" title="Owner approval required">
+                The seed record for this content has not been approved by the
+                owner yet; publish is blocked until then (server-enforced).
+              </Notice>
+            ) : null}
             <button
               type="button"
               className="admin-button"
-              disabled={busy}
+              disabled={busy || approvalBlocked}
               onClick={() => setConfirmPublish(true)}
             >
               Publish
+            </button>
+            <button
+              type="button"
+              className="admin-button admin-button--secondary"
+              disabled={busy}
+              onClick={() => setConfirmSchedule(true)}
+            >
+              Schedule
             </button>
             <button
               type="button"
@@ -543,6 +562,33 @@ export function ContentEditPage({ entity }: { entity: string }) {
           ) : null}
         </section>
       ) : null}
+
+      <Dialog
+        title="Schedule publication"
+        open={confirmSchedule}
+        onClose={() => setConfirmSchedule(false)}
+      >
+        <TextField
+          id="schedule-at"
+          label="Publish at"
+          type="datetime-local"
+          value={scheduledFor}
+          onChange={setScheduledFor}
+        />
+        <button
+          type="button"
+          className="admin-button"
+          disabled={busy || !scheduledFor}
+          onClick={() =>
+            void runTransition(
+              'scheduled',
+              scheduledFor ? new Date(scheduledFor).toISOString() : null,
+            )
+          }
+        >
+          Confirm schedule
+        </button>
+      </Dialog>
 
       <Dialog
         title="Publish this content?"

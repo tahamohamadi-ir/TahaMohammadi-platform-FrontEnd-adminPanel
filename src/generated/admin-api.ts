@@ -4,6 +4,23 @@
  */
 
 export interface paths {
+    "/api/v1/admin/approval-queue": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Owner approval queue from the imported seed records. */
+        get: operations["apps_api_admin_approvals_approval_queue"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/auth/csrf": {
         parameters: {
             query?: never;
@@ -204,6 +221,31 @@ export interface paths {
         /** Replace a composition page (optimistic locking). */
         put: operations["apps_api_admin_composition_composition_update"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/profile/{id}/sibling-locale": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Create the sibling-locale draft for a profile (G-G).
+         * @description Create the missing sibling-locale draft sharing the source translation_key.
+         *
+         *     Mirrors the legacy ``POST /api/admin/profiles/{locale}/{slug}/siblings/
+         *     {target_locale}`` behavior (apps/content/admin_api.py): the new row starts
+         *     as an empty draft inheriting the source's slug, translation_key and
+         *     updated_at; registry codes replace the legacy local codes.
+         */
+        post: operations["apps_api_admin_content_profile_create_sibling_locale"];
         delete?: never;
         options?: never;
         head?: never;
@@ -644,7 +686,8 @@ export interface paths {
         /** Update media (optimistic locking). */
         put: operations["apps_api_admin_media_media_update"];
         post?: never;
-        delete?: never;
+        /** Delete media (blocked while referenced by content). */
+        delete: operations["apps_api_admin_media_media_delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -853,6 +896,48 @@ export interface components {
             mfaEnrolled: boolean;
             /** Otpverified */
             otpVerified: boolean;
+        };
+        /**
+         * ApprovalQueueCountsOut
+         * @description Counts over every seed record, independent of the ``state`` filter.
+         */
+        ApprovalQueueCountsOut: {
+            /** Approved */
+            approved: number;
+            /** Notapproved */
+            notApproved: number;
+            /** Total */
+            total: number;
+        };
+        /**
+         * ApprovalQueueItemOut
+         * @description One seed row as the admin approval queue shows it.
+         */
+        ApprovalQueueItemOut: {
+            /** Approvalstate */
+            approvalState: string;
+            /** Contentid */
+            contentId: string;
+            /** Contenttype */
+            contentType: string;
+            /** Ispublicationallowed */
+            isPublicationAllowed: boolean;
+            /** Locale */
+            locale: string;
+            /** Publicationstate */
+            publicationState: string;
+            /** Slug */
+            slug: string;
+            /** Title */
+            title: string;
+            /** Visibility */
+            visibility: string;
+        };
+        /** ApprovalQueueOut */
+        ApprovalQueueOut: {
+            counts: components["schemas"]["ApprovalQueueCountsOut"];
+            /** Items */
+            items: components["schemas"]["ApprovalQueueItemOut"][];
         };
         /** BlockFieldSpecOut */
         BlockFieldSpecOut: {
@@ -1096,6 +1181,8 @@ export interface components {
          * @description Content detail with entity-specific fields (camelCase keys).
          */
         ContentDetailOut: {
+            /** Approvalstate */
+            approvalState?: string | null;
             /**
              * Createdat
              * Format: date-time
@@ -1177,6 +1264,8 @@ export interface components {
          * @description Compact admin row for a content entity (list view).
          */
         ContentListItemOut: {
+            /** Approvalstate */
+            approvalState?: string | null;
             /** Id */
             id: number;
             /** Locale */
@@ -1782,6 +1871,14 @@ export interface components {
             url: string;
         };
         /**
+         * ProfileSiblingLocaleIn
+         * @description Target locale for the new sibling-locale profile draft (G-G).
+         */
+        ProfileSiblingLocaleIn: {
+            /** Targetlocale */
+            targetLocale: string;
+        };
+        /**
          * ProjectCaseMediaOut
          * @description Nested diagram + screenshot rows for a project (Media library FKs).
          */
@@ -2149,6 +2246,28 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    apps_api_admin_approvals_approval_queue: {
+        parameters: {
+            query?: {
+                state?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApprovalQueueOut"];
+                };
+            };
+        };
+    };
     apps_api_admin_api_auth_csrf: {
         parameters: {
             query?: never;
@@ -2453,6 +2572,34 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CompositionDetailOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_content_profile_create_sibling_locale: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProfileSiblingLocaleIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
@@ -3282,6 +3429,26 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["MediaItemOut"];
                 };
+            };
+        };
+    };
+    apps_api_admin_media_media_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                media_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
         };
     };

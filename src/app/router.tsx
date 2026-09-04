@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { ApprovalQueuePage } from '@/pages/ApprovalQueuePage'
 import { ContentEditPage } from '@/pages/ContentEditPage'
 import { ContentListPage } from '@/pages/ContentListPage'
 import { DashboardPage } from '@/pages/DashboardPage'
@@ -57,6 +58,14 @@ export function AppRouter() {
         element={
           <ProtectedRoute requireStaff>
             <TimelinePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="approvals"
+        element={
+          <ProtectedRoute requireStaff>
+            <ApprovalQueuePage />
           </ProtectedRoute>
         }
       />

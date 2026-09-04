@@ -84,6 +84,7 @@ const DETAIL = {
   slug: 'hello-world',
   title: 'Hello world',
   status: 'draft',
+  approvalState: 'approved',
   fields: { excerpt: 'Hi' },
   publishedAt: null,
   createdAt: '2026-08-31T00:00:00.000Z',
@@ -97,7 +98,9 @@ function jsonResponse(body: unknown, status = 200) {
   })
 }
 
-function stubDefault() {
+function stubDefault(
+  handlers?: (url: string, init?: RequestInit) => Response | null,
+) {
   vi.stubGlobal(
     'fetch',
     vi
@@ -105,6 +108,8 @@ function stubDefault() {
       .mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
         const url = String(input)
         if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
+        const custom = handlers?.(url, init)
+        if (custom) return Promise.resolve(custom)
         if (url.includes('/content/schema')) {
           return Promise.resolve(jsonResponse(SCHEMA))
         }
@@ -325,6 +330,39 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     })
   })
 
+  it('schedules through a dialog with the datetime input (ADMIN-240)', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    fireEvent.click(await screen.findByRole('button', { name: /schedule/i }))
+    const dialog = screen.getByRole('dialog', { name: /schedule publication/i })
+    fireEvent.change(within(dialog).getByLabelText(/publish at/i), {
+      target: { value: '2026-10-01T09:00' },
+    })
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: /confirm schedule/i }),
+    )
+    await waitFor(() => {
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(
+            ([input, init]) =>
+              String(input).includes('/content/article/7/transition') &&
+              (init as RequestInit | undefined)?.method === 'POST',
+          ),
+      ).toBe(true)
+      const transitionCall = vi
+        .mocked(fetch)
+        .mock.calls.find(([input]) =>
+          String(input).includes('/content/article/7/transition'),
+        )
+      const body = JSON.parse(String(transitionCall![1]?.body))
+      expect(body.to).toBe('scheduled')
+      // The wire value is a real instant; exact ISO depends on the host TZ.
+      expect(body.scheduledFor).toBe(new Date('2026-10-01T09:00').toISOString())
+    })
+  })
+
   it('creates a preview share link and shows url + expiry (ADMIN-220)', async () => {
     stubDefault()
     renderEdit('/content/article/7')
@@ -350,5 +388,22 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     expect(
       screen.queryByRole('button', { name: /create preview link/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('blocks publish while owner approval is missing (ADMIN-280)', async () => {
+    stubDefault((url) => {
+      if (/\/api\/v1\/admin\/content\/article\/7$/.test(url)) {
+        return jsonResponse({
+          ...DETAIL,
+          approvalState: 'needs-owner-input',
+        })
+      }
+      return null
+    })
+    renderEdit('/content/article/7')
+    const publish = await screen.findByRole('button', { name: /publish/i })
+    expect(publish).toBeDisabled()
+    expect(screen.getByText(/owner approval required/i)).toBeInTheDocument()
+    expect(screen.getByText(/approval: needs-owner-input/)).toBeInTheDocument()
   })
 })

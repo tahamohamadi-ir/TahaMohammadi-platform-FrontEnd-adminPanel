@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 
 import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
+  Dialog,
   Notice,
   SelectField,
   Table,
@@ -10,6 +11,8 @@ import {
 } from '@/components/ui/primitives'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { useContentList } from '@/lib/api/hooks/useContent'
+import { AdminApiError } from '@/lib/api/auth'
+import { bulkArchiveContent } from '@/lib/api/content'
 import { CONTENT_STATUSES } from '@/lib/api/content'
 
 const ENTITY_LABELS: Record<string, string> = {
@@ -40,6 +43,11 @@ export function ContentListPage({ entity }: { entity: string }) {
   const [status, setStatus] = useState('')
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
+  const [selected, setSelected] = useState<number[]>([])
+  const [confirmBulk, setConfirmBulk] = useState(false)
+  const [bulkMessage, setBulkMessage] = useState<string | null>(null)
+  const [bulkError, setBulkError] = useState<string | null>(null)
+  const [bulkPending, setBulkPending] = useState(false)
   const list = useContentList(entity, {
     locale: locale || undefined,
     status: status || undefined,
@@ -47,11 +55,44 @@ export function ContentListPage({ entity }: { entity: string }) {
     page,
     pageSize: 20,
   })
+  const bulkEnabled = user?.featureFlags?.['admin_bulk_archive'] === true
 
   const data = list.data
   const totalPages = data
     ? Math.max(1, Math.ceil(data.total / data.pageSize))
     : 1
+
+  function toggleSelected(id: number, checked: boolean) {
+    setSelected((current) =>
+      checked
+        ? [...new Set([...current, id])]
+        : current.filter((at) => at !== id),
+    )
+  }
+
+  async function handleBulkArchive() {
+    setBulkError(null)
+    setBulkPending(true)
+    try {
+      const result = await bulkArchiveContent(entity, {
+        ids: selected,
+        reason: 'bulk archive from list',
+      })
+      setBulkMessage(`Archived ${result.archived}; skipped ${result.skipped}.`)
+      setSelected([])
+      setConfirmBulk(false)
+      void list.refetch()
+    } catch (caught) {
+      setConfirmBulk(false)
+      setBulkError(
+        caught instanceof AdminApiError
+          ? caught.message
+          : 'Bulk archive failed. Try again.',
+      )
+    } finally {
+      setBulkPending(false)
+    }
+  }
 
   return (
     <main className="page">
@@ -117,11 +158,53 @@ export function ContentListPage({ entity }: { entity: string }) {
         </Notice>
       ) : null}
 
+      {bulkMessage ? <p role="status">{bulkMessage}</p> : null}
+      {bulkError ? (
+        <Notice tone="error" title="Bulk archive failed">
+          {bulkError}
+        </Notice>
+      ) : null}
+      {bulkEnabled && data ? (
+        <p>
+          <button
+            type="button"
+            className="admin-button"
+            disabled={selected.length === 0 || bulkPending}
+            onClick={() => setConfirmBulk(true)}
+          >
+            Archive selected ({selected.length})
+          </button>
+        </p>
+      ) : data ? (
+        <p className="muted">
+          Bulk archive is disabled on the server (FEATURE_ADMIN_BULK_ARCHIVE);
+          archive rows individually.
+        </p>
+      ) : null}
+
       {!list.isPending && !list.error && data ? (
         <>
           <Table
             caption={`${entityLabel(entity)} rows`}
             columns={[
+              ...(bulkEnabled
+                ? [
+                    {
+                      key: 'select',
+                      header: 'Select',
+                      render: (row: { id: number }) => (
+                        <input
+                          type="checkbox"
+                          aria-label={`Select row ${row.id}`}
+                          checked={selected.includes(row.id)}
+                          onChange={(event) =>
+                            toggleSelected(row.id, event.currentTarget.checked)
+                          }
+                        />
+                      ),
+                    },
+                  ]
+                : []),
               {
                 key: 'title',
                 header: 'Title',
@@ -162,6 +245,25 @@ export function ContentListPage({ entity }: { entity: string }) {
           </div>
         </>
       ) : null}
+
+      <Dialog
+        title="Archive selected rows?"
+        open={confirmBulk}
+        onClose={() => setConfirmBulk(false)}
+      >
+        <p>
+          {selected.length} row(s) will move to archived. Invalid transitions
+          are skipped by the backend and reported.
+        </p>
+        <button
+          type="button"
+          className="admin-button"
+          disabled={bulkPending}
+          onClick={() => void handleBulkArchive()}
+        >
+          Confirm archive
+        </button>
+      </Dialog>
     </main>
   )
 }

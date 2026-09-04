@@ -117,3 +117,20 @@ export async function transitionContent(
 export async function fetchContentSchema(): Promise<ContentSchemaOut> {
   return adminJson<ContentSchemaOut>('/content/schema')
 }
+
+/** Flag-guarded server op: 404 FEATURE_DISABLED unless
+ * FEATURE_ADMIN_BULK_ARCHIVE is on. The UI hides it behind the same flag
+ * from AdminUserOut.featureFlags. */
+export async function bulkArchiveContent(
+  entity: string,
+  payload: { ids: number[]; reason?: string | null },
+): Promise<components['schemas']['ContentBulkArchiveOut']> {
+  return adminJson<components['schemas']['ContentBulkArchiveOut']>(
+    `/content/${entity}/bulk-archive`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  )
+}

@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   CONTENT_ENTITIES,
   CONTENT_STATUSES,
+  bulkArchiveContent,
   createContent,
   fetchContentDetail,
   listContent,
@@ -160,5 +161,39 @@ describe('content API client (ADMIN-160/170)', () => {
     await expect(
       transitionContent('article', 7, { to: 'published' }),
     ).rejects.toMatchObject({ kind: 'conflict' })
+  })
+
+  it('schedules with the real scheduledFor field', async () => {
+    vi.mocked(fetch).mockResolvedValue(jsonResponse(DETAIL))
+    await transitionContent('article', 7, {
+      to: 'scheduled',
+      scheduledFor: '2026-10-01T09:00:00Z',
+    })
+    const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
+    expect(JSON.parse(String(init.body))).toEqual({
+      to: 'scheduled',
+      scheduledFor: '2026-10-01T09:00:00Z',
+    })
+  })
+
+  it('bulk-archives through the flag-guarded op', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ archived: 2, ids: [7, 8], skipped: 0 }),
+    )
+    const result = await bulkArchiveContent('article', {
+      ids: [7, 8],
+      reason: 'cleanup',
+    })
+    expect(fetch).toHaveBeenCalledWith(
+      '/api/v1/admin/content/article/bulk-archive',
+      expect.objectContaining({ method: 'POST' }),
+    )
+    expect(
+      JSON.parse(String(vi.mocked(fetch).mock.calls[0]?.[1]?.body)),
+    ).toEqual({
+      ids: [7, 8],
+      reason: 'cleanup',
+    })
+    expect(result.archived).toBe(2)
   })
 })
