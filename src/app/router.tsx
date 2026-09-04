@@ -4,6 +4,8 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ContentEditPage } from '@/pages/ContentEditPage'
 import { ContentListPage } from '@/pages/ContentListPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { GraphEditPage } from '@/pages/GraphEditPage'
+import { GraphPage } from '@/pages/GraphPage'
 import { HomePage } from '@/pages/HomePage'
 import { MediaPage } from '@/pages/MediaPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
@@ -55,6 +57,22 @@ export function AppRouter() {
         element={
           <ProtectedRoute requireStaff>
             <TimelinePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="graph"
+        element={
+          <ProtectedRoute requireStaff>
+            <GraphPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="graph/:versionId"
+        element={
+          <ProtectedRoute requireStaff>
+            <GraphEditPage />
           </ProtectedRoute>
         }
       />

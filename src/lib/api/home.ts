@@ -1,7 +1,6 @@
 import type { components } from '@/generated/admin-api'
 import { adminJson } from '@/lib/api/auth'
-export type HomeModulesAdminOut =
-  components['schemas']['HomeModulesAdminOut']
+export type HomeModulesAdminOut = components['schemas']['HomeModulesAdminOut']
 export type HomeModulesPutIn = components['schemas']['HomeModulesPutIn']
 export type HomeModuleIn = components['schemas']['HomeModuleIn']
 export type HomeModulesRevisionOut =

@@ -8,10 +8,7 @@ import {
   TextField,
 } from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
-import type {
-  TimelineAdminOut,
-  TimelinePatchIn,
-} from '@/lib/api/timeline'
+import type { TimelineAdminOut, TimelinePatchIn } from '@/lib/api/timeline'
 import {
   useCreateTimelineRecord,
   useDeleteTimelineRecord,
