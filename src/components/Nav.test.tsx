@@ -2,7 +2,12 @@ import { render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { AdminNav, filterNavItems, type NavItem } from '@/components/Nav'
+import {
+  AdminNav,
+  ADMIN_NAV_ITEMS,
+  filterNavItems,
+  type NavItem,
+} from '@/components/Nav'
 import type { AdminUserOut } from '@/lib/api/auth'
 
 const ITEMS: NavItem[] = [
@@ -28,6 +33,24 @@ function staffUser(overrides: Partial<AdminUserOut> = {}): AdminUserOut {
 describe('permission-aware navigation (ADMIN-130)', () => {
   beforeEach(() => {
     vi.unstubAllGlobals()
+  })
+
+  it('ships the ADMIN-170/171 collection entries', () => {
+    const labels = ADMIN_NAV_ITEMS.map((item) => item.label)
+    for (const label of [
+      'Articles',
+      'Series',
+      'Research topics',
+      'Projects',
+      'Publications',
+      'Books',
+      'Talks',
+      'Downloads',
+      'Courses',
+      'Creative work',
+    ]) {
+      expect(labels, label).toContain(label)
+    }
   })
 
   it('hides feature-flagged items when the flag is off', () => {

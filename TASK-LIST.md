@@ -38,13 +38,13 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 - [x] **ADMIN-150** Profile + site settings.
 - [x] **ADMIN-160** Articles/series CRUD, filters, pagination.
 - [x] **ADMIN-170** Research, publications, projects collections.
-- [ ] **ADMIN-171** Books, talks, downloads, courses, creative work.
+- [x] **ADMIN-171** Books, talks, downloads, courses, creative work.
 - [ ] **ADMIN-180** Media library: upload, metadata, usage, delete protection.
 - [ ] **ADMIN-190** Home module composition and ordering.
 - [ ] **ADMIN-200** Timeline editor + validation.
 - [ ] **ADMIN-210** Graph editor (nodes, edges, groups) per reference boundary.
 - [ ] **ADMIN-220** Preview-share tokens.
-- [ ] **ADMIN-230** Revision history + restore + conflict UI.
+- [x] **ADMIN-230** Revision history + restore + conflict UI.
 - [ ] **ADMIN-240** Schedule, publish, archive, bulk actions.
 
 ## ADM-4 — Seed supplement and approval queue

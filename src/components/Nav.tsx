@@ -11,8 +11,8 @@ export interface NavItem {
   featureFlag?: string
 }
 
-/** Sections shipped by this client. New workflows add one entry here —
- * never a bare <Link> elsewhere — so authorization stays in one place. */
+/** Sections shipped by this client. New workflows add one entry here,
+ * never a bare <Link> elsewhere, so authorization stays in one place. */
 export const ADMIN_NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', requiresStaff: true },
   { to: '/content/article', label: 'Articles', requiresStaff: true },
@@ -22,8 +22,22 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     label: 'Research topics',
     requiresStaff: true,
   },
+  {
+    to: '/content/research-statement',
+    label: 'Research statements',
+    requiresStaff: true,
+  },
   { to: '/content/project', label: 'Projects', requiresStaff: true },
   { to: '/content/publication', label: 'Publications', requiresStaff: true },
+  { to: '/content/book', label: 'Books', requiresStaff: true },
+  { to: '/content/talk', label: 'Talks', requiresStaff: true },
+  { to: '/content/download', label: 'Downloads', requiresStaff: true },
+  { to: '/content/course', label: 'Courses', requiresStaff: true },
+  {
+    to: '/content/creative-work',
+    label: 'Creative work',
+    requiresStaff: true,
+  },
   { to: '/settings', label: 'Settings', requiresStaff: true },
 ]
 

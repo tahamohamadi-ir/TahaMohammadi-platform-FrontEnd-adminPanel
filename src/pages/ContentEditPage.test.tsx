@@ -35,6 +35,27 @@ const SCHEMA = {
   },
 }
 
+const REVISIONS = {
+  items: [
+    {
+      id: 3,
+      entityKey: 'article',
+      objectId: 7,
+      note: 'before publish',
+      createdAt: '2026-09-01T12:00:00.000Z',
+      createdById: 1,
+    },
+    {
+      id: 2,
+      entityKey: 'article',
+      objectId: 7,
+      note: '',
+      createdAt: '2026-08-31T12:00:00.000Z',
+      createdById: null,
+    },
+  ],
+}
+
 const DETAIL = {
   id: 7,
   locale: 'en',
@@ -57,14 +78,22 @@ function jsonResponse(body: unknown, status = 200) {
 function stubDefault() {
   vi.stubGlobal(
     'fetch',
-    vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = String(input)
-      if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
-      if (url.includes('/content/schema')) {
-        return Promise.resolve(jsonResponse(SCHEMA))
-      }
-      return Promise.resolve(jsonResponse(DETAIL))
-    }),
+    vi
+      .fn()
+      .mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
+        if (url.includes('/content/schema')) {
+          return Promise.resolve(jsonResponse(SCHEMA))
+        }
+        if (url.includes('/revisions')) {
+          if (init?.method === 'POST' && !url.includes('/restore')) {
+            return Promise.resolve(jsonResponse(REVISIONS.items[0]))
+          }
+          return Promise.resolve(jsonResponse(REVISIONS))
+        }
+        return Promise.resolve(jsonResponse(DETAIL))
+      }),
   )
 }
 
@@ -199,5 +228,64 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     expect(
       screen.getByText(/media library workflow pending/i),
     ).toBeInTheDocument()
+  })
+
+  it('lists revision history with notes and timestamps (ADMIN-230)', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    const history = await screen.findByRole('table', {
+      name: /revision history/i,
+    })
+    expect(history).toBeInTheDocument()
+    expect(screen.getByText(/before publish/)).toBeInTheDocument()
+    expect(screen.getByText('3')).toBeInTheDocument()
+  })
+
+  it('creates a snapshot with a note from the history form', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    await screen.findByRole('table', { name: /revision history/i })
+    fireEvent.change(screen.getByLabelText(/snapshot note/i), {
+      target: { value: 'pre-cleanup' },
+    })
+    fireEvent.click(screen.getByRole('button', { name: /save snapshot/i }))
+    await waitFor(() => {
+      const snapCall = vi
+        .mocked(fetch)
+        .mock.calls.find(
+          ([input, init]) =>
+            String(input).endsWith(
+              '/api/v1/admin/content/article/7/revisions',
+            ) && (init as RequestInit | undefined)?.method === 'POST',
+        )
+      expect(snapCall).toBeTruthy()
+      expect(JSON.parse(String(snapCall![1]?.body))).toEqual({
+        note: 'pre-cleanup',
+      })
+    })
+  })
+
+  it('requires confirmation before restore and calls the restore op', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    await screen.findByRole('table', { name: /revision history/i })
+    fireEvent.click(screen.getByRole('button', { name: /restore revision 3/i }))
+    const dialog = screen.getByRole('dialog', { name: /restore revision/i })
+    expect(dialog).toBeInTheDocument()
+    fireEvent.click(
+      within(dialog).getByRole('button', { name: /confirm restore/i }),
+    )
+    await waitFor(() => {
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(
+            ([input, init]) =>
+              String(input).includes(
+                '/content/article/7/revisions/3/restore',
+              ) && (init as RequestInit | undefined)?.method === 'POST',
+          ),
+      ).toBe(true)
+    })
   })
 })
