@@ -40,8 +40,8 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 - [x] **ADMIN-170** Research, publications, projects collections.
 - [x] **ADMIN-171** Books, talks, downloads, courses, creative work.
 - [x] **ADMIN-180** Media library: upload, metadata, usage, delete protection.
-- [ ] **ADMIN-190** Home module composition and ordering.
-- [ ] **ADMIN-200** Timeline editor + validation.
+- [x] **ADMIN-190** Home module composition and ordering.
+- [x] **ADMIN-200** Timeline editor + validation.
 - [ ] **ADMIN-210** Graph editor (nodes, edges, groups) per reference boundary.
 - [ ] **ADMIN-220** Preview-share tokens.
 - [x] **ADMIN-230** Revision history + restore + conflict UI.

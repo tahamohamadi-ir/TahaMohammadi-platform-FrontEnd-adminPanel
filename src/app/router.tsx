@@ -4,10 +4,12 @@ import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { ContentEditPage } from '@/pages/ContentEditPage'
 import { ContentListPage } from '@/pages/ContentListPage'
 import { DashboardPage } from '@/pages/DashboardPage'
+import { HomePage } from '@/pages/HomePage'
 import { MediaPage } from '@/pages/MediaPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
+import { TimelinePage } from '@/pages/TimelinePage'
 
 function ContentListPageRoute() {
   const { entity } = useParams()
@@ -37,6 +39,22 @@ export function AppRouter() {
         element={
           <ProtectedRoute requireStaff>
             <SettingsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="home"
+        element={
+          <ProtectedRoute requireStaff>
+            <HomePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="timeline"
+        element={
+          <ProtectedRoute requireStaff>
+            <TimelinePage />
           </ProtectedRoute>
         }
       />

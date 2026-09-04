@@ -202,6 +202,8 @@ interface TextareaFieldProps {
   error?: string
   description?: string
   defaultValue?: string
+  value?: string
+  onChange?: (value: string) => void
   rows?: number
   name?: string
 }
@@ -216,8 +218,14 @@ export function TextareaField(props: TextareaFieldProps) {
           name={props.name ?? id}
           rows={props.rows ?? 4}
           defaultValue={props.defaultValue}
+          value={props.value}
           aria-invalid={invalid}
           aria-describedby={describedBy}
+          onChange={
+            props.onChange
+              ? (event) => props.onChange?.(event.currentTarget.value)
+              : undefined
+          }
         />
       )}
     </FieldShell>

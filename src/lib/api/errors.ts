@@ -35,6 +35,7 @@ function mapCodeToKind(code: string, status?: number): AdminErrorKind {
     case 'FORBIDDEN':
       return 'forbidden'
     case 'STALE_REVISION':
+    case 'PRECONDITION_REQUIRED':
       return 'conflict'
     case 'RATE_LIMITED':
       return 'rate_limit'

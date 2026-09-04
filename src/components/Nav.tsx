@@ -39,6 +39,8 @@ export const ADMIN_NAV_ITEMS: NavItem[] = [
     requiresStaff: true,
   },
   { to: '/media', label: 'Media', requiresStaff: true },
+  { to: '/home', label: 'Home composition', requiresStaff: true },
+  { to: '/timeline', label: 'Timeline', requiresStaff: true },
   { to: '/settings', label: 'Settings', requiresStaff: true },
 ]
 
