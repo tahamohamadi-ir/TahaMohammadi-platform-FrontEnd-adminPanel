@@ -4,6 +4,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { AppRouter } from '@/app/router'
 import { AuthProvider } from '@/lib/auth/AuthProvider'
+import { createTestQueryClient } from '@/lib/query/client'
+import { QueryClientProvider } from '@tanstack/react-query'
 
 describe('AppRouter', () => {
   beforeEach(() => {
@@ -19,11 +21,13 @@ describe('AppRouter', () => {
 
   it('redirects unauthenticated users from dashboard to sign-in', async () => {
     render(
-      <MemoryRouter initialEntries={['/dashboard']}>
-        <AuthProvider>
-          <AppRouter />
-        </AuthProvider>
-      </MemoryRouter>,
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter initialEntries={['/dashboard']}>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
     )
 
     await waitFor(() => {

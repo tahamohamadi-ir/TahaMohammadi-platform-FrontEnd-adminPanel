@@ -7,6 +7,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 
 import type { AdminUserOut, LoginIn, AdminApiError } from '@/lib/api/auth'
 import {
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextValue | null>(null)
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AdminUserOut | null>(null)
   const [status, setStatus] = useState<AuthStatus>('loading')
+  const queryClient = useQueryClient()
 
   const refresh = useCallback(async () => {
     const current = await fetchCurrentAdmin()
@@ -53,10 +55,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await logoutAdmin()
     } finally {
+      // Never leak privileged server state across sessions.
+      queryClient.clear()
       setUser(null)
       setStatus('anonymous')
     }
-  }, [])
+  }, [queryClient])
 
   const value = useMemo(
     () => ({ user, status, login, logout, refresh }),

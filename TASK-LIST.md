@@ -11,7 +11,7 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 - [x] **ADMIN-010** Init React 19 + Vite + TypeScript 5.9; lockfile; `npm run build` green.
 - [x] **ADMIN-011** ESLint + Prettier + Vitest baseline.
 - [x] **ADMIN-012** GitHub Actions: install, typecheck, unit tests, build.
-- [ ] **ADMIN-013** ADRs: auth, state, editor, testing, deployment.
+- [x] **ADMIN-013** ADRs: auth, state, editor, testing, deployment.
 
 ## ADM-1 — Auth and API client
 
@@ -28,14 +28,14 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
 ## ADM-2 — Design system and shell
 
-- [ ] **ADMIN-120** Admin tokens + table, form, dialog, notice, upload primitives.
-- [ ] **ADMIN-130** Permission-aware nav; forbidden/unauthorized states.
-- [ ] **ADMIN-131** RTL text entry and long-content layout checks.
+- [x] **ADMIN-120** Admin tokens + table, form, dialog, notice, upload primitives.
+- [x] **ADMIN-130** Permission-aware nav; forbidden/unauthorized states.
+- [x] **ADMIN-131** RTL text entry and long-content layout checks.
 
 ## ADM-3 — Core workflows
 
-- [ ] **ADMIN-140** Dashboard + backend health/degraded status.
-- [ ] **ADMIN-150** Profile + site settings.
+- [x] **ADMIN-140** Dashboard + backend health/degraded status.
+- [x] **ADMIN-150** Profile + site settings.
 - [ ] **ADMIN-160** Articles/series CRUD, filters, pagination.
 - [ ] **ADMIN-170** Research, publications, projects collections.
 - [ ] **ADMIN-171** Books, talks, downloads, courses, creative work.

@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { DashboardPage } from '@/pages/DashboardPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
 
 export function AppRouter() {
@@ -13,8 +14,16 @@ export function AppRouter() {
       <Route
         path="dashboard"
         element={
-          <ProtectedRoute>
+          <ProtectedRoute requireStaff>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="settings"
+        element={
+          <ProtectedRoute requireStaff>
+            <SettingsPage />
           </ProtectedRoute>
         }
       />

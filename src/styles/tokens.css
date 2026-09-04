@@ -1,0 +1,56 @@
+/* Admin design tokens (ADMIN-120). Components consume these variables only;
+ * no hard-coded palette values in component CSS. Logical properties keep
+ * RTL layouts correct without overrides. */
+
+:root {
+  --admin-font-family:
+    system-ui, -apple-system, 'Segoe UI', Tahoma, Arial, sans-serif;
+  --admin-font-size-sm: 0.8125rem;
+  --admin-font-size-md: 0.9375rem;
+  --admin-font-size-lg: 1.125rem;
+
+  --admin-space-1: 0.25rem;
+  --admin-space-2: 0.5rem;
+  --admin-space-3: 0.75rem;
+  --admin-space-4: 1rem;
+  --admin-space-6: 1.5rem;
+
+  --admin-radius-sm: 0.375rem;
+  --admin-radius-md: 0.5rem;
+
+  --admin-color-canvas: #f4f4f5;
+  --admin-color-surface: #ffffff;
+  --admin-color-ink: #18181b;
+  --admin-color-ink-secondary: #52525b;
+  --admin-color-border: #d4d4d8;
+  --admin-color-brand: #0f766e;
+  --admin-color-brand-ink: #ffffff;
+  --admin-color-danger: #b91c1c;
+  --admin-color-danger-surface: #fef2f2;
+  --admin-color-success: #15803d;
+  --admin-color-success-surface: #f0fdf4;
+  --admin-color-warning: #b45309;
+  --admin-color-warning-surface: #fffbeb;
+  --admin-color-info: #1d4ed8;
+  --admin-color-info-surface: #eff6ff;
+
+  --admin-focus-ring: 0 0 0 3px rgb(15 118 110 / 0.35);
+
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --admin-color-canvas: #09090b;
+    --admin-color-surface: #18181b;
+    --admin-color-ink: #f4f4f5;
+    --admin-color-ink-secondary: #a1a1aa;
+    --admin-color-border: #3f3f46;
+    --admin-color-danger-surface: #450a0a;
+    --admin-color-success-surface: #052e16;
+    --admin-color-warning-surface: #451a03;
+    --admin-color-info-surface: #172554;
+
+    color-scheme: dark;
+  }
+}
