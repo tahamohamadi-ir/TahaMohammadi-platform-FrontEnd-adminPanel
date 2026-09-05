@@ -17,6 +17,9 @@ export default defineConfig({
     },
   },
   server: {
+    // Explicit IPv4 bind so Playwright's webServer probe (127.0.0.1) and the
+    // dev proxy match, regardless of how the OS resolves `localhost`.
+    host: '127.0.0.1',
     port: 5173,
     strictPort: true,
     proxy: {
