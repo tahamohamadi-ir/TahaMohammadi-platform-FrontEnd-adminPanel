@@ -38,4 +38,24 @@ Synthetic fixtures are test content only. No real data was published.
 
 Authenticated browser → real backend draft/save/conflict/media/locale → explicit publish → rebuild/result → correct public rendered content remains **OPEN**. These HTTP-mocked component tests are not evidence of live integration, release delivery, production access, or owner acceptance. No claim of PU-25 acceptance is made.
 
+## 2026-09-07 — Live journey spec (still gated, not yet executed)
+
+- Added `tests/e2e/product-journey-live.e2e.ts`: API-driven live probe
+  against staging — CSRF seed, `POST auth/login` (email/password/OTP),
+  `POST content/article` draft with a unique marker, `PUT` edit with
+  `If-Match` round-trip, `transition` to `published`, 10-minute poll of
+  `/en/blog/{slug}/` for the marker, `finally` archive cleanup (no admin
+  DELETE endpoint exists by design). Approval-gate rejections fail loudly.
+- Endpoint shapes verified against `Back-End/apps/api/admin_api.py`,
+  `admin_content.py` (`VALID_STATUSES`, `ContentCreateIn`,
+  `ContentDetailOut.updatedAt`, `rebuild_trigger` HMAC gate) and the
+  public `/en/blog/[slug]` route before writing — no invented fields.
+- Runs only when `ADMIN_JOURNEY_ADMIN_URL`, `ADMIN_JOURNEY_PUBLIC_URL`,
+  `ADMIN_JOURNEY_EMAIL`, `ADMIN_JOURNEY_PASSWORD` (`ADMIN_JOURNEY_OTP`
+  optional) are set; verified locally: **1 skipped, 0 failed**, zero
+  requests issued without env. `npm run lint` 0 errors, `npm run build`
+  green.
+- Unblock requirements (owner): staging backend + admin session creds,
+  staging static rebuild after publish. No live system was touched.
+
 `git diff --check` passed. Full-suite/build and live browser gates remain with the coordinator.
