@@ -167,4 +167,33 @@ describe('GraphEditPage (ADMIN-210)', () => {
     expect(alert).toHaveTextContent(/MISSING_POSITION/)
     expect(alert).toHaveTextContent(/research/)
   })
+
+  it('provides keyboard/table alternative to drag with coordinate controls', async () => {
+    stubGraph()
+    renderEdit()
+    expect(
+      await screen.findByRole('heading', {
+        name: /node table & keyboard positioning/i,
+      }),
+    ).toBeInTheDocument()
+    expect(screen.getByLabelText('X (impact)')).toBeInTheDocument()
+    expect(screen.getByLabelText('Y (impact)')).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /nudge impact left/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /nudge impact right/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('allows editing and validating node relatedRecords', async () => {
+    stubGraph()
+    renderEdit()
+    expect(
+      await screen.findByRole('heading', { name: /related records/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /add related record to impact/i }),
+    ).toBeInTheDocument()
+  })
 })

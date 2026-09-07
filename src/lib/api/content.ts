@@ -30,6 +30,31 @@ export const CONTENT_STATUSES = [
   'archived',
 ] as const
 
+/** Entities whose backend detail map exposes a `story` relation (`storyId`).
+ * Exactly the entities with `"story": "storyId"` in `DETAIL_FIELD_MAPS`
+ * (`Back-End/apps/api/admin_content.py`). `landing` and `profile` have no
+ * story relation. The server validates kind (`story` compositions only) and
+ * exact-locale match; this set only decides where the story UI is offered. */
+export const STORY_ENTITIES: ReadonlySet<string> = new Set([
+  'article',
+  'series',
+  'research-topic',
+  'research-statement',
+  'project',
+  'publication',
+  'book',
+  'talk',
+  'download',
+  'course',
+  'creative-work',
+  'lesson',
+  'collection',
+])
+
+export function entitySupportsStory(entity: string): boolean {
+  return STORY_ENTITIES.has(entity)
+}
+
 export type ContentStatus = (typeof CONTENT_STATUSES)[number]
 
 export type ContentListOut = components['schemas']['ContentListOut']

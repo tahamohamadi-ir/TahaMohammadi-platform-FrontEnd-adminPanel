@@ -4,6 +4,29 @@
  */
 
 export interface paths {
+    "/api/v1/admin/analytics": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Retrieve first-party received events report
+         * @description Admin report of received events aggregate counters (§I07).
+         *
+         *     Authentication: Staff session + verified OTP required.
+         *     Window: Maximum 366 days.
+         */
+        get: operations["apps_analytics_api_get_analytics_report"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/approval-queue": {
         parameters: {
             query?: never;
@@ -269,6 +292,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/content/project/{id}/case-study": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get project case study, evidence, collaborators, and funding. */
+        get: operations["apps_api_admin_project_evidence_get_project_case_study"];
+        /** Atomically update project case study, evidence, collaborators, and funding. */
+        put: operations["apps_api_admin_project_evidence_put_project_case_study"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/content/project/{id}/diagrams/{diagram_id}": {
         parameters: {
             query?: never;
@@ -405,6 +446,23 @@ export interface paths {
         put?: never;
         /** Create an immutable content snapshot. */
         post: operations["apps_api_admin_content_content_revisions_create"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/content/{entity}/{id}/revisions/{revision_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get an immutable content revision with full snapshot. */
+        get: operations["apps_api_admin_content_content_revisions_detail"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -764,6 +822,69 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/publication-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List publication jobs (paged, filterable by state and locale)
+         * @description List publication jobs with pagination and optional state/locale filters.
+         */
+        get: operations["apps_api_admin_publication_jobs_list_publication_jobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/publication-jobs/{job_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get one publication job by UUID
+         * @description Get single publication job detail.
+         */
+        get: operations["apps_api_admin_publication_jobs_get_publication_job"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/publication-jobs/{job_id}/retry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Idempotently retry a publication job with If-Match and Idempotency-Key
+         * @description Idempotently retry a publication job.
+         *
+         *     Enforces If-Match preconditions against the target job's updatedAt timestamp.
+         *     Reuses existing retry jobs when an identical Idempotency-Key header is presented.
+         */
+        post: operations["apps_api_admin_publication_jobs_retry_publication_job"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/site": {
         parameters: {
             query?: never;
@@ -776,6 +897,41 @@ export interface paths {
         /** Update site settings (optimistic locking). */
         put: operations["apps_api_admin_siteconfig_site_settings_put"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/site/{locale}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get localized site settings for admin (draft state). */
+        get: operations["apps_api_admin_siteconfig_localized_site_settings_get"];
+        /** Update localized site settings (optimistic locking). */
+        put: operations["apps_api_admin_siteconfig_localized_site_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/site/{locale}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Publish draft snapshot for localized site settings (PRODUCT-V2 §I04). */
+        post: operations["apps_api_admin_siteconfig_localized_site_settings_publish"];
         delete?: never;
         options?: never;
         head?: never;
@@ -898,6 +1054,51 @@ export interface components {
             otpVerified: boolean;
         };
         /**
+         * AnalyticsReportOut
+         * @description Admin received events report payload (§I07).
+         */
+        AnalyticsReportOut: {
+            /** From */
+            from_: string;
+            /**
+             * Metric
+             * @default received_events
+             */
+            metric: string;
+            /** Rows */
+            rows?: components["schemas"]["AnalyticsRowOut"][];
+            /**
+             * Timezone
+             * @default UTC
+             */
+            timezone: string;
+            /** To */
+            to: string;
+            /** Updatedat */
+            updatedAt: string;
+        };
+        /**
+         * AnalyticsRowOut
+         * @description Single aggregate event counter row.
+         */
+        AnalyticsRowOut: {
+            /** Count */
+            count: number;
+            /** Date */
+            date: string;
+            /** Event */
+            event: string;
+            /** Locale */
+            locale: string;
+            /** Pagepath */
+            pagePath: string;
+            /**
+             * Target
+             * @default
+             */
+            target: string;
+        };
+        /**
          * ApprovalQueueCountsOut
          * @description Counts over every seed record, independent of the ``state`` filter.
          */
@@ -941,10 +1142,18 @@ export interface components {
         };
         /** BlockFieldSpecOut */
         BlockFieldSpecOut: {
+            /** Itemfields */
+            itemFields?: {
+                [key: string]: unknown;
+            }[] | null;
             /** Key */
             key: string;
             /** Label */
             label: string;
+            /** Maxitems */
+            maxItems?: number | null;
+            /** Minitems */
+            minItems?: number | null;
             /** Options */
             options?: string[] | null;
             /** Type */
@@ -960,6 +1169,220 @@ export interface components {
             required?: string[];
             /** Type */
             type: string;
+        };
+        /**
+         * CaseStudyCollaboratorIn
+         * @description Collaborator credit update row; id is optional for new rows.
+         */
+        CaseStudyCollaboratorIn: {
+            /** Id */
+            id?: number | null;
+            /** Name */
+            name: string;
+            /**
+             * Publication Approved
+             * @default false
+             */
+            publication_approved: boolean;
+            /**
+             * Role
+             * @default
+             */
+            role: string;
+        };
+        /** CaseStudyCollaboratorOut */
+        CaseStudyCollaboratorOut: {
+            /** Id */
+            id: number;
+            /** Name */
+            name: string;
+            /**
+             * Publication Approved
+             * @default false
+             */
+            publication_approved: boolean;
+            /**
+             * Role
+             * @default
+             */
+            role: string;
+        };
+        /**
+         * CaseStudyDetailsIn
+         * @description Case study narrative extension fields.
+         */
+        CaseStudyDetailsIn: {
+            /**
+             * Constraints
+             * @default
+             */
+            constraints: string;
+            /**
+             * Depth
+             * @default standard
+             */
+            depth: string;
+            /**
+             * Lessons Learned
+             * @default
+             */
+            lessons_learned: string;
+            /**
+             * Outcomes Summary
+             * @default
+             */
+            outcomes_summary: string;
+            /**
+             * Problem
+             * @default
+             */
+            problem: string;
+            /**
+             * Technical Decisions
+             * @default
+             */
+            technical_decisions: string;
+            /**
+             * Testing Summary
+             * @default
+             */
+            testing_summary: string;
+            /**
+             * Trade Offs
+             * @default
+             */
+            trade_offs: string;
+        };
+        /** CaseStudyDetailsOut */
+        CaseStudyDetailsOut: {
+            /**
+             * Constraints
+             * @default
+             */
+            constraints: string;
+            /**
+             * Depth
+             * @default standard
+             */
+            depth: string;
+            /**
+             * Lessons Learned
+             * @default
+             */
+            lessons_learned: string;
+            /**
+             * Outcomes Summary
+             * @default
+             */
+            outcomes_summary: string;
+            /**
+             * Problem
+             * @default
+             */
+            problem: string;
+            /**
+             * Technical Decisions
+             * @default
+             */
+            technical_decisions: string;
+            /**
+             * Testing Summary
+             * @default
+             */
+            testing_summary: string;
+            /**
+             * Trade Offs
+             * @default
+             */
+            trade_offs: string;
+        };
+        /**
+         * CaseStudyEvidenceIn
+         * @description Evidence update row; id is optional for new rows.
+         */
+        CaseStudyEvidenceIn: {
+            /** Id */
+            id?: number | null;
+            /** Label */
+            label: string;
+            /** Last Verified */
+            last_verified?: string | null;
+            /**
+             * Source
+             * @default
+             */
+            source: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+            /**
+             * Visibility
+             * @default internal
+             */
+            visibility: string;
+        };
+        /** CaseStudyEvidenceOut */
+        CaseStudyEvidenceOut: {
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Last Verified */
+            last_verified?: string | null;
+            /**
+             * Source
+             * @default
+             */
+            source: string;
+            /**
+             * Value
+             * @default
+             */
+            value: string;
+            /**
+             * Visibility
+             * @default internal
+             */
+            visibility: string;
+        };
+        /**
+         * CaseStudyFundingIn
+         * @description Funding disclosure update row; id is optional for new rows.
+         */
+        CaseStudyFundingIn: {
+            /** Funder */
+            funder: string;
+            /**
+             * Grant Id
+             * @default
+             */
+            grant_id: string;
+            /** Id */
+            id?: number | null;
+            /**
+             * Publication Approved
+             * @default false
+             */
+            publication_approved: boolean;
+        };
+        /** CaseStudyFundingOut */
+        CaseStudyFundingOut: {
+            /** Funder */
+            funder: string;
+            /**
+             * Grant Id
+             * @default
+             */
+            grant_id: string;
+            /** Id */
+            id: number;
+            /**
+             * Publication Approved
+             * @default false
+             */
+            publication_approved: boolean;
         };
         /** CompositionBlockOut */
         CompositionBlockOut: {
@@ -1686,6 +2109,156 @@ export interface components {
             status: string;
         };
         /**
+         * LocalizedAudienceLinkOut
+         * @description One audience link for research or employment audiences.
+         */
+        LocalizedAudienceLinkOut: {
+            /** Href */
+            href: string;
+            /** Kind */
+            kind: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * LocalizedNavLinkOut
+         * @description One navigation link for localized site settings.
+         */
+        LocalizedNavLinkOut: {
+            /** Href */
+            href: string;
+            /** Label */
+            label: string;
+        };
+        /**
+         * LocalizedSceneOut
+         * @description Scene presets and motion/density configuration (§I04).
+         */
+        LocalizedSceneOut: {
+            /**
+             * Density
+             * @default standard
+             */
+            density: string;
+            /**
+             * Graphpreset
+             * @default atlas-v2
+             */
+            graphPreset: string;
+            /**
+             * Motion
+             * @default full
+             */
+            motion: string;
+            /**
+             * Portalpreset
+             * @default arch-v2
+             */
+            portalPreset: string;
+        };
+        /**
+         * LocalizedSitePublishOut
+         * @description Result of publishing draft localized site settings.
+         */
+        LocalizedSitePublishOut: {
+            /** Locale */
+            locale: string;
+            /**
+             * Ok
+             * @default true
+             */
+            ok: boolean;
+            /**
+             * Publishedat
+             * Format: date-time
+             */
+            publishedAt: string;
+            /** Revision */
+            revision: string;
+        };
+        /**
+         * LocalizedSiteSeoIn
+         * @description SEO input for localized site settings.
+         */
+        LocalizedSiteSeoIn: {
+            /** Description */
+            description?: string | null;
+            /** Title */
+            title?: string | null;
+        };
+        /**
+         * LocalizedSiteSeoOut
+         * @description SEO title and description for localized site settings.
+         */
+        LocalizedSiteSeoOut: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /**
+             * Title
+             * @default
+             */
+            title: string;
+        };
+        /**
+         * LocalizedSiteSettingsAdminOut
+         * @description Admin projection of localized site settings with draft/published status.
+         */
+        LocalizedSiteSettingsAdminOut: {
+            /** Audiencelinks */
+            audienceLinks?: components["schemas"]["LocalizedAudienceLinkOut"][];
+            /** Brandname */
+            brandName: string;
+            /** Footertext */
+            footerText: string;
+            /** Locale */
+            locale: string;
+            /** Navlinks */
+            navLinks?: components["schemas"]["LocalizedNavLinkOut"][];
+            /** Publishedat */
+            publishedAt?: string | null;
+            /** Revision */
+            revision: string;
+            scene: components["schemas"]["LocalizedSceneOut"];
+            seo: components["schemas"]["LocalizedSiteSeoOut"];
+            /** Status */
+            status: string;
+            /** Tagline */
+            tagline: string;
+            /**
+             * Updatedat
+             * Format: date-time
+             */
+            updatedAt: string;
+        };
+        /**
+         * LocalizedSiteSettingsUpdateIn
+         * @description Partial update payload for localized site settings (optimistically locked).
+         */
+        LocalizedSiteSettingsUpdateIn: {
+            /** Audiencelinks */
+            audienceLinks?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Brandname */
+            brandName?: string | null;
+            /** Footertext */
+            footerText?: string | null;
+            /** Navlinks */
+            navLinks?: {
+                [key: string]: unknown;
+            }[] | null;
+            /** Scene */
+            scene?: {
+                [key: string]: unknown;
+            } | null;
+            seo?: components["schemas"]["LocalizedSiteSeoIn"] | null;
+            /** Tagline */
+            tagline?: string | null;
+        };
+        /**
          * LoginIn
          * @description Admin login request — email (username), password, optional OTP/recovery code.
          */
@@ -1891,6 +2464,33 @@ export interface components {
             screenshots: components["schemas"]["ProjectScreenshotOut"][];
         };
         /**
+         * ProjectCaseStudyIn
+         * @description Full-aggregate case-study payload for atomic PUT.
+         */
+        ProjectCaseStudyIn: {
+            /** Collaborators */
+            collaborators?: components["schemas"]["CaseStudyCollaboratorIn"][];
+            details?: components["schemas"]["CaseStudyDetailsIn"] | null;
+            /** Evidence */
+            evidence?: components["schemas"]["CaseStudyEvidenceIn"][];
+            /** Funding */
+            funding?: components["schemas"]["CaseStudyFundingIn"][];
+        };
+        /** ProjectCaseStudyOut */
+        ProjectCaseStudyOut: {
+            /** Collaborators */
+            collaborators?: components["schemas"]["CaseStudyCollaboratorOut"][];
+            details?: components["schemas"]["CaseStudyDetailsOut"] | null;
+            /** Evidence */
+            evidence?: components["schemas"]["CaseStudyEvidenceOut"][];
+            /** Funding */
+            funding?: components["schemas"]["CaseStudyFundingOut"][];
+            /** Projectid */
+            projectId: number;
+            /** Updatedat */
+            updatedAt: string;
+        };
+        /**
          * ProjectDiagramImageIn
          * @description Assign or clear a diagram Media FK.
          */
@@ -1949,11 +2549,58 @@ export interface components {
             /** Visibility */
             visibility: string;
         };
+        /**
+         * PublicationJobListOut
+         * @description Paged collection of publication jobs.
+         */
+        PublicationJobListOut: {
+            /** Count */
+            count: number;
+            /** Items */
+            items: components["schemas"]["PublicationJobOut"][];
+        };
+        /**
+         * PublicationJobOut
+         * @description Publication job representation conforming strictly to PRODUCT-INTERFACES-V2 §I06.
+         */
+        PublicationJobOut: {
+            /** Affectedpaths */
+            affectedPaths?: string[];
+            /** Createdat */
+            createdAt: string;
+            /** Deployedrevision */
+            deployedRevision?: string | null;
+            /** Errorcode */
+            errorCode?: string | null;
+            /** Finishedat */
+            finishedAt?: string | null;
+            /** Id */
+            id: string;
+            /** Locale */
+            locale?: string | null;
+            /** Removalstate */
+            removalState: string;
+            /** Requestedrevision */
+            requestedRevision: string;
+            /** Revokedpaths */
+            revokedPaths?: string[];
+            /** Startedat */
+            startedAt?: string | null;
+            /** State */
+            state: string;
+            /** Updatedat */
+            updatedAt: string;
+        };
         /** RecoveryCodesOut */
         RecoveryCodesOut: {
             /** Codes */
             codes: string[];
         };
+        /**
+         * RetryJobIn
+         * @description Empty payload for job retry.
+         */
+        RetryJobIn: Record<string, never>;
         /** SectionLayoutOut */
         SectionLayoutOut: {
             /** Label */
@@ -2250,6 +2897,30 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    apps_analytics_api_get_analytics_report: {
+        parameters: {
+            query?: {
+                from?: string | null;
+                to?: string | null;
+                locale?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsReportOut"];
+                };
+            };
+        };
+    };
     apps_api_admin_approvals_approval_queue: {
         parameters: {
             query?: {
@@ -2630,6 +3301,54 @@ export interface operations {
             };
         };
     };
+    apps_api_admin_project_evidence_get_project_case_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectCaseStudyOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_project_evidence_put_project_case_study: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectCaseStudyIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectCaseStudyOut"];
+                };
+            };
+        };
+    };
     apps_api_admin_content_project_diagram_set_image: {
         parameters: {
             query?: never;
@@ -2898,6 +3617,30 @@ export interface operations {
         responses: {
             /** @description Created */
             201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContentRevisionOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_content_content_revisions_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entity: string;
+                id: number;
+                revision_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
@@ -3551,6 +4294,88 @@ export interface operations {
             };
         };
     };
+    apps_api_admin_publication_jobs_list_publication_jobs: {
+        parameters: {
+            query?: {
+                page?: number;
+                page_size?: number;
+                state?: string | null;
+                locale?: string | null;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationJobListOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_publication_jobs_get_publication_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationJobOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_publication_jobs_retry_publication_job: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                job_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["RetryJobIn"] | null;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationJobOut"];
+                };
+            };
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicationJobOut"];
+                };
+            };
+        };
+    };
     apps_api_admin_siteconfig_site_settings_get: {
         parameters: {
             query?: never;
@@ -3591,6 +4416,76 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SiteSettingsOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_siteconfig_localized_site_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                locale: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalizedSiteSettingsAdminOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_siteconfig_localized_site_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                locale: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["LocalizedSiteSettingsUpdateIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalizedSiteSettingsAdminOut"];
+                };
+            };
+        };
+    };
+    apps_api_admin_siteconfig_localized_site_settings_publish: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                locale: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["LocalizedSitePublishOut"];
                 };
             };
         };

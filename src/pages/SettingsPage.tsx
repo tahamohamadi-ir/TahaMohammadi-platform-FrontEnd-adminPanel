@@ -4,6 +4,7 @@ import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
   CheckboxField,
   Notice,
+  SelectField,
   Table,
   TextareaField,
   TextField,
@@ -13,7 +14,10 @@ import {
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { AdminApiError } from '@/lib/api/auth'
 import {
+  useLocalizedSiteSettings,
+  usePublishLocalizedSiteSettings,
   useSiteSettings,
+  useUpdateLocalizedSiteSettings,
   useUpdateSiteSettings,
 } from '@/lib/api/hooks/useSiteSettings'
 
@@ -307,6 +311,333 @@ export function SettingsPage() {
           </form>
         ) : null}
       </section>
+
+      <LocalizedSettingsSection />
     </main>
+  )
+}
+
+function LocalizedSettingsSection() {
+  const [locale, setLocale] = useState<'en' | 'fa'>('en')
+  const localized = useLocalizedSiteSettings(locale)
+  const update = useUpdateLocalizedSiteSettings(locale)
+  const publish = usePublishLocalizedSiteSettings(locale)
+  const [conflict, setConflict] = useState(false)
+  const [saved, setSaved] = useState(false)
+  const [published, setPublished] = useState(false)
+  const [issues, setIssues] = useState<ValidationIssue[]>([])
+  const data = localized.data
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    try {
+      if (!data) return
+      setIssues([])
+      setConflict(false)
+      setSaved(false)
+      setPublished(false)
+
+      const form = new FormData(event.currentTarget)
+      const text = (name: string) => String(form.get(name) ?? '').trim()
+
+      const brandName = text('locBrandName')
+      const tagline = text('locTagline')
+      const footerText = text('locFooterText')
+      const seoTitle = text('locSeoTitle')
+      const seoDescription = text('locSeoDescription')
+      const graphPreset = text('graphPreset') || 'atlas-v2'
+      const portalPreset = text('portalPreset') || 'arch-v2'
+      const motion = text('motion') || 'full'
+      const density = text('density') || 'standard'
+
+      const researchLabel = text('audResearchLabel')
+      const researchHref = text('audResearchHref')
+      const employmentLabel = text('audEmploymentLabel')
+      const employmentHref = text('audEmploymentHref')
+
+      const audienceLinks = [
+        { kind: 'research', label: researchLabel, href: researchHref },
+        { kind: 'employment', label: employmentLabel, href: employmentHref },
+      ].filter((link) => link.label && link.href)
+
+      const payload = {
+        brandName,
+        tagline,
+        footerText,
+        seo: {
+          title: seoTitle,
+          description: seoDescription,
+        },
+        scene: {
+          graphPreset,
+          portalPreset,
+          motion,
+          density,
+        },
+        audienceLinks,
+        navLinks: data.navLinks ?? [],
+      }
+
+      await update.mutateAsync({ payload, ifMatch: data.updatedAt })
+      setSaved(true)
+    } catch (caught) {
+      if (caught instanceof AdminApiError && caught.kind === 'conflict') {
+        setConflict(true)
+        return
+      }
+      setIssues([
+        {
+          field: 'submit',
+          message:
+            caught instanceof AdminApiError
+              ? caught.message
+              : 'Failed to update localized settings.',
+          targetId: 'localized-settings-title',
+        },
+      ])
+    }
+  }
+
+  async function handlePublish() {
+    setIssues([])
+    setSaved(false)
+    setPublished(false)
+    try {
+      await publish.mutateAsync()
+      setPublished(true)
+    } catch (caught) {
+      setIssues([
+        {
+          field: 'publish',
+          message:
+            caught instanceof AdminApiError
+              ? caught.message
+              : 'Failed to publish localized settings.',
+          targetId: 'localized-settings-title',
+        },
+      ])
+    }
+  }
+
+  return (
+    <section aria-labelledby="localized-settings-title">
+      <h2 id="localized-settings-title">
+        Localized site identity & scene presets
+      </h2>
+      <div
+        role="tablist"
+        aria-label="Settings locale"
+        className="admin-nav"
+        style={{ marginBottom: '1rem' }}
+      >
+        <button
+          type="button"
+          role="tab"
+          aria-selected={locale === 'en'}
+          className={`admin-nav__link ${locale === 'en' ? 'active' : ''}`}
+          onClick={() => {
+            setLocale('en')
+            setSaved(false)
+            setPublished(false)
+            setConflict(false)
+          }}
+        >
+          English (en)
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={locale === 'fa'}
+          className={`admin-nav__link ${locale === 'fa' ? 'active' : ''}`}
+          onClick={() => {
+            setLocale('fa')
+            setSaved(false)
+            setPublished(false)
+            setConflict(false)
+          }}
+        >
+          فارسی (fa)
+        </button>
+      </div>
+
+      {localized.isPending ? (
+        <p role="status">Loading localized settings…</p>
+      ) : null}
+      {localized.error ? (
+        <Notice tone="error" title="Localized settings unavailable">
+          Could not load localized settings for {locale}.
+        </Notice>
+      ) : null}
+      {conflict ? (
+        <Notice tone="error" title="Settings changed elsewhere">
+          Someone modified this locale settings since you loaded them.{' '}
+          <button
+            type="button"
+            className="admin-button admin-button--secondary"
+            onClick={() => {
+              setConflict(false)
+              void localized.refetch()
+            }}
+          >
+            Reload latest
+          </button>
+        </Notice>
+      ) : null}
+      {saved ? <Notice tone="success" title="Localized draft saved" /> : null}
+      {published ? (
+        <Notice tone="success" title="Localized settings published" />
+      ) : null}
+      <ValidationSummary title="Validation issues" errors={issues} />
+
+      {data && data.locale ? (
+        <form
+          key={`${locale}-${data.updatedAt}`}
+          noValidate
+          dir={locale === 'fa' ? 'rtl' : 'ltr'}
+          onSubmit={(event) => void handleSubmit(event)}
+        >
+          <div style={{ marginBottom: '0.75rem' }}>
+            <span
+              className="badge"
+              style={{ textTransform: 'uppercase', marginRight: '0.5rem' }}
+            >
+              Status: {data.status}
+            </span>
+            <span className="muted" style={{ fontSize: '0.85rem' }}>
+              Revision: {data.revision} | Updated: {data.updatedAt}
+            </span>
+          </div>
+
+          <TextField
+            id="locBrandName"
+            label="Locale display name"
+            defaultValue={data.brandName}
+          />
+          <TextField
+            id="locTagline"
+            label="Localized tagline"
+            defaultValue={data.tagline}
+          />
+          <TextField
+            id="locSeoTitle"
+            label="SEO title"
+            defaultValue={data.seo?.title ?? ''}
+          />
+          <TextareaField
+            id="locSeoDescription"
+            label="SEO description"
+            defaultValue={data.seo?.description ?? ''}
+          />
+          <TextareaField
+            id="locFooterText"
+            label="Footer text"
+            defaultValue={data.footerText}
+          />
+
+          <fieldset
+            style={{
+              border: '1px solid var(--border, #ccc)',
+              padding: '1rem',
+              margin: '1rem 0',
+            }}
+          >
+            <legend style={{ fontWeight: 'bold' }}>Scene presets (§I04)</legend>
+            <SelectField
+              id="graphPreset"
+              label="Graph scene preset"
+              defaultValue={data.scene?.graphPreset ?? 'atlas-v2'}
+              options={[{ value: 'atlas-v2', label: 'Atlas V2 (atlas-v2)' }]}
+            />
+            <SelectField
+              id="portalPreset"
+              label="Portal preset"
+              defaultValue={data.scene?.portalPreset ?? 'arch-v2'}
+              options={[{ value: 'arch-v2', label: 'Arch V2 (arch-v2)' }]}
+            />
+            <SelectField
+              id="motion"
+              label="Procedural motion"
+              defaultValue={data.scene?.motion ?? 'full'}
+              options={[
+                { value: 'full', label: 'Full motion' },
+                { value: 'reduced', label: 'Reduced motion' },
+                { value: 'off', label: 'Off' },
+              ]}
+            />
+            <SelectField
+              id="density"
+              label="Visual density"
+              defaultValue={data.scene?.density ?? 'standard'}
+              options={[
+                { value: 'standard', label: 'Standard' },
+                { value: 'low', label: 'Low' },
+              ]}
+            />
+          </fieldset>
+
+          <fieldset
+            style={{
+              border: '1px solid var(--border, #ccc)',
+              padding: '1rem',
+              margin: '1rem 0',
+            }}
+          >
+            <legend style={{ fontWeight: 'bold' }}>
+              Audience entry links (§I04)
+            </legend>
+            <TextField
+              id="audResearchLabel"
+              label="Research audience label"
+              defaultValue={
+                data.audienceLinks?.find((l) => l.kind === 'research')?.label ??
+                ''
+              }
+            />
+            <TextField
+              id="audResearchHref"
+              label="Research audience destination URL"
+              defaultValue={
+                data.audienceLinks?.find((l) => l.kind === 'research')?.href ??
+                ''
+              }
+            />
+            <TextField
+              id="audEmploymentLabel"
+              label="Employment audience label"
+              defaultValue={
+                data.audienceLinks?.find((l) => l.kind === 'employment')
+                  ?.label ?? ''
+              }
+            />
+            <TextField
+              id="audEmploymentHref"
+              label="Employment audience destination URL"
+              defaultValue={
+                data.audienceLinks?.find((l) => l.kind === 'employment')
+                  ?.href ?? ''
+              }
+            />
+          </fieldset>
+
+          <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
+            <button
+              type="submit"
+              className="admin-button"
+              disabled={update.isPending}
+            >
+              {update.isPending ? 'Saving draft…' : 'Save draft'}
+            </button>
+            <button
+              type="button"
+              className="admin-button admin-button--secondary"
+              disabled={publish.isPending}
+              onClick={() => void handlePublish()}
+            >
+              {publish.isPending ? 'Publishing…' : 'Publish localized settings'}
+            </button>
+          </div>
+        </form>
+      ) : null}
+    </section>
   )
 }

@@ -1,6 +1,44 @@
 # Admin Panel Task List
 
-Detailed execution queue. Cross-repo board: `../../Docs/05-delivery/MULTI-AGENT-TASK-BOARD.md` (IDs prefixed `ADMIN-`).
+<!-- PRODUCT-V2.1 -->
+
+## Active V2.1 packets — ADMIN
+
+Parent groups and retired CA IDs are not assignments. Dependencies and exact files: `../../Docs/05-delivery/concept-alignment-v2/execution-tasks.json`. Implementation/visual/publication gates remain open.
+
+| Packet              | State                  | Specification                                                                        |
+| ------------------- | ---------------------- | ------------------------------------------------------------------------------------ |
+| PU-SYNC-admin       | IMPLEMENTED_UNREVIEWED | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-SYNC-admin.md`       |
+| PU-09-transport     | BLOCKED                | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-09-transport.md`     |
+| PU-09-editor        | BLOCKED                | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-09-editor.md`        |
+| PU-09-host          | BLOCKED                | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-09-host.md`          |
+| PU-10-research      | BLOCKED                | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-research.md`      |
+| PU-10-publication   | BLOCKED                | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-publication.md`   |
+| PU-10-project       | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-project.md`       |
+| PU-10-article       | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-article.md`       |
+| PU-10-course        | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-course.md`        |
+| PU-10-lesson        | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-lesson.md`        |
+| PU-10-creative      | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-creative.md`      |
+| PU-10-book          | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-book.md`          |
+| PU-10-talk          | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-talk.md`          |
+| PU-10-resource      | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-resource.md`      |
+| PU-10-collection    | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-collection.md`    |
+| PU-10-series        | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-10-series.md`        |
+| PU-08-settings      | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-08-settings.md`      |
+| PU-08-profile       | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-08-profile.md`       |
+| PU-11-media         | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-11-media.md`         |
+| PU-12-home          | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-12-home.md`          |
+| PU-12-graph         | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-12-graph.md`         |
+| PU-12-jobs          | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-12-jobs.md`          |
+| PU-22-analytics     | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-22-analytics.md`     |
+| PU-25-admin-journey | NOT_STARTED            | `../../Docs/05-delivery/concept-alignment-v2/product-packets/PU-25-admin-journey.md` |
+
+## Historical milestones
+
+Rows below preserve their original evidence and are not reverified by this documentation delivery.
+<!-- /PRODUCT-V2.1 -->
+
+Historical milestone register. Current dispatch queue: `../../Docs/05-delivery/concept-alignment-v2/EXECUTION.md`; filter repository `ADMIN`.
 
 Status: `[x]` done, `[ ]` open, `[~]` in progress.
 
@@ -57,7 +95,7 @@ Status: `[x]` done, `[ ]` open, `[~]` in progress.
 ## ADM-5 — Quality and release
 
 - [x] **ADMIN-250** Complete `WORKFLOW-API-MAP.md` — every mutation mapped to permission test (BACKEND-190 gap list recorded).
-- [x] **ADMIN-290** Browser matrix CI (signed out, MFA, forbidden, validation, stale revision) — Playwright + mocked API boundary (server guard *enforcement* stays in the Back-End suite).
+- [x] **ADMIN-290** Browser matrix CI (signed out, MFA, forbidden, validation, stale revision) — Playwright + mocked API boundary (server guard _enforcement_ stays in the Back-End suite).
 - [ ] **ADMIN-300** Integrated staging smoke with backend.
 - [ ] **ADMIN-320** Release evidence (`R6` + `R8` admin).
 

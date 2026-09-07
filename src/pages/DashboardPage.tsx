@@ -117,6 +117,25 @@ export function DashboardPage() {
         </section>
       ) : null}
 
+      <section
+        aria-labelledby="dashboard-deployment"
+        style={{ marginTop: '2rem' }}
+      >
+        <h2 id="dashboard-deployment">Deployment & publication</h2>
+        <p className="muted">
+          Content saves in the CMS update records directly. Public site
+          deployment runs asynchronously via background publication jobs.
+        </p>
+        <p>
+          <Link
+            className="admin-button admin-button--secondary"
+            to="/publication-jobs"
+          >
+            View publication jobs →
+          </Link>
+        </p>
+      </section>
+
       <p>
         <button
           type="button"

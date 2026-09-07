@@ -6,9 +6,55 @@ export type GraphVersionDetailOut =
   components['schemas']['GraphVersionDetailOut']
 export type GraphPayloadIn = components['schemas']['GraphPayloadIn']
 export type GraphValidationOut = components['schemas']['GraphValidationOut']
-export type GraphNode = { [key: string]: unknown }
-export type GraphEdge = { [key: string]: unknown }
-export type GraphGroup = { [key: string]: unknown }
+export type GraphNode = {
+  id: string
+  type?: string
+  label?: string
+  accessibleLabel?: string
+  colorRole?: string
+  iconRole?: string
+  weight?: number
+  position?: { x: number; y: number; z?: number }
+  relatedRecords?: Array<{ family: string; id: string }>
+  [key: string]: unknown
+}
+
+export type GraphEdge = {
+  id?: string
+  source: string
+  target: string
+  relationType?: string
+  directed?: boolean
+  weight?: number
+  [key: string]: unknown
+}
+
+export type GraphGroup = {
+  name: string
+  nodeIds: string[]
+  [key: string]: unknown
+}
+
+export const GRAPH_RELATED_FAMILIES = [
+  'project',
+  'publication',
+  'article',
+  'research-topic',
+  'research-statement',
+  'book',
+  'talk',
+  'download',
+  'course',
+  'creative-work',
+] as const
+
+export const GRAPH_RELATION_TYPES = [
+  'relates',
+  'supports',
+  'mentions',
+  'cites',
+  'prerequisite',
+] as const
 
 export async function fetchGraphVersions(): Promise<GraphVersionOut[]> {
   return adminJson<GraphVersionOut[]>('/graph/versions')

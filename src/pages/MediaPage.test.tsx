@@ -1,4 +1,4 @@
-﻿import {
+import {
   fireEvent,
   render,
   screen,
@@ -155,6 +155,44 @@ describe('MediaPage (ADMIN-180)', () => {
     )
     await waitFor(() => {
       expect(deleteCount).toBe(2)
+    })
+  })
+
+  it('provides upload cancel/retry, locale alt text and metadata edit (PU-11-media)', async () => {
+    let putCalled = false
+    stubMedia((url, init) => {
+      if (url.includes('/api/v1/admin/media/5') && init?.method === 'PUT') {
+        putCalled = true
+        return jsonResponse({
+          ...ITEM,
+          altTextEn: 'Updated English Alt',
+          altTextFa: 'متن جایگزین فارسی',
+          updatedAt: '2026-09-02T00:00:00.000Z',
+        })
+      }
+      return null
+    })
+
+    renderMedia()
+    // Check that localized alt fields exist in upload section
+    expect(await screen.findByLabelText(/alt text \(en\)/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/alt text \(fa\)/i)).toBeInTheDocument()
+
+    // Edit metadata dialog
+    const editBtn = await screen.findByRole('button', {
+      name: /edit metadata/i,
+    })
+    fireEvent.click(editBtn)
+    const dialog = screen.getByRole('dialog', { name: /edit media metadata/i })
+    expect(dialog).toBeInTheDocument()
+
+    // Save updated metadata
+    const saveBtn = within(dialog).getByRole('button', {
+      name: /save metadata/i,
+    })
+    fireEvent.click(saveBtn)
+    await waitFor(() => {
+      expect(putCalled).toBe(true)
     })
   })
 })
