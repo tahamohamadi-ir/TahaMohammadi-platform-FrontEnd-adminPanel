@@ -18,31 +18,34 @@ transport tests green).
 
 ## 2. Changed paths (exact allowlist only)
 
-- `src/components/editor/StoryEditor.tsx` (NEW) — controlled block editor:
+- `src/components/editor/StoryEditor.tsx` (MODIFIED) — controlled block editor:
   schema-driven per-field forms (`BlockTypeOut.fields`, required markers,
   options→select, boolean→checkbox, media/number→number, text→input/
   textarea), section/block add/remove/reorder with accessible names,
   enabled toggles, visible autosave status (`aria-live`), conflict banner
   with mine/theirs resolution, server-error alert, `dir` support, story
   catalog fallback (`STORY_BLOCK_TYPES` = backend `STORY_BLOCK_TYPES`)
-  when the schema is unavailable. Persistence only via `onSave`/`onChange`
-  callbacks — no endpoint invented or called here.
-- `src/components/editor/story-editor.css` (NEW) — scoped layout styles,
-  logical properties, error color tokens.
-- `src/components/editor/StoryEditor.test.tsx` (NEW) — 6 tests.
+  when the schema is unavailable. Typed structured fields for complex blocks:
+  `MediaListField` (`number[]`), `ColumnListField` (`{ key, label }[]`),
+  `RowListField` (JSON rows array), `ReferenceListField` (`{ label, url }[]`),
+  `RelatedListField` (`{ family, id }[]`), and `ItemListField` (dynamic
+  sub-field schemas for accordion, tabs, timeline, counters).
+  Persistence only via `onSave`/`onChange` callbacks — no endpoint invented or called here.
+- `src/components/editor/story-editor.css` (MODIFIED) — scoped layout styles,
+  logical properties, error color tokens, and structured card item styling.
+- `src/components/editor/StoryEditor.test.tsx` (MODIFIED) — 7 tests (added structured
+  value preservation test for items, mediaIds, columns, rows, records, and references).
 - `docs/quality/product-v2/PU-09-editor-HANDOFF.md` (this file).
 
 ## 3. Failing-before / passing-after
 
 Failing-before: all three component paths absent; no schema-driven editor.
 Passing-after: `npm.cmd test -- src/components/editor/StoryEditor.test.tsx`
-→ **6 passed**: story-catalog guard (code/table/file/related); schema forms
-
-- required markers; reorder via accessible controls; autosave/saved/
-  conflict/error visibility + conflict resolution callback; keyboard focus +
-  RTL `dir`; schema-unavailable fallback catalog. (Two interim test-only
-  failures — `<output role=status>` collisions and stale render counts —
-  were fixed in the test harness, never in the component.)
+→ **7 passed**: story-catalog guard (code/table/file/related); schema forms
+with required markers; reorder via accessible controls; autosave/saved/
+conflict/error visibility + conflict resolution callback; keyboard focus +
+RTL `dir`; schema-unavailable fallback catalog; structured list/item field
+editing (preserving native arrays and objects).
 
 ## 4. Schema hash / impact
 
@@ -54,10 +57,10 @@ Passing-after: `npm.cmd test -- src/components/editor/StoryEditor.test.tsx`
 
 ## 5. Checks executed
 
-- `npm.cmd test -- src/components/editor/StoryEditor.test.tsx` → 6/6 pass.
+- `npm.cmd test -- src/components/editor/StoryEditor.test.tsx` → 7/7 pass.
 - `npm.cmd run lint` → 0 errors.
-- `tsc -b` → zero errors in this packet's paths.
-- Full lane suite → 43 files / 171 tests pass.
+- `npm.cmd run build` → Vite build passed cleanly.
+- Full lane suite → 186 tests pass.
 
 ## 6. Screenshots
 

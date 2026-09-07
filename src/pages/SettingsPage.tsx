@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
@@ -326,7 +326,28 @@ function LocalizedSettingsSection() {
   const [saved, setSaved] = useState(false)
   const [published, setPublished] = useState(false)
   const [issues, setIssues] = useState<ValidationIssue[]>([])
+  const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>([])
+  const [copyEntries, setCopyEntries] = useState<{ key: string; value: string }[]>([])
   const data = localized.data
+
+  useEffect(() => {
+    if (data) {
+      setNavLinks(
+        (data.navLinks ?? []).map((lnk) => ({
+          label: lnk.label ?? '',
+          href: lnk.href ?? '',
+        })),
+      )
+      setCopyEntries(
+        data.contentCopy
+          ? Object.entries(data.contentCopy).map(([key, value]) => ({
+              key,
+              value: String(value),
+            }))
+          : [],
+      )
+    }
+  }, [data, locale])
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -360,6 +381,18 @@ function LocalizedSettingsSection() {
         { kind: 'employment', label: employmentLabel, href: employmentHref },
       ].filter((link) => link.label && link.href)
 
+      const copyRecord: Record<string, string> = {}
+      for (const entry of copyEntries) {
+        const k = entry.key.trim()
+        if (k) {
+          copyRecord[k] = entry.value
+        }
+      }
+
+      const validNavLinks = navLinks
+        .map((l) => ({ label: l.label.trim(), href: l.href.trim() }))
+        .filter((l) => l.label && l.href)
+
       const payload = {
         brandName,
         tagline,
@@ -375,7 +408,8 @@ function LocalizedSettingsSection() {
           density,
         },
         audienceLinks,
-        navLinks: data.navLinks ?? [],
+        navLinks: validNavLinks,
+        contentCopy: copyRecord,
       }
 
       await update.mutateAsync({ payload, ifMatch: data.updatedAt })
@@ -617,6 +651,209 @@ function LocalizedSettingsSection() {
                   ?.href ?? ''
               }
             />
+          </fieldset>
+
+          <fieldset
+            style={{
+              border: '1px solid var(--border, #ccc)',
+              padding: '1rem',
+              margin: '1rem 0',
+            }}
+          >
+            <legend style={{ fontWeight: 'bold' }}>
+              Navigation links (§I04)
+            </legend>
+            <p className="muted" style={{ fontSize: '0.85rem' }}>
+              Order and target paths for the primary header and footer navigation (maximum 20 links).
+            </p>
+            {navLinks.length === 0 ? (
+              <p className="admin-empty">No navigation links defined.</p>
+            ) : (
+              <div className="admin-table-scroll" role="region" aria-label="Navigation links" tabIndex={0}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">#</th>
+                      <th scope="col">Label</th>
+                      <th scope="col">Destination URL / Path</th>
+                      <th scope="col">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {navLinks.map((link, idx) => (
+                      <tr key={idx}>
+                        <td>{idx + 1}</td>
+                        <td>
+                          <input
+                            type="text"
+                            aria-label={`Navigation link ${idx + 1} label`}
+                            value={link.label}
+                            onChange={(e) => {
+                              const next = [...navLinks]
+                              next[idx] = { ...next[idx], label: e.target.value }
+                              setNavLinks(next)
+                            }}
+                            className="admin-input"
+                            style={{ width: '100%' }}
+                          />
+                        </td>
+                        <td>
+                          <input
+                            type="text"
+                            aria-label={`Navigation link ${idx + 1} destination`}
+                            value={link.href}
+                            onChange={(e) => {
+                              const next = [...navLinks]
+                              next[idx] = { ...next[idx], href: e.target.value }
+                              setNavLinks(next)
+                            }}
+                            className="admin-input"
+                            style={{ width: '100%' }}
+                          />
+                        </td>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <button
+                            type="button"
+                            className="admin-button admin-button--secondary"
+                            disabled={idx === 0}
+                            onClick={() => {
+                              const next = [...navLinks]
+                              const temp = next[idx - 1]
+                              next[idx - 1] = next[idx]
+                              next[idx] = temp
+                              setNavLinks(next)
+                            }}
+                            style={{ marginRight: '0.25rem' }}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-button admin-button--secondary"
+                            disabled={idx === navLinks.length - 1}
+                            onClick={() => {
+                              const next = [...navLinks]
+                              const temp = next[idx + 1]
+                              next[idx + 1] = next[idx]
+                              next[idx] = temp
+                              setNavLinks(next)
+                            }}
+                            style={{ marginRight: '0.25rem' }}
+                          >
+                            ↓
+                          </button>
+                          <button
+                            type="button"
+                            className="admin-button admin-button--secondary"
+                            onClick={() => {
+                              setNavLinks(navLinks.filter((_, i) => i !== idx))
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {navLinks.length < 20 ? (
+              <button
+                type="button"
+                className="admin-button admin-button--secondary"
+                onClick={() => setNavLinks([...navLinks, { label: '', href: '' }])}
+                style={{ marginTop: '0.5rem' }}
+              >
+                + Add navigation link
+              </button>
+            ) : null}
+          </fieldset>
+
+          <fieldset
+            style={{
+              border: '1px solid var(--border, #ccc)',
+              padding: '1rem',
+              margin: '1rem 0',
+            }}
+          >
+            <legend style={{ fontWeight: 'bold' }}>
+              Managed copy & UI text (§I04)
+            </legend>
+            <p className="muted" style={{ fontSize: '0.85rem' }}>
+              Editable interface strings, action labels, and section copy stored in CMS dictionary.
+            </p>
+            {copyEntries.length === 0 ? (
+              <p className="admin-empty">No copy entries defined.</p>
+            ) : (
+              <div className="admin-table-scroll" role="region" aria-label="Content copy entries" tabIndex={0}>
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th scope="col">Key</th>
+                      <th scope="col">Text value</th>
+                      <th scope="col">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {copyEntries.map((entry, idx) => (
+                      <tr key={idx}>
+                        <td style={{ verticalAlign: 'top', width: '35%' }}>
+                          <input
+                            type="text"
+                            aria-label={`Copy entry ${idx + 1} key`}
+                            placeholder="e.g. hero.cta.read"
+                            value={entry.key}
+                            onChange={(e) => {
+                              const next = [...copyEntries]
+                              next[idx] = { ...next[idx], key: e.target.value }
+                              setCopyEntries(next)
+                            }}
+                            className="admin-input"
+                            style={{ width: '100%', fontFamily: 'monospace' }}
+                          />
+                        </td>
+                        <td style={{ verticalAlign: 'top' }}>
+                          <textarea
+                            aria-label={`Copy entry ${idx + 1} value`}
+                            rows={2}
+                            value={entry.value}
+                            onChange={(e) => {
+                              const next = [...copyEntries]
+                              next[idx] = { ...next[idx], value: e.target.value }
+                              setCopyEntries(next)
+                            }}
+                            className="admin-input"
+                            style={{ width: '100%' }}
+                          />
+                        </td>
+                        <td style={{ verticalAlign: 'top', width: '10%' }}>
+                          <button
+                            type="button"
+                            className="admin-button admin-button--secondary"
+                            onClick={() => {
+                              setCopyEntries(copyEntries.filter((_, i) => i !== idx))
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            {copyEntries.length < 1500 ? (
+              <button
+                type="button"
+                className="admin-button admin-button--secondary"
+                onClick={() => setCopyEntries([...copyEntries, { key: '', value: '' }])}
+                style={{ marginTop: '0.5rem' }}
+              >
+                + Add copy entry
+              </button>
+            ) : null}
           </fieldset>
 
           <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
