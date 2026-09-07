@@ -4,6 +4,18 @@ import { describe, expect, it, vi } from 'vitest'
 
 import type { CompositionSectionUpdateIn } from '@/lib/api/composition'
 import { STORY_BLOCK_TYPES, StoryEditor } from '@/components/editor/StoryEditor'
+import { fetchMediaList, fetchMediaItem } from '@/lib/api/media'
+import { listContent, fetchContentDetail } from '@/lib/api/content'
+
+vi.mock('@/lib/api/media', () => ({ fetchMediaList: vi.fn(), fetchMediaItem: vi.fn() }))
+vi.mock('@/lib/api/content', () => ({ listContent: vi.fn(), fetchContentDetail: vi.fn() }))
+
+vi.mocked(fetchMediaList).mockResolvedValue({ items: [
+  { id: 30, title: 'Test image', mime: 'image/png' },
+] } as Awaited<ReturnType<typeof fetchMediaList>>)
+vi.mocked(fetchMediaItem).mockImplementation(async (id) => ({ id, title: `Image ${id}`, mime: 'image/png' }) as Awaited<ReturnType<typeof fetchMediaItem>>)
+vi.mocked(listContent).mockResolvedValue({ items: [{ id: 43, title: 'Test article', status: 'draft' }] } as Awaited<ReturnType<typeof listContent>>)
+vi.mocked(fetchContentDetail).mockImplementation(async (_entity, id) => ({ id, title: `Article ${id}`, status: 'draft' }) as Awaited<ReturnType<typeof fetchContentDetail>>)
 
 const PAGE = {
   id: 11,
@@ -179,5 +191,173 @@ describe('story editor (PU-09-editor)', () => {
     expect(
       screen.getByRole('article', { name: /block 3: table/i }),
     ).toBeDefined()
+  })
+
+  it('chooses actual media and records and edits table cells without raw IDs or JSON', async () => {
+    let capturedSections: CompositionSectionUpdateIn[] = []
+    const structuredSchema = {
+      kind: 'story',
+      blockTypes: [
+        {
+          type: 'table',
+          labelFa: 'جدول',
+          required: ['columns'],
+          fields: [
+            { key: 'columns', label: 'Columns', type: 'columnList' },
+            { key: 'rows', label: 'Rows', type: 'rowList' },
+          ],
+        },
+        {
+          type: 'gallery',
+          labelFa: 'گالری',
+          required: ['mediaIds'],
+          fields: [
+            { key: 'mediaIds', label: 'Media IDs', type: 'mediaList' },
+          ],
+        },
+        {
+          type: 'references',
+          labelFa: 'مراجع',
+          required: ['items'],
+          fields: [
+            { key: 'items', label: 'Items', type: 'referenceList' },
+          ],
+        },
+        {
+          type: 'related',
+          labelFa: 'موارد مرتبط',
+          required: ['records'],
+          fields: [
+            { key: 'records', label: 'Records', type: 'relatedList' },
+          ],
+        },
+      ],
+      sectionLayouts: [{ value: '1col', label: 'One column', ratios: [] }],
+    }
+
+    const structuredSections: CompositionSectionUpdateIn[] = [
+      {
+        layout: '1col',
+        ratio: '',
+        enabled: true,
+        blocks: [
+          {
+            blockType: 'gallery',
+            enabled: true,
+            settings: { mediaIds: [10, 20] },
+          },
+          {
+            blockType: 'table',
+            enabled: true,
+            settings: {
+              columns: [{ key: 'col1', label: 'Col 1' }],
+              rows: [{ col1: 'val1' }],
+            },
+          },
+          {
+            blockType: 'references',
+            enabled: true,
+            settings: {
+              items: [{ label: 'Ref A', url: 'https://example.com' }],
+            },
+          },
+          {
+            blockType: 'related',
+            enabled: true,
+            settings: {
+              records: [{ family: 'article', id: '42' }],
+            },
+          },
+        ],
+      },
+    ]
+
+    function StructuredHarness() {
+      const [sections, setSections] = useState(structuredSections)
+      capturedSections = sections
+      return (
+        <StoryEditor
+          page={PAGE}
+          schema={structuredSchema}
+          sections={sections}
+          onChange={setSections}
+          onSave={vi.fn()}
+          saveState="idle"
+          autosaveState="idle"
+          onResolveConflict={vi.fn()}
+        />
+      )
+    }
+
+    render(<StructuredHarness />)
+
+    fireEvent.click(await screen.findByRole('button', { name: /choose test image/i }))
+
+    // Check captured sections preserves number[] array
+    const galleryBlock = capturedSections[0]?.blocks?.[0]
+    expect(Array.isArray(galleryBlock?.settings?.mediaIds)).toBe(true)
+    expect(galleryBlock?.settings?.mediaIds).toEqual([10, 20, 30])
+
+    // Check columnList input has column inputs, not raw [object Object]
+    expect(screen.queryByDisplayValue('col1')).toBeNull()
+    expect(screen.getByDisplayValue('Col 1')).toBeDefined()
+    expect(screen.queryByDisplayValue('[object Object]')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Row 1, Col 1'), { target: { value: 'Edited cell' } })
+    expect(capturedSections[0]?.blocks?.[1]?.settings?.rows).toEqual([{ col1: 'Edited cell' }])
+
+    // Add column
+    fireEvent.click(screen.getByRole('button', { name: /\+ add column/i }))
+    const tableBlock = capturedSections[0]?.blocks?.[1]
+    expect(Array.isArray(tableBlock?.settings?.columns)).toBe(true)
+    expect((tableBlock?.settings?.columns as unknown[]).length).toBe(2)
+
+    // Add reference
+    fireEvent.click(screen.getByRole('button', { name: /\+ add reference/i }))
+    const refBlock = capturedSections[0]?.blocks?.[2]
+    expect(Array.isArray(refBlock?.settings?.items)).toBe(true)
+    expect((refBlock?.settings?.items as unknown[]).length).toBe(2)
+
+    // Add related record
+    fireEvent.click(await screen.findByRole('button', { name: /choose test article/i }))
+    const relBlock = capturedSections[0]?.blocks?.[3]
+    expect(Array.isArray(relBlock?.settings?.records)).toBe(true)
+    expect((relBlock?.settings?.records as unknown[]).length).toBe(2)
+    expect(relBlock?.settings?.records).toEqual([{ family: 'article', id: '42' }, { family: 'article', id: '43' }])
+    expect(screen.queryByPlaceholderText('Record ID')).toBeNull()
+  })
+
+  it('blocks saving incomplete required values and allows saving after correction', () => {
+    const onSave = vi.fn()
+    render(<Harness onSave={onSave} />)
+    fireEvent.change(screen.getByLabelText(/markdown \(required\)/i), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /save story/i }))
+    expect(onSave).not.toHaveBeenCalled()
+    expect(screen.getByRole('alert').textContent).toMatch(/markdown/i)
+    fireEvent.change(screen.getByLabelText(/markdown \(required\)/i), { target: { value: 'Corrected' } })
+    fireEvent.click(screen.getByRole('button', { name: /save story/i }))
+    expect(onSave).toHaveBeenCalledTimes(1)
+  })
+
+  it('replaces visible table cells and media selections on external reload', async () => {
+    const schema = { ...SCHEMA, blockTypes: [{ type: 'table', labelFa: 'Table', required: ['columns', 'rows'], fields: [
+      { key: 'columns', label: 'Columns', type: 'columnList' }, { key: 'rows', label: 'Rows', type: 'rowList' },
+    ] }, { type: 'gallery', labelFa: 'Gallery', required: ['mediaIds'], fields: [{ key: 'mediaIds', label: 'Images', type: 'mediaList' }] }] }
+    const makeSections = (cell: string, mediaId: number) => [{
+      enabled: true,
+      layout: '1col',
+      ratio: '',
+      blocks: [
+        { blockType: 'table', enabled: true, settings: { columns: [{ key: 'a', label: 'Title' }], rows: [{ a: cell }] } },
+        { blockType: 'gallery', enabled: true, settings: { mediaIds: [mediaId] } },
+      ],
+    }]
+    const props = { page: PAGE, schema, onChange: vi.fn(), onSave: vi.fn(), saveState: 'idle' as const, autosaveState: 'idle' as const, onResolveConflict: vi.fn() }
+    const { rerender } = render(<StoryEditor {...props} sections={makeSections('Local', 10)} />)
+    expect(screen.getByLabelText('Row 1, Title')).toHaveProperty('value', 'Local')
+    await screen.findByText('Image 10')
+    rerender(<StoryEditor {...props} sections={makeSections('Server', 20)} />)
+    expect(screen.getByLabelText('Row 1, Title')).toHaveProperty('value', 'Server')
+    await screen.findByText('Image 20')
+    expect(screen.queryByText('Image 10')).toBeNull()
   })
 })

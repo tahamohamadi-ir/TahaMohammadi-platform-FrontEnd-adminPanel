@@ -311,4 +311,116 @@ describe('SettingsPage (ADMIN-150)', () => {
       ).toBeInTheDocument()
     })
   })
+
+  it('supports editing navigation links and content copy dictionary (PU-08-settings)', async () => {
+    let putPayload: Record<string, unknown> | null = null
+
+    vi.mocked(fetch).mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
+        if (url.includes('/auth/csrf'))
+          return Promise.resolve(
+            jsonResponse({ csrfToken: 'dummy-csrf-token' }),
+          )
+        if (url.includes('/api/v1/admin/site/en') && init?.method === 'PUT') {
+          putPayload = JSON.parse(String(init.body))
+          return Promise.resolve(
+            jsonResponse({
+              locale: 'en',
+              revision: 'rev-en-2',
+              brandName: 'Taha',
+              tagline: 'Research',
+              footerText: 'Footer',
+              seo: { title: 'T', description: 'D' },
+              navLinks: (putPayload?.navLinks ?? []) as { label: string; href: string }[],
+              contentCopy: (putPayload?.contentCopy ?? {}) as Record<string, string>,
+              audienceLinks: [],
+              scene: {
+                graphPreset: 'atlas-v2',
+                portalPreset: 'arch-v2',
+                motion: 'full',
+                density: 'standard',
+              },
+              status: 'draft',
+              publishedAt: null,
+              updatedAt: '2026-09-06T12:01:00.000Z',
+            }),
+          )
+        }
+        if (url.includes('/api/v1/admin/site/en')) {
+          return Promise.resolve(
+            jsonResponse({
+              locale: 'en',
+              revision: 'rev-en-1',
+              brandName: 'Taha',
+              tagline: 'Research',
+              footerText: 'Footer',
+              seo: { title: 'T', description: 'D' },
+              navLinks: [{ label: 'Old Link', href: '/old' }],
+              contentCopy: { 'old.key': 'Old value' },
+              audienceLinks: [],
+              scene: {
+                graphPreset: 'atlas-v2',
+                portalPreset: 'arch-v2',
+                motion: 'full',
+                density: 'standard',
+              },
+              status: 'draft',
+              publishedAt: null,
+              updatedAt: '2026-09-01T12:00:00.000Z',
+            }),
+          )
+        }
+        if (url.includes('/api/v1/admin/site')) {
+          return Promise.resolve(jsonResponse(SETTINGS))
+        }
+        return Promise.resolve(new Response(null, { status: 404 }))
+      },
+    )
+
+    renderSettings()
+    await screen.findByRole('heading', { name: /localized site identity/i })
+
+    // Check existing copy entry and nav link loaded
+    expect(await screen.findByDisplayValue('Old Link')).toBeInTheDocument()
+    expect(screen.getByDisplayValue('old.key')).toBeInTheDocument()
+
+    // Add navigation link
+    const addNavBtn = screen.getByRole('button', { name: /\+ add navigation link/i })
+    fireEvent.click(addNavBtn)
+
+    const linkInputs = screen.getAllByLabelText(/navigation link 2 label/i)
+    expect(linkInputs.length).toBeGreaterThan(0)
+    fireEvent.change(linkInputs[0], { target: { value: 'Publications' } })
+
+    const destInputs = screen.getAllByLabelText(/navigation link 2 destination/i)
+    fireEvent.change(destInputs[0], { target: { value: '/en/publications' } })
+
+    // Add copy entry
+    const addCopyBtn = screen.getByRole('button', { name: /\+ add copy entry/i })
+    fireEvent.click(addCopyBtn)
+
+    const keyInputs = screen.getAllByLabelText(/copy entry 2 key/i)
+    fireEvent.change(keyInputs[0], { target: { value: 'hero.cta.read' } })
+
+    const valInputs = screen.getAllByLabelText(/copy entry 2 value/i)
+    fireEvent.change(valInputs[0], { target: { value: 'Read Research' } })
+
+    // Save draft
+    const saveDraftBtn = screen.getByRole('button', { name: /save draft/i })
+    fireEvent.submit(saveDraftBtn.closest('form')!)
+
+    await waitFor(() => {
+      expect(putPayload).not.toBeNull()
+      expect(putPayload?.navLinks).toEqual([
+        { label: 'Old Link', href: '/old' },
+        { label: 'Publications', href: '/en/publications' },
+      ])
+      expect(putPayload?.contentCopy).toEqual({
+        'old.key': 'Old value',
+        'hero.cta.read': 'Read Research',
+      })
+    })
+  })
 })

@@ -2211,6 +2211,10 @@ export interface components {
             audienceLinks?: components["schemas"]["LocalizedAudienceLinkOut"][];
             /** Brandname */
             brandName: string;
+            /** Contentcopy */
+            contentCopy?: {
+                [key: string]: string;
+            };
             /** Footertext */
             footerText: string;
             /** Locale */
@@ -2244,6 +2248,10 @@ export interface components {
             }[] | null;
             /** Brandname */
             brandName?: string | null;
+            /** Contentcopy */
+            contentCopy?: {
+                [key: string]: unknown;
+            } | null;
             /** Footertext */
             footerText?: string | null;
             /** Navlinks */

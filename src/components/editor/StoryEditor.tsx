@@ -1,3 +1,6 @@
+import { StoryLibraryField } from './story-library-fields'
+import { validateStoryDraft } from './story-validation'
+
 import type {
   CompositionDetailOut,
   CompositionSchemaOut,
@@ -71,17 +74,291 @@ function move<T>(items: T[], from: number, to: number): T[] {
   return next
 }
 
+interface TableCol {
+  key: string
+  label: string
+}
+
+interface RefItem {
+  label: string
+  url?: string
+}
+
+function ColumnListField({
+  inputId,
+  value,
+  onChange,
+}: {
+  inputId: string
+  value: unknown
+  onChange: (cols: TableCol[]) => void
+}) {
+  const cols: TableCol[] = Array.isArray(value)
+    ? (value as TableCol[]).map((c) => ({
+        key: String(c.key || ''),
+        label: String(c.label || ''),
+      }))
+    : []
+
+  function updateCol(idx: number, patch: Partial<TableCol>) {
+    const next = [...cols]
+    const current = next[idx] ?? { key: '', label: '' }
+    next[idx] = { ...current, ...patch }
+    onChange(next)
+  }
+
+  function addCol() {
+    let suffix = cols.length + 1
+    while (cols.some((col) => col.key === `col_${suffix}`)) suffix += 1
+    onChange([...cols, { key: `col_${suffix}`, label: `Column ${cols.length + 1}` }])
+  }
+
+  function removeCol(idx: number) {
+    onChange(cols.filter((_, i) => i !== idx))
+  }
+
+  return (
+    <div className="story-editor__list" id={inputId}>
+      {cols.map((col, idx) => (
+        <div key={idx} className="story-editor__list-item story-editor__row">
+          <input
+            type="text"
+            placeholder="Label"
+            value={col.label}
+            aria-label={`Column ${idx + 1} label`}
+            onChange={(e) => updateCol(idx, { label: e.target.value })}
+          />
+          <button
+            type="button"
+            className="story-editor__btn-remove"
+            onClick={() => removeCol(idx)}
+            aria-label={`Remove column ${idx + 1}`}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="story-editor__btn-add"
+        onClick={addCol}
+      >
+        + Add Column
+      </button>
+    </div>
+  )
+}
+
+function RowListField({ inputId, value, columns = [], onChange }: {
+  inputId: string; value: unknown; columns?: TableCol[];
+  onChange: (rows: Array<Record<string, unknown>>) => void
+}) {
+  const rows = Array.isArray(value) ? value as Array<Record<string, unknown>> : []
+  return <div id={inputId} className="story-editor__table-wrap">
+    {columns.length ? <table><thead><tr>{columns.map((column) => <th key={column.key} scope="col">{column.label}</th>)}<th scope="col">Actions</th></tr></thead>
+      <tbody>{rows.map((row, index) => <tr key={index}>{columns.map((column) => <td key={column.key}>
+        <input aria-label={`Row ${index + 1}, ${column.label}`} value={String(row?.[column.key] ?? '')} dir="auto" onChange={(event) => onChange(rows.map((item, i) => i === index ? { ...item, [column.key]: event.target.value } : item))} />
+      </td>)}<td><button type="button" aria-label={`Remove row ${index + 1}`} onClick={() => onChange(rows.filter((_, i) => i !== index))}>Remove</button></td></tr>)}</tbody>
+    </table> : <p>Add a column before adding rows.</p>}
+    <button type="button" disabled={!columns.length} onClick={() => onChange([...rows, Object.fromEntries(columns.map((column) => [column.key, '']))])}>+ Add Row</button>
+  </div>
+}
+
+function ReferenceListField({
+  inputId,
+  value,
+  onChange,
+}: {
+  inputId: string
+  value: unknown
+  onChange: (items: RefItem[]) => void
+}) {
+  const items: RefItem[] = Array.isArray(value)
+    ? (value as RefItem[]).map((r) => ({
+        label: String(r.label || ''),
+        url: r.url ? String(r.url) : undefined,
+      }))
+    : []
+
+  function updateItem(idx: number, patch: Partial<RefItem>) {
+    const next = [...items]
+    const current = next[idx] ?? { label: '' }
+    next[idx] = { ...current, ...patch }
+    onChange(next)
+  }
+
+  function addItem() {
+    onChange([...items, { label: '', url: '' }])
+  }
+
+  function removeItem(idx: number) {
+    onChange(items.filter((_, i) => i !== idx))
+  }
+
+  return (
+    <div className="story-editor__list" id={inputId}>
+      {items.map((item, idx) => (
+        <div key={idx} className="story-editor__list-item story-editor__row">
+          <input
+            type="text"
+            placeholder="Label (required)"
+            value={item.label}
+            aria-label={`Reference ${idx + 1} label`}
+            onChange={(e) => updateItem(idx, { label: e.target.value })}
+            required
+          />
+          <input
+            type="url"
+            placeholder="URL (optional)"
+            value={item.url || ''}
+            aria-label={`Reference ${idx + 1} URL`}
+            onChange={(e) => updateItem(idx, { url: e.target.value || undefined })}
+          />
+          <button
+            type="button"
+            className="story-editor__btn-remove"
+            onClick={() => removeItem(idx)}
+            aria-label={`Remove reference ${idx + 1}`}
+          >
+            Remove
+          </button>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="story-editor__btn-add"
+        onClick={addItem}
+      >
+        + Add Reference
+      </button>
+    </div>
+  )
+}
+
+function ItemListField({
+  inputId,
+  spec,
+  value,
+  onChange,
+}: {
+  inputId: string
+  spec: FieldSpec
+  value: unknown
+  onChange: (items: Array<Record<string, unknown>>) => void
+}) {
+  const items = Array.isArray(value)
+    ? (value as Array<Record<string, unknown>>)
+    : []
+  const itemFields = Array.isArray(spec.itemFields) ? spec.itemFields : []
+
+  function updateItem(idx: number, fieldKey: string, fieldVal: unknown) {
+    const next = [...items]
+    const current = next[idx] ?? {}
+    next[idx] = { ...current, [fieldKey]: fieldVal }
+    onChange(next)
+  }
+
+  function addItem() {
+    const newItem: Record<string, unknown> = {}
+    for (const f of itemFields) {
+      if (typeof f === 'object' && f && 'key' in f) {
+        newItem[String((f as Record<string, unknown>).key)] = ''
+      }
+    }
+    onChange([...items, newItem])
+  }
+
+  function removeItem(idx: number) {
+    onChange(items.filter((_, i) => i !== idx))
+  }
+
+  if (itemFields.length === 0) {
+    return <p role="alert">Item fields are unavailable. Reload the block schema before editing.</p>
+  }
+
+  return (
+    <div className="story-editor__list" id={inputId}>
+      {items.map((item, idx) => (
+        <div key={idx} className="story-editor__item-card">
+          <div className="story-editor__item-header story-editor__row">
+            <strong>Item {idx + 1}</strong>
+            <button
+              type="button"
+              className="story-editor__btn-remove"
+              onClick={() => removeItem(idx)}
+              aria-label={`Remove item ${idx + 1}`}
+            >
+              Remove
+            </button>
+          </div>
+          <div className="story-editor__item-fields">
+            {itemFields.map((fieldObj: Record<string, unknown>) => {
+              const fKey = String(fieldObj.key || '')
+              const fLabel = String(fieldObj.label || fKey)
+              const fType = String(fieldObj.type || 'text')
+              const isArea =
+                fType === 'textarea' || /body|text|markdown/i.test(fKey)
+              return (
+                <div key={fKey} className="story-editor__field-group">
+                  <label htmlFor={`${inputId}-${idx}-${fKey}`}>
+                    {fLabel}
+                    {fieldObj.required ? ' (required)' : ''}
+                  </label>
+                  {isArea ? (
+                    <textarea
+                      id={`${inputId}-${idx}-${fKey}`}
+                      value={String(item[fKey] ?? '')}
+                      onChange={(e) => updateItem(idx, fKey, e.target.value)}
+                      rows={3}
+                      dir="auto"
+                    />
+                  ) : (
+                    <input
+                      id={`${inputId}-${idx}-${fKey}`}
+                      type="text"
+                      value={String(item[fKey] ?? '')}
+                      onChange={(e) => updateItem(idx, fKey, e.target.value)}
+                      dir="auto"
+                    />
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      ))}
+      <button
+        type="button"
+        className="story-editor__btn-add"
+        onClick={addItem}
+      >
+        + Add Item
+      </button>
+    </div>
+  )
+}
+
 function FieldInput({
   spec,
   value,
   onChange,
   inputId,
+  settings = {},
+  locale = 'en',
+  blockType = '',
 }: {
   spec: FieldSpec
   value: unknown
   onChange: (value: unknown) => void
   inputId: string
+  settings?: Record<string, unknown>
+  locale?: string
+  blockType?: string
 }) {
+  if (spec.type === 'media' || spec.type === 'mediaList' || spec.type === 'download' || spec.type === 'relatedList') {
+    const mediaType = ['figure', 'gallery', 'before_after', 'slider'].includes(blockType) ? 'image' : ['video', 'audio'].includes(blockType) ? blockType : undefined
+    return <StoryLibraryField inputId={inputId} kind={spec.type} value={value} onChange={onChange} locale={locale} mediaType={mediaType} />
+  }
   if (spec.options && spec.options.length > 0) {
     return (
       <select
@@ -108,7 +385,9 @@ function FieldInput({
       />
     )
   }
-  if (spec.type === 'number' || spec.type === 'media') {
+  if (
+    spec.type === 'number'
+  ) {
     return (
       <input
         id={inputId}
@@ -119,9 +398,53 @@ function FieldInput({
             event.target.value === '' ? null : Number(event.target.value),
           )
         }
-        aria-describedby={spec.type === 'media' ? `${inputId}-hint` : undefined}
+
       />
     )
+  }
+  if (spec.type === 'columnList') {
+    return (
+      <ColumnListField
+        inputId={inputId}
+        value={value}
+        onChange={(val) => onChange(val)}
+      />
+    )
+  }
+  if (spec.type === 'rowList') {
+    return (
+      <RowListField
+        inputId={inputId}
+        value={value}
+        columns={Array.isArray(settings.columns) ? settings.columns as TableCol[] : []}
+        onChange={(val) => onChange(val)}
+      />
+    )
+  }
+  if (spec.type === 'referenceList') {
+    return (
+      <ReferenceListField
+        inputId={inputId}
+        value={value}
+        onChange={(val) => onChange(val)}
+      />
+    )
+  }
+  if (
+    spec.type === 'itemList' ||
+    (Array.isArray(spec.itemFields) && spec.itemFields.length > 0)
+  ) {
+    return (
+      <ItemListField
+        inputId={inputId}
+        spec={spec}
+        value={value}
+        onChange={(val) => onChange(val)}
+      />
+    )
+  }
+  if (Array.isArray(value) || (spec.type && spec.type.endsWith('List'))) {
+    return <p role="alert">This structured field needs an available editor schema.</p>
   }
   if (
     spec.type === 'textarea' ||
@@ -163,6 +486,7 @@ export function StoryEditor({
   dir = 'ltr',
 }: StoryEditorProps) {
   const saving = saveState === 'saving'
+  const validationIssues = validateStoryDraft(sections, schema)
   const schemaTypes = schema?.blockTypes ?? []
   const availableTypes =
     schemaTypes.length > 0
@@ -195,6 +519,10 @@ export function StoryEditor({
               delete settings[key]
             } else {
               settings[key] = value
+            }
+            if (key === 'columns' && Array.isArray(value)) {
+              const keys = new Set(value.map((column: TableCol) => column.key))
+              settings.rows = (Array.isArray(settings.rows) ? settings.rows : []).map((row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([column]) => keys.has(column))))
             }
             return { ...block, settings }
           }),
@@ -277,7 +605,7 @@ export function StoryEditor({
             <button type="button" onClick={() => onResolveConflict('theirs')}>
               Reload latest
             </button>{' '}
-            <button type="button" onClick={() => onResolveConflict('mine')}>
+            <button type="button" disabled={validationIssues.length > 0} onClick={() => onResolveConflict('mine')}>
               Save mine on top
             </button>
           </p>
@@ -295,6 +623,7 @@ export function StoryEditor({
         </p>
       ) : null}
 
+      {validationIssues.length > 0 ? <div role="alert" className="story-editor__error"><p>Complete these fields before saving:</p><ul>{validationIssues.map((issue) => <li key={issue}>{issue}</li>)}</ul></div> : null}
       {sections.map((section, si) => (
         <fieldset key={si} className="story-editor__section">
           <legend>
@@ -411,7 +740,7 @@ export function StoryEditor({
                   fields.map((field) => {
                     const inputId = `story-s${si}-b${bi}-${field.key}`
                     return (
-                      <p key={field.key}>
+                      <div key={field.key} className="story-editor__field-wrapper">
                         <label htmlFor={inputId}>
                           {field.label}
                           {(spec?.required ?? []).includes(field.key)
@@ -422,18 +751,15 @@ export function StoryEditor({
                         <FieldInput
                           spec={field}
                           inputId={inputId}
+                          settings={block.settings ?? {}}
+                          locale={page.locale}
+                          blockType={block.blockType}
                           value={(block.settings ?? {})[field.key]}
                           onChange={(value) =>
                             setBlockSetting(si, bi, field.key, value)
                           }
                         />
-                        {field.type === 'media' ? (
-                          <span id={`${inputId}-hint`} className="muted">
-                            {' '}
-                            Media library id.
-                          </span>
-                        ) : null}
-                      </p>
+                      </div>
                     )
                   })
                 )}
@@ -481,8 +807,8 @@ export function StoryEditor({
         </button>{' '}
         <button
           type="button"
-          disabled={saving || sections.length === 0}
-          onClick={onSave}
+          disabled={saving || sections.length === 0 || validationIssues.length > 0}
+          onClick={() => { if (validationIssues.length === 0) onSave() }}
         >
           {saving ? 'Saving…' : 'Save story'}
         </button>
