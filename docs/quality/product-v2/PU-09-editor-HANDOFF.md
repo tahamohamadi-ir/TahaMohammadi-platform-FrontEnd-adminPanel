@@ -1,6 +1,6 @@
 # PU-09-editor — CM-08 usable story controls revision
 
-Date: 2026-09-07. Owner: ADMIN. Result: uncommitted; implementation evidence only.
+Date: 2026-09-07. Owner: ADMIN. Result: committed as `fbb61d5` on `cx/content-completion-2026-09-07` (pushed).
 Base: `21e2f73cfe653cf53146afda642dc021df5718e4` on `cx/content-completion-2026-09-07`.
 
 ## Change and interface evidence
@@ -30,6 +30,17 @@ The two helper paths extend the original packet allowlist under the owner's curr
 - Focused ESLint for StoryEditor, tests, library helper and validator — **0 errors / 0 warnings**.
 - Full suite/build: deferred to coordinator; historical full-suite/build claims do not certify this revision.
 - Generated schema unchanged. Tracked schema marker SHA-256: `135f14e5c7f03ba1aaee50fca76a54e55e0ed5a2e0360050a8939e837859208c` (marker read, not a regenerated schema).
+
+## 2026-09-07 — Build-green fix + re-verification
+
+- `src/components/editor/StoryEditor.test.tsx` used section/block
+  fixtures missing required `enabled` (and section `layout`/`ratio`) plus
+  an unsafe media-page cast. Added the required fields and a complete
+  `{ items, total, page, pageSize }` mock. Test-only change; no editor
+  behavior changed.
+- `npm test -- src/components/editor/StoryEditor.test.tsx src/pages/product-journey.test.tsx` -> **17 passed** (12 + 5).
+- `npm run lint` -> 0 errors, 6 pre-existing react-refresh warnings.
+- `npm run build` (`tsc -b` + vite) -> **green**.
 
 ## Open gates
 

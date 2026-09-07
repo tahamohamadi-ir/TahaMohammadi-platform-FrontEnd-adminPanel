@@ -1,6 +1,6 @@
 # PU-25-admin-journey — corrected evidence, 2026-09-07
 
-Owner: ADMIN. Base: `21e2f73cfe653cf53146afda642dc021df5718e4`. Result: uncommitted.
+Owner: ADMIN. Base: `21e2f73cfe653cf53146afda642dc021df5718e4`. Result: committed as `fbb61d5` on `cx/content-completion-2026-09-07` (pushed).
 
 ## Corrected scope
 
@@ -18,6 +18,14 @@ Synthetic fixtures are test content only. No real data was published.
 ## Current checks
 
 `npm.cmd test -- src/pages/product-journey.test.tsx src/components/editor/StoryEditor.test.tsx --reporter=dot`: **17 passed** (12 StoryEditor + 5 mocked-HTTP journey cases). The Persian host direction regression is repaired. `npm.cmd test -- src/pages/ContentEditPage.test.tsx --reporter=dot`: **18 passed**. Focused ESLint passes with no errors/warnings. Full suite and build deferred to coordinator.
+
+## 2026-09-07 — Re-verification (committed `fbb61d5`, plus test-type fix)
+
+- Joint run re-executed: **17 passed**. `npm run lint` -> 0 errors
+  (6 pre-existing react-refresh warnings). `npm run build` (`tsc -b` +
+  vite) -> **green** after adding required `enabled`/`layout`/`ratio`
+  fields and a complete media-page mock in `StoryEditor.test.tsx`
+  (test-only change).
 
 ## Changed paths
 

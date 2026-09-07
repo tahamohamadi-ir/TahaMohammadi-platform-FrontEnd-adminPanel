@@ -400,9 +400,13 @@ describe('story editor (PU-09-editor)', () => {
       validateStoryDraft(
         [
           {
+            enabled: true,
+            layout: '1col',
+            ratio: '1:1',
             blocks: [
               {
                 blockType: 'table',
+                enabled: true,
                 settings: { columns: [{ key: 'a', label: 'A' }], rows: [] },
               },
             ],
@@ -414,9 +418,13 @@ describe('story editor (PU-09-editor)', () => {
     const issues = validateStoryDraft(
       [
         {
+          enabled: true,
+          layout: '1col',
+          ratio: '1:1',
           blocks: [
             {
               blockType: 'table',
+              enabled: true,
               settings: {
                 columns: [
                   { key: 'a', label: '' },
@@ -425,7 +433,11 @@ describe('story editor (PU-09-editor)', () => {
                 rows: [{ unknown: 'x' }],
               },
             },
-            { blockType: 'tabs', settings: { items: [{ label: '' }] } },
+            {
+              blockType: 'tabs',
+              enabled: true,
+              settings: { items: [{ label: '' }] },
+            },
           ],
         },
       ],
@@ -540,7 +552,9 @@ describe('story editor (PU-09-editor)', () => {
     vi.mocked(fetchMediaList).mockResolvedValueOnce({
       items: [],
       total: 21,
-    } as Awaited<ReturnType<typeof fetchMediaList>>)
+      page: 1,
+      pageSize: 20,
+    })
     vi.mocked(fetchMediaList).mockRejectedValueOnce(new Error('offline'))
     const onChange = vi.fn()
     render(
