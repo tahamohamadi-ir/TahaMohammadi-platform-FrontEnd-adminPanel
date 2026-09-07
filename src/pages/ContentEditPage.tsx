@@ -797,7 +797,7 @@ export function ContentEditPage({ entity }: { entity: string }) {
   }
 
   return (
-    <main className="page">
+    <main className="page" dir={data?.locale === 'fa' ? 'rtl' : 'ltr'}>
       <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <p>
         <Link to={`/content/${entity}`}>← {entityLabel(entity)}</Link>

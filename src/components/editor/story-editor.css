@@ -105,3 +105,33 @@
   display: block;
   margin-block-start: 0.25rem;
 }
+
+.story-editor__table-wrap {
+  overflow-x: auto;
+  max-inline-size: 100%;
+}
+
+.story-editor__table-wrap table {
+  border-collapse: collapse;
+  inline-size: 100%;
+  margin-block: 0.5rem;
+}
+
+.story-editor__table-wrap th,
+.story-editor__table-wrap td {
+  padding: 0.5rem;
+  text-align: start;
+  border: 1px solid var(--admin-border, #ccc);
+}
+
+.story-editor__library {
+  display: grid;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--admin-border, #ccc);
+  border-radius: 0.375rem;
+}
+
+.story-editor__list li {
+  overflow-wrap: anywhere;
+}
