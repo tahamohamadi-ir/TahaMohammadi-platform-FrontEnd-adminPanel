@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useQuery } from '@tanstack/react-query'
 
 import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
@@ -12,8 +13,35 @@ import {
   ValidationSummary,
   type ValidationIssue,
 } from '@/components/ui/primitives'
+import { StoryEditor } from '@/components/editor/StoryEditor'
+import { ArticleFields } from '@/components/editor/article-fields'
+import { BookFields } from '@/components/editor/book-fields'
+import { CollectionFields } from '@/components/editor/collection-fields'
+import { CourseFields } from '@/components/editor/course-fields'
+import { CreativeFields } from '@/components/editor/creative-fields'
+import { LessonFields } from '@/components/editor/lesson-fields'
+import { ProfileFields } from '@/components/editor/profile-fields'
+import { ProjectFields } from '@/components/editor/project-fields'
+import { PublicationFields } from '@/components/editor/publication-fields'
+import { ResearchFields } from '@/components/editor/research-fields'
+import { ResourceFields } from '@/components/editor/resource-fields'
+import { SeriesFields } from '@/components/editor/series-fields'
+import { TalkFields } from '@/components/editor/talk-fields'
 import { AdminApiError } from '@/lib/api/auth'
-import { CONTENT_STATUSES, type ContentFieldSpecOut } from '@/lib/api/content'
+import {
+  CONTENT_STATUSES,
+  entitySupportsStory,
+  type ContentFieldSpecOut,
+} from '@/lib/api/content'
+import {
+  fetchCompositionDetail,
+  fetchCompositionSchema,
+  type CompositionSectionUpdateIn,
+} from '@/lib/api/composition'
+import {
+  useCompositionDetail,
+  useUpdateComposition,
+} from '@/lib/api/hooks/useComposition'
 import {
   useContentDetail,
   useContentSchema,
@@ -108,6 +136,456 @@ function SchemaField({
     )
   }
   return <TextField id={id} label={spec.label} defaultValue={asText} />
+}
+
+/** Story selection/edit/preview for story-bearing entities (PU-09-host).
+ * Attaching writes `fields.storyId` through the existing content update with
+ * `If-Match`; the backend owns kind (`story` only) and exact-locale checks.
+ * Block editing reuses the PU-09-editor `StoryEditor` against the
+ * PU-09-transport composition adapters. Existing metadata and revision
+ * workflow above is untouched. */
+function StorySection({
+  entity,
+  contentId,
+  contentLocale,
+  contentUpdatedAt,
+  currentStoryId,
+  onChanged,
+}: {
+  entity: string
+  contentId: number
+  contentLocale: string
+  contentUpdatedAt: string
+  currentStoryId: number | null
+  onChanged: () => void
+}) {
+  const update = useUpdateContent(entity)
+  const [input, setInput] = useState(
+    currentStoryId ? String(currentStoryId) : '',
+  )
+  const [notice, setNotice] = useState<{
+    tone: 'success' | 'error'
+    text: string
+  } | null>(null)
+  const [attaching, setAttaching] = useState(false)
+
+  async function handleAttach(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setNotice(null)
+    const parsed = Number(input.trim())
+    if (!Number.isInteger(parsed) || parsed <= 0) {
+      setNotice({ tone: 'error', text: 'Enter a story id (positive integer).' })
+      return
+    }
+    setAttaching(true)
+    try {
+      const story = await fetchCompositionDetail(parsed)
+      if (story.kind !== 'story') {
+        setNotice({
+          tone: 'error',
+          text: `Composition ${parsed} is a “${story.kind}” page, not a story.`,
+        })
+        return
+      }
+      if (story.locale !== contentLocale) {
+        setNotice({
+          tone: 'error',
+          text: `Story locale “${story.locale}” must match the content locale “${contentLocale}”.`,
+        })
+        return
+      }
+      await update.mutateAsync({
+        id: contentId,
+        payload: { fields: { storyId: parsed } },
+        ifMatch: contentUpdatedAt,
+      })
+      setNotice({ tone: 'success', text: `Story ${parsed} attached.` })
+      onChanged()
+    } catch (error) {
+      setNotice({
+        tone: 'error',
+        text:
+          error instanceof AdminApiError
+            ? error.kind === 'conflict'
+              ? 'Changed elsewhere — reload and try again.'
+              : error.message
+            : 'Attaching the story failed. Try again.',
+      })
+    } finally {
+      setAttaching(false)
+    }
+  }
+
+  async function handleDetach() {
+    setNotice(null)
+    setAttaching(true)
+    try {
+      await update.mutateAsync({
+        id: contentId,
+        payload: { fields: { storyId: null } },
+        ifMatch: contentUpdatedAt,
+      })
+      setInput('')
+      setNotice({ tone: 'success', text: 'Story detached.' })
+      onChanged()
+    } catch (error) {
+      setNotice({
+        tone: 'error',
+        text:
+          error instanceof AdminApiError
+            ? error.kind === 'conflict'
+              ? 'Changed elsewhere — reload and try again.'
+              : error.message
+            : 'Detaching the story failed. Try again.',
+      })
+    } finally {
+      setAttaching(false)
+    }
+  }
+
+  return (
+    <section aria-labelledby="story-section-title">
+      <h2 id="story-section-title">Story</h2>
+      {notice ? (
+        <Notice
+          tone={notice.tone === 'error' ? 'error' : 'success'}
+          title={
+            notice.tone === 'error' ? 'Story action failed' : 'Story updated'
+          }
+        >
+          {notice.text}
+        </Notice>
+      ) : null}
+      {currentStoryId === null ? (
+        <p className="muted">
+          No story attached. Attach a story-kind composition in “{contentLocale}
+          ”.
+        </p>
+      ) : (
+        <StoryAttachedEditor
+          key={currentStoryId}
+          storyId={currentStoryId}
+          onDetached={handleDetach}
+          detaching={attaching}
+        />
+      )}
+      <form onSubmit={(event) => void handleAttach(event)}>
+        <TextField
+          id="story-id"
+          label="Story id"
+          type="text"
+          value={input}
+          onChange={setInput}
+          description="Numeric id of a story-kind composition with the same locale."
+        />
+        <p>
+          <button
+            type="submit"
+            className="admin-button admin-button--secondary"
+            disabled={attaching || update.isPending}
+          >
+            {attaching ? 'Attaching…' : 'Attach story'}
+          </button>
+        </p>
+      </form>
+    </section>
+  )
+}
+
+function StoryAttachedEditor({
+  storyId,
+  onDetached,
+  detaching,
+}: {
+  storyId: number
+  onDetached: () => void
+  detaching: boolean
+}) {
+  const detail = useCompositionDetail(storyId)
+  const schema = useQuery({
+    queryKey: ['composition', 'schema', 'story'],
+    queryFn: () => fetchCompositionSchema('story'),
+  })
+  const save = useUpdateComposition(storyId)
+  const [sections, setSections] = useState<CompositionSectionUpdateIn[] | null>(
+    null,
+  )
+  const [editing, setEditing] = useState(false)
+  const [dirty, setDirty] = useState(false)
+  const [conflictDetail, setConflictDetail] = useState<string | null>(null)
+  const [serverError, setServerError] = useState<string | null>(null)
+
+  const page = detail.data
+  const draft =
+    sections ??
+    (page?.sections ?? []).map((section) => ({
+      layout: section.layout,
+      ratio: section.ratio,
+      enabled: section.enabled,
+      blocks: (section.blocks ?? []).map((block) => ({
+        blockType: block.blockType,
+        enabled: block.enabled,
+        settings: { ...(block.settings ?? {}) },
+      })),
+    })) ??
+    []
+
+  async function handleSave() {
+    if (!page) return
+    setConflictDetail(null)
+    setServerError(null)
+    try {
+      const updated = await save.mutateAsync({
+        payload: { sections: draft },
+        ifMatch: page.updatedAt,
+      })
+      setSections(
+        (updated.sections ?? []).map((section) => ({
+          layout: section.layout,
+          ratio: section.ratio,
+          enabled: section.enabled,
+          blocks: (section.blocks ?? []).map((block) => ({
+            blockType: block.blockType,
+            enabled: block.enabled,
+            settings: { ...(block.settings ?? {}) },
+          })),
+        })),
+      )
+      setDirty(false)
+    } catch (error) {
+      if (error instanceof AdminApiError && error.kind === 'conflict') {
+        setConflictDetail(error.message)
+        return
+      }
+      setServerError(
+        error instanceof AdminApiError
+          ? error.message
+          : 'Saving the story failed. Try again.',
+      )
+    }
+  }
+
+  async function handleResolve(choice: 'mine' | 'theirs') {
+    if (choice === 'theirs' || !page) {
+      const refetched = await detail.refetch()
+      const fresh = refetched.data
+      if (fresh) {
+        setSections(
+          (fresh.sections ?? []).map((section) => ({
+            layout: section.layout,
+            ratio: section.ratio,
+            enabled: section.enabled,
+            blocks: (section.blocks ?? []).map((block) => ({
+              blockType: block.blockType,
+              enabled: block.enabled,
+              settings: { ...(block.settings ?? {}) },
+            })),
+          })),
+        )
+      } else {
+        setSections(null)
+      }
+      setDirty(false)
+      setConflictDetail(null)
+      return
+    }
+    setConflictDetail(null)
+    const refetched = await detail.refetch()
+    const fresh = refetched.data
+    if (!fresh) {
+      setServerError('The story is no longer available. Reload the page.')
+      return
+    }
+    try {
+      const updated = await save.mutateAsync({
+        payload: { sections: draft },
+        ifMatch: fresh.updatedAt,
+      })
+      setSections(
+        (updated.sections ?? []).map((section) => ({
+          layout: section.layout,
+          ratio: section.ratio,
+          enabled: section.enabled,
+          blocks: (section.blocks ?? []).map((block) => ({
+            blockType: block.blockType,
+            enabled: block.enabled,
+            settings: { ...(block.settings ?? {}) },
+          })),
+        })),
+      )
+      setDirty(false)
+    } catch (error) {
+      if (error instanceof AdminApiError && error.kind === 'conflict') {
+        setConflictDetail(error.message)
+        return
+      }
+      setServerError(
+        error instanceof AdminApiError
+          ? error.message
+          : 'Saving the story failed. Try again.',
+      )
+    }
+  }
+
+  if (detail.isPending) {
+    return <p role="status">Loading attached story…</p>
+  }
+  if (detail.error || !page) {
+    return (
+      <Notice tone="error" title="Attached story unavailable">
+        The story {storyId} did not answer.{' '}
+        <button
+          type="button"
+          className="admin-button admin-button--secondary"
+          onClick={() => void detail.refetch()}
+        >
+          Retry
+        </button>
+      </Notice>
+    )
+  }
+
+  return (
+    <div>
+      <p>
+        Attached story: <strong>{page.title}</strong> (id {page.id},{' '}
+        {page.locale}, {page.status}
+        {page.publishedAt ? `, published ${page.publishedAt}` : ''})
+      </p>
+      <p>
+        <button
+          type="button"
+          className="admin-button admin-button--secondary"
+          onClick={() => setEditing((value) => !value)}
+        >
+          {editing ? 'Hide block editor' : 'Edit blocks'}
+        </button>{' '}
+        <button
+          type="button"
+          className="admin-button admin-button--secondary"
+          disabled={detaching}
+          onClick={onDetached}
+        >
+          Detach story
+        </button>
+      </p>
+      {editing ? (
+        <StoryEditor
+          page={page}
+          schema={schema.data ?? null}
+          sections={draft}
+          onChange={(next) => {
+            setSections(next)
+            setDirty(true)
+          }}
+          onSave={() => void handleSave()}
+          saveState={
+            save.isPending
+              ? 'saving'
+              : conflictDetail
+                ? 'conflict'
+                : serverError
+                  ? 'error'
+                  : !dirty
+                    ? 'saved'
+                    : 'idle'
+          }
+          autosaveState={dirty ? 'dirty' : 'idle'}
+          conflictDetail={conflictDetail}
+          serverError={serverError}
+          onResolveConflict={(choice) => void handleResolve(choice)}
+        />
+      ) : null}
+    </div>
+  )
+}
+
+/** Generic structured-metadata save section for the PU-10 family editors.
+ * Each family packet renders its own `*-fields` component through this shell:
+ * values stay local until Save, then go through the existing content update
+ * with `If-Match`. Saved/published stays on the server `status`; validation
+ * and 409 conflicts surface visibly without touching the metadata, story, or
+ * revision workflow. */
+function FamilyEditorSection({
+  entity,
+  title,
+  contentId,
+  ifMatch,
+  initialFields,
+  onSaved,
+  children,
+}: {
+  entity: string
+  title: string
+  contentId: number
+  ifMatch: string
+  initialFields: Record<string, unknown>
+  onSaved: () => void
+  children: (controls: {
+    values: Record<string, unknown>
+    setField: (key: string, value: unknown) => void
+    saving: boolean
+  }) => React.ReactNode
+}) {
+  const update = useUpdateContent(entity)
+  const [values, setValues] = useState<Record<string, unknown>>(initialFields)
+  const [notice, setNotice] = useState<{
+    tone: 'success' | 'error'
+    text: string
+  } | null>(null)
+
+  function setField(key: string, value: unknown) {
+    setValues((prev) => ({ ...prev, [key]: value }))
+  }
+
+  async function handleSave() {
+    setNotice(null)
+    try {
+      await update.mutateAsync({
+        id: contentId,
+        payload: { fields: values },
+        ifMatch,
+      })
+      setNotice({ tone: 'success', text: 'Saved.' })
+      onSaved()
+    } catch (error) {
+      setNotice({
+        tone: 'error',
+        text:
+          error instanceof AdminApiError
+            ? error.kind === 'conflict'
+              ? 'Changed elsewhere — reload and try again.'
+              : error.message
+            : 'Saving failed. Try again.',
+      })
+    }
+  }
+
+  const saving = update.isPending
+  return (
+    <section aria-label={title}>
+      <h2>{title}</h2>
+      {notice ? (
+        <Notice
+          tone={notice.tone === 'error' ? 'error' : 'success'}
+          title={notice.tone === 'error' ? 'Save failed' : 'Saved'}
+        >
+          {notice.text}
+        </Notice>
+      ) : null}
+      {children({ values, setField, saving })}
+      <p>
+        <button
+          type="button"
+          className="admin-button admin-button--secondary"
+          disabled={saving}
+          onClick={() => void handleSave()}
+        >
+          {saving ? 'Saving…' : `Save ${title.toLowerCase()}`}
+        </button>
+      </p>
+    </section>
+  )
 }
 
 /** Content create/edit (ADMIN-160/170). Create POSTs once; edit PUTs with
@@ -426,6 +904,276 @@ export function ContentEditPage({ entity }: { entity: string }) {
           </p>
         </form>
       )}
+
+      {isEdit && data && entitySupportsStory(entity) ? (
+        <StorySection
+          entity={entity}
+          contentId={data.id}
+          contentLocale={data.locale}
+          contentUpdatedAt={data.updatedAt}
+          currentStoryId={
+            typeof data.fields?.storyId === 'number'
+              ? (data.fields.storyId as number)
+              : null
+          }
+          onChanged={() => void detail.refetch()}
+        />
+      ) : null}
+
+      {isEdit &&
+      data &&
+      (entity === 'research-topic' || entity === 'research-statement') ? (
+        <FamilyEditorSection
+          key={`research-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Research details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <ResearchFields
+              entity={entity as 'research-topic' | 'research-statement'}
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'publication' ? (
+        <FamilyEditorSection
+          key={`publication-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Publication details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <PublicationFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'project' ? (
+        <FamilyEditorSection
+          key={`project-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Project details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <ProjectFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'article' ? (
+        <FamilyEditorSection
+          key={`article-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Article details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <ArticleFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'course' ? (
+        <FamilyEditorSection
+          key={`course-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Course details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <CourseFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'lesson' ? (
+        <FamilyEditorSection
+          key={`lesson-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Lesson details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <LessonFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'creative-work' ? (
+        <FamilyEditorSection
+          key={`creative-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Creative-work details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <CreativeFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'book' ? (
+        <FamilyEditorSection
+          key={`book-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Book details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <BookFields fields={values} onChange={setField} disabled={saving} />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'talk' ? (
+        <FamilyEditorSection
+          key={`talk-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Talk details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <TalkFields fields={values} onChange={setField} disabled={saving} />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'download' ? (
+        <FamilyEditorSection
+          key={`download-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Download details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <ResourceFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'collection' ? (
+        <FamilyEditorSection
+          key={`collection-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Collection details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <CollectionFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'series' ? (
+        <FamilyEditorSection
+          key={`series-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Series details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <SeriesFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
+
+      {isEdit && data && entity === 'profile' ? (
+        <FamilyEditorSection
+          key={`profile-${data.id}-${data.updatedAt}`}
+          entity={entity}
+          title="Profile details"
+          contentId={data.id}
+          ifMatch={data.updatedAt}
+          initialFields={{ ...(data.fields ?? {}) }}
+          onSaved={() => void detail.refetch()}
+        >
+          {({ values, setField, saving }) => (
+            <ProfileFields
+              fields={values}
+              onChange={setField}
+              disabled={saving}
+            />
+          )}
+        </FamilyEditorSection>
+      ) : null}
 
       {isEdit && data ? (
         <section aria-labelledby="lifecycle-title">

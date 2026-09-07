@@ -1,5 +1,10 @@
 # Admin Panel Agent Contract
 
+<!-- PRODUCT-V2.1 -->
+
+Current product work: read `../../Docs/09-decisions/ADR-0010-UNIFIED-EXECUTION-CONTRACTS.md`, `../../Docs/05-delivery/concept-alignment-v2/EXECUTION.md`, and the assigned **ADMIN** leaf packet. New target interfaces live in `../../Docs/03-contracts/PRODUCT-INTERFACES-V2.md`; generated OpenAPI remains current implementation evidence. Old prefix-only task selection and family freezes are superseded for this queue. CA-09–16 must not be dispatched separately.
+<!-- /PRODUCT-V2.1 -->
+
 ## Read order
 
 1. `README.md`
@@ -10,7 +15,7 @@
 6. `../../Docs/03-contracts/ERROR-COMPATIBILITY-MATRIX.md`
 7. `../../Docs/references/frontend-design-authority/README.md`
 8. `TASK-LIST.md`
-9. `../../Docs/05-delivery/MULTI-AGENT-TASK-BOARD.md` (pick one `ADMIN-*` task)
+9. `../../Docs/05-delivery/MULTI-AGENT-TASK-BOARD.md` (select one active ADMIN packet from execution-tasks.json)
 
 ## Rules
 

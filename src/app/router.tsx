@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { ApprovalQueuePage } from '@/pages/ApprovalQueuePage'
 import { ContentEditPage } from '@/pages/ContentEditPage'
 import { ContentListPage } from '@/pages/ContentListPage'
@@ -10,6 +11,7 @@ import { GraphPage } from '@/pages/GraphPage'
 import { HomePage } from '@/pages/HomePage'
 import { MediaPage } from '@/pages/MediaPage'
 import { NotFoundPage } from '@/pages/NotFoundPage'
+import { PublicationJobsPage } from '@/pages/PublicationJobsPage'
 import { SettingsPage } from '@/pages/SettingsPage'
 import { SignInPage } from '@/pages/SignInPage'
 import { TimelinePage } from '@/pages/TimelinePage'
@@ -66,6 +68,22 @@ export function AppRouter() {
         element={
           <ProtectedRoute requireStaff>
             <ApprovalQueuePage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="publication-jobs"
+        element={
+          <ProtectedRoute requireStaff>
+            <PublicationJobsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="analytics"
+        element={
+          <ProtectedRoute requireStaff>
+            <AnalyticsPage />
           </ProtectedRoute>
         }
       />

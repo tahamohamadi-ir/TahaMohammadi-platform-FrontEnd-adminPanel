@@ -191,7 +191,9 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
   it('loads the detail and saves edits with If-Match', async () => {
     stubDefault()
     renderEdit('/content/article/7')
-    const title = await screen.findByLabelText(/title/i)
+    // Anchored: the PU-10 family sections add their own "SEO title" control
+    // outside the main form; the metadata title is matched exactly.
+    const title = await screen.findByLabelText(/^title$/i)
     expect(title).toHaveValue('Hello world')
     fireEvent.change(title, { target: { value: 'Edited title' } })
     fireEvent.submit(title.closest('form')!)
@@ -262,8 +264,12 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
   it('renders schema-driven fields with a media picker for media fields', async () => {
     stubDefault()
     renderEdit('/content/article/7')
-    expect(await screen.findByLabelText(/excerpt/i)).toBeInTheDocument()
-    const mediaSelect = screen.getByLabelText(/featured media/i)
+    // Scoped to the metadata form: the PU-10 article section renders its own
+    // excerpt control outside this form.
+    const title = await screen.findByLabelText(/^title$/i)
+    const form = title.closest('form')!
+    expect(await within(form).findByLabelText(/^excerpt$/i)).toBeInTheDocument()
+    const mediaSelect = within(form).getByLabelText(/featured media/i)
     expect(mediaSelect.tagName).toBe('SELECT')
     const option = await within(
       mediaSelect.closest('.admin-field')!,
@@ -405,5 +411,255 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     expect(publish).toBeDisabled()
     expect(screen.getByText(/owner approval required/i)).toBeInTheDocument()
     expect(screen.getByText(/approval: needs-owner-input/)).toBeInTheDocument()
+  })
+})
+
+const STORY_COMPOSITION = {
+  id: 11,
+  key: 'story-en-1',
+  kind: 'story',
+  locale: 'en',
+  title: 'Test story',
+  status: 'draft',
+  publishedAt: null,
+  createdAt: '2026-09-01T00:00:00.000Z',
+  updatedAt: '2026-09-02T00:00:00.000Z',
+  sections: [
+    {
+      id: 1,
+      position: 0,
+      layout: '1col',
+      ratio: '',
+      enabled: true,
+      blocks: [
+        {
+          id: 5,
+          position: 0,
+          blockType: 'text',
+          enabled: true,
+          settings: { markdown: 'Hello' },
+        },
+      ],
+    },
+  ],
+}
+
+const STORY_SCHEMA = {
+  kind: 'story',
+  blockTypes: [
+    {
+      type: 'text',
+      labelFa: 'متن',
+      required: ['markdown'],
+      fields: [{ key: 'markdown', label: 'Markdown', type: 'textarea' }],
+    },
+  ],
+  sectionLayouts: [{ value: '1col', label: 'One column', ratios: [] }],
+}
+
+function stubStory(
+  handlers?: (url: string, init?: RequestInit) => Response | null,
+) {
+  vi.stubGlobal(
+    'fetch',
+    vi
+      .fn()
+      .mockImplementation((input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
+        const custom = handlers?.(url, init)
+        if (custom) return Promise.resolve(custom)
+        if (url.includes('/api/v1/admin/composition/schema')) {
+          return Promise.resolve(jsonResponse(STORY_SCHEMA))
+        }
+        if (url.includes('/api/v1/admin/composition/12')) {
+          return Promise.resolve(
+            jsonResponse({ ...STORY_COMPOSITION, id: 12, kind: 'landing' }),
+          )
+        }
+        if (url.includes('/api/v1/admin/composition/11')) {
+          return Promise.resolve(jsonResponse(STORY_COMPOSITION))
+        }
+        if (url.includes('/content/schema')) {
+          return Promise.resolve(jsonResponse(SCHEMA))
+        }
+        if (url.includes('/revisions')) {
+          return Promise.resolve(jsonResponse(REVISIONS))
+        }
+        if (url.includes('/api/v1/admin/media')) {
+          return Promise.resolve(jsonResponse(MEDIA_LIST))
+        }
+        return Promise.resolve(jsonResponse(DETAIL))
+      }),
+  )
+}
+
+describe('ContentEditPage story connection (PU-09-host)', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('fails before the story connection when no story UI exists', async () => {
+    stubStory()
+    renderEdit('/content/article/7')
+    // The story slice owns this heading; without the host wiring the
+    // attach flow below has no mounting point.
+    expect(
+      await screen.findByRole('heading', { name: /^story$/i }),
+    ).toBeInTheDocument()
+  })
+
+  it('attaches a story-kind composition with If-Match', async () => {
+    stubStory()
+    renderEdit('/content/article/7')
+    const input = await screen.findByLabelText(/story id/i)
+    fireEvent.change(input, { target: { value: '11' } })
+    fireEvent.click(screen.getByRole('button', { name: /attach story/i }))
+    await waitFor(() => {
+      const putCall = vi
+        .mocked(fetch)
+        .mock.calls.find(
+          ([callUrl, init]) =>
+            String(callUrl).endsWith('/api/v1/admin/content/article/7') &&
+            (init as RequestInit | undefined)?.method === 'PUT' &&
+            String((init as RequestInit | undefined)?.body ?? '').includes(
+              'storyId',
+            ),
+        )
+      expect(putCall).toBeTruthy()
+      expect(new Headers(putCall![1]?.headers).get('If-Match')).toBe(
+        '2026-09-01T00:00:00.000Z',
+      )
+      expect(JSON.parse(String(putCall![1]?.body))).toEqual({
+        fields: { storyId: 11 },
+      })
+    })
+  })
+
+  it('refuses non-story compositions without saving', async () => {
+    stubStory()
+    renderEdit('/content/article/7')
+    const input = await screen.findByLabelText(/story id/i)
+    fireEvent.change(input, { target: { value: '12' } })
+    fireEvent.click(screen.getByRole('button', { name: /attach story/i }))
+    expect(await screen.findByText(/not a story/i)).toBeInTheDocument()
+    expect(
+      vi
+        .mocked(fetch)
+        .mock.calls.some(
+          ([callUrl, init]) =>
+            String(callUrl).endsWith('/api/v1/admin/content/article/7') &&
+            (init as RequestInit | undefined)?.method === 'PUT' &&
+            String((init as RequestInit | undefined)?.body ?? '').includes(
+              'storyId',
+            ),
+        ),
+    ).toBe(false)
+  })
+
+  it('previews the attached story and surfaces block-save conflicts', async () => {
+    stubStory((url, init) => {
+      if (/\/api\/v1\/admin\/content\/article\/7$/.test(url)) {
+        return jsonResponse({
+          ...DETAIL,
+          fields: { excerpt: 'Hi', storyId: 11 },
+        })
+      }
+      if (
+        url.includes('/api/v1/admin/composition/11') &&
+        init?.method === 'PUT'
+      ) {
+        return jsonResponse(
+          { code: 'STALE_REVISION', message: 'Stale composition' },
+          409,
+        )
+      }
+      return null
+    })
+    renderEdit('/content/article/7')
+    expect(await screen.findByText(/attached story:/i)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /edit blocks/i }))
+    expect(
+      await screen.findByRole('heading', { name: /story blocks/i }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /^save story$/i }))
+    await waitFor(() => {
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(
+            ([callUrl, init]) =>
+              String(callUrl).endsWith('/api/v1/admin/composition/11') &&
+              (init as RequestInit | undefined)?.method === 'PUT' &&
+              new Headers((init as RequestInit | undefined)?.headers).get(
+                'If-Match',
+              ) === '2026-09-02T00:00:00.000Z',
+          ),
+      ).toBe(true)
+    })
+    expect(await screen.findByText(/changed elsewhere/i)).toBeInTheDocument()
+  })
+})
+
+describe('ContentEditPage family sections (PU-10)', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('saves article metadata through the family section with If-Match', async () => {
+    stubStory()
+    renderEdit('/content/article/7')
+    const section = await screen.findByRole('region', {
+      name: /article details/i,
+    })
+    fireEvent.change(within(section).getByLabelText(/^excerpt$/i), {
+      target: { value: 'Family excerpt' },
+    })
+    fireEvent.click(
+      within(section).getByRole('button', { name: /save article details/i }),
+    )
+    await waitFor(() => {
+      const putCall = vi
+        .mocked(fetch)
+        .mock.calls.find(
+          ([callUrl, init]) =>
+            String(callUrl).endsWith('/api/v1/admin/content/article/7') &&
+            (init as RequestInit | undefined)?.method === 'PUT' &&
+            String((init as RequestInit | undefined)?.body ?? '').includes(
+              'Family excerpt',
+            ),
+        )
+      expect(putCall).toBeTruthy()
+      expect(new Headers(putCall![1]?.headers).get('If-Match')).toBe(
+        '2026-09-01T00:00:00.000Z',
+      )
+    })
+    expect(await within(section).findByText(/^saved\.$/i)).toBeInTheDocument()
+  })
+
+  it('surfaces family-save conflicts without touching the metadata form', async () => {
+    stubStory((url, init) => {
+      if (
+        /\/api\/v1\/admin\/content\/article\/7$/.test(url) &&
+        init?.method === 'PUT' &&
+        String(init.body ?? '').includes('Family excerpt')
+      ) {
+        return jsonResponse({ code: 'STALE_REVISION', message: 'Stale' }, 409)
+      }
+      return null
+    })
+    renderEdit('/content/article/7')
+    const section = await screen.findByRole('region', {
+      name: /article details/i,
+    })
+    fireEvent.change(within(section).getByLabelText(/^excerpt$/i), {
+      target: { value: 'Family excerpt' },
+    })
+    fireEvent.click(
+      within(section).getByRole('button', { name: /save article details/i }),
+    )
+    expect(
+      await within(section).findByText(/changed elsewhere/i),
+    ).toBeInTheDocument()
   })
 })

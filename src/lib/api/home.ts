@@ -6,6 +6,19 @@ export type HomeModuleIn = components['schemas']['HomeModuleIn']
 export type HomeModulesRevisionOut =
   components['schemas']['HomeModulesRevisionOut']
 
+export const CANONICAL_MODULE_KEYS = [
+  'identity',
+  'graph',
+  'research-fit',
+  'journey',
+  'projects',
+  'publications',
+  'previews',
+  'cta',
+] as const
+
+export const SELECTION_MODES = ['manual', 'rule', 'hybrid'] as const
+
 export async function fetchHomeModules(
   locale: string,
 ): Promise<HomeModulesAdminOut> {

@@ -30,9 +30,18 @@ export function TimelinePage() {
   const [locale, setLocale] = useState<'en' | 'fa'>('en')
   const [newLabel, setNewLabel] = useState('')
   const [newType, setNewType] = useState('job')
+  const [newRole, setNewRole] = useState('')
+  const [newPeriodLabel, setNewPeriodLabel] = useState('')
+  const [newDetailUrl, setNewDetailUrl] = useState('')
+  const [newAttach, setNewAttach] = useState('')
+  const [newBody, setNewBody] = useState('')
   const [editingId, setEditingId] = useState<number | null>(null)
   const [editLabel, setEditLabel] = useState('')
   const [editBody, setEditBody] = useState('')
+  const [editRole, setEditRole] = useState('')
+  const [editPeriodLabel, setEditPeriodLabel] = useState('')
+  const [editDetailUrl, setEditDetailUrl] = useState('')
+  const [editAttach, setEditAttach] = useState('')
   const [deleteTarget, setDeleteTarget] = useState<TimelineAdminOut | null>(
     null,
   )
@@ -62,15 +71,20 @@ export function TimelinePage() {
       await create.mutateAsync({
         type: newType,
         label,
-        period_label: '',
-        body: '',
-        role: '',
+        period_label: newPeriodLabel.trim(),
+        body: newBody.trim(),
+        role: newRole.trim(),
         weight: 0,
-        detail_url: '',
-        attach: null,
+        detail_url: newDetailUrl.trim(),
+        attach: newAttach.trim() ? Number(newAttach.trim()) : null,
         after_id: null,
       })
       setNewLabel('')
+      setNewRole('')
+      setNewPeriodLabel('')
+      setNewDetailUrl('')
+      setNewAttach('')
+      setNewBody('')
     } catch (caught) {
       setError(
         caught instanceof AdminApiError
@@ -99,6 +113,10 @@ export function TimelinePage() {
     setEditingId(row.id)
     setEditLabel(row.label)
     setEditBody(row.body)
+    setEditRole(row.role ?? '')
+    setEditPeriodLabel(row.period_label ?? '')
+    setEditDetailUrl(row.detail_url ?? '')
+    setEditAttach(row.attach ? String(row.attach) : '')
     setError(null)
   }
 
@@ -119,6 +137,13 @@ export function TimelinePage() {
       const payload: TimelinePatchIn = {}
       if (label !== row.label) payload.label = label
       if (editBody !== row.body) payload.body = editBody
+      if (editRole !== (row.role ?? '')) payload.role = editRole
+      if (editPeriodLabel !== (row.period_label ?? ''))
+        payload.period_label = editPeriodLabel
+      if (editDetailUrl !== (row.detail_url ?? ''))
+        payload.detail_url = editDetailUrl
+      const attachVal = editAttach.trim() ? Number(editAttach.trim()) : null
+      if (attachVal !== row.attach) payload.attach = attachVal
       if (Object.keys(payload).length === 0) {
         setEditingId(null)
         return
@@ -210,6 +235,38 @@ export function TimelinePage() {
           value={newLabel}
           onChange={setNewLabel}
         />
+        <TextField
+          id="timeline-new-role"
+          label="Role"
+          value={newRole}
+          onChange={setNewRole}
+        />
+        <TextField
+          id="timeline-new-period"
+          label="Period label"
+          value={newPeriodLabel}
+          onChange={setNewPeriodLabel}
+        />
+        <TextField
+          id="timeline-new-detail-url"
+          label="Detail URL / Timeline link"
+          value={newDetailUrl}
+          onChange={setNewDetailUrl}
+          description="Link to related project, publication, or credential."
+        />
+        <TextField
+          id="timeline-new-attach"
+          label="Attached Profile ID"
+          value={newAttach}
+          onChange={setNewAttach}
+          description="Numeric ID of the owner profile to attach."
+        />
+        <TextareaField
+          id="timeline-new-body"
+          label="Body"
+          value={newBody}
+          onChange={setNewBody}
+        />
         <p>
           <button
             type="submit"
@@ -229,8 +286,22 @@ export function TimelinePage() {
                 <strong>{row.label}</strong>{' '}
                 <span className="muted">
                   {row.type} · order {row.order}
+                  {row.role ? ` · ${row.role}` : ''}
                   {row.period_label ? ` · ${row.period_label}` : ''}
+                  {row.attach ? ` · profile #${row.attach}` : ''}
                 </span>
+                {row.detail_url ? (
+                  <div>
+                    <a
+                      href={row.detail_url}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{ fontSize: '0.85rem' }}
+                    >
+                      {row.detail_url}
+                    </a>
+                  </div>
+                ) : null}
               </div>
               <div>
                 <button
@@ -276,6 +347,30 @@ export function TimelinePage() {
                     label="Label"
                     value={editLabel}
                     onChange={setEditLabel}
+                  />
+                  <TextField
+                    id={`timeline-role-${row.id}`}
+                    label="Role"
+                    value={editRole}
+                    onChange={setEditRole}
+                  />
+                  <TextField
+                    id={`timeline-period-${row.id}`}
+                    label="Period label"
+                    value={editPeriodLabel}
+                    onChange={setEditPeriodLabel}
+                  />
+                  <TextField
+                    id={`timeline-detail-url-${row.id}`}
+                    label="Detail URL"
+                    value={editDetailUrl}
+                    onChange={setEditDetailUrl}
+                  />
+                  <TextField
+                    id={`timeline-attach-${row.id}`}
+                    label="Attached Profile ID"
+                    value={editAttach}
+                    onChange={setEditAttach}
                   />
                   <TextareaField
                     id={`timeline-body-${row.id}`}

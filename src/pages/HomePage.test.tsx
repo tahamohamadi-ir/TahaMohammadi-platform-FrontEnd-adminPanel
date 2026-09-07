@@ -145,4 +145,79 @@ describe('HomePage composition (ADMIN-190)', () => {
       expect(screen.getByRole('alert')).toHaveTextContent(/reload/i)
     })
   })
+
+  it('renders and allows updating the two audience entry links for the locale', async () => {
+    const siteSettings = {
+      locale: 'en',
+      revision: 'site-rev-123',
+      siteTitle: 'Taha Mohammadi',
+      tagline: 'AI Engineer',
+      metaDescription: 'Description',
+      seoIndex: true,
+      ogImageMediaId: null,
+      themeDefault: 'system',
+      scenePresets: {
+        motion: 'reduced',
+        density: 'normal',
+        themePreset: 'atlas-v2',
+      },
+      navItems: [],
+      audienceLinks: [
+        { kind: 'research', label: 'Research Direction', href: '/en/research' },
+        {
+          kind: 'employment',
+          label: 'Systems & Architecture',
+          href: '/en/projects',
+        },
+      ],
+    }
+
+    stubHome((url, init) => {
+      if (url.includes('/auth/csrf')) {
+        return jsonResponse({ csrfToken: 'dummy-csrf-token' })
+      }
+      if (url.includes('/site/en')) {
+        if (init?.method === 'PUT') {
+          return jsonResponse({ ...siteSettings, revision: 'site-rev-124' })
+        }
+        return jsonResponse(siteSettings)
+      }
+      return null
+    })
+
+    renderHome()
+
+    expect(
+      await screen.findByRole('heading', { name: /audience entry links/i }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByDisplayValue('Research Direction'),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByDisplayValue('Systems & Architecture'),
+    ).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /save audience links/i }),
+    )
+
+    await waitFor(() => {
+      expect(
+        screen.getByText('Audience entry links saved.'),
+      ).toBeInTheDocument()
+    })
+  })
+
+  it('allows adding missing canonical modules to the composition', async () => {
+    stubHome()
+    renderHome()
+
+    expect(await screen.findByText(/hero/)).toBeInTheDocument()
+    const addBtn = screen.getByRole('button', { name: /\+ identity/i })
+    expect(addBtn).toBeInTheDocument()
+
+    fireEvent.click(addBtn)
+
+    expect(screen.getByText('identity')).toBeInTheDocument()
+  })
 })

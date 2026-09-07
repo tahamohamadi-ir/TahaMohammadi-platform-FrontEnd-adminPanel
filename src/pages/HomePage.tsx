@@ -1,17 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 
 import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
-import { Notice, SelectField } from '@/components/ui/primitives'
+import { Notice, SelectField, TextField } from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
-import type { HomeModuleIn, HomeModulesPutIn } from '@/lib/api/home'
+import {
+  CANONICAL_MODULE_KEYS,
+  SELECTION_MODES,
+  type HomeModuleIn,
+  type HomeModulesPutIn,
+} from '@/lib/api/home'
 import {
   useHomeModules,
   useSaveHomeModules,
   useValidateHomeModules,
 } from '@/lib/api/hooks/useHome'
+import {
+  useLocalizedSiteSettings,
+  useUpdateLocalizedSiteSettings,
+} from '@/lib/api/hooks/useSiteSettings'
 import { useAuth } from '@/lib/auth/AuthProvider'
-
-const SELECTION_MODES = ['manual', 'latest', 'top'] as const
 
 /** Locale switch shared by composition-style pages. */
 export function LocaleTabs({
@@ -39,10 +46,10 @@ export function LocaleTabs({
   )
 }
 
-/** Home module composition (ADMIN-190). Full-array bulk save with the
- * locale-level If-Match revision; server-side dry-run validate before save.
- * Module keys come from the backend's canonical set — the page never
- * invents a slot. */
+/** Home module composition & audience paths (ADMIN-190 / PU-12-home).
+ * Full-array bulk save with the locale-level If-Match revision; server-side dry-run validate before save.
+ * Module keys come from the backend's canonical set — the page never invents a slot or fake featured records.
+ * Audience entry paths (research and employment) are managed per locale without hardcoded assumptions. */
 export function HomePage() {
   const { user } = useAuth()
   const [locale, setLocale] = useState<'en' | 'fa'>('en')
@@ -50,9 +57,20 @@ export function HomePage() {
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
 
+  // Audience links state
+  const [audienceResearchLabel, setAudienceResearchLabel] = useState('')
+  const [audienceResearchHref, setAudienceResearchHref] = useState('')
+  const [audienceEmploymentLabel, setAudienceEmploymentLabel] = useState('')
+  const [audienceEmploymentHref, setAudienceEmploymentHref] = useState('')
+  const [audienceMessage, setAudienceMessage] = useState<string | null>(null)
+  const [audienceError, setAudienceError] = useState<string | null>(null)
+
   const modules = useHomeModules(locale)
   const validate = useValidateHomeModules(locale)
   const save = useSaveHomeModules(locale)
+
+  const settingsQuery = useLocalizedSiteSettings(locale)
+  const updateSettings = useUpdateLocalizedSiteSettings(locale)
 
   const data = modules.data
   const current: HomeModuleIn[] =
@@ -65,6 +83,37 @@ export function HomePage() {
       provenance_note: module.provenance_note,
     })) ??
     []
+
+  // Sync audience links from settings
+  useEffect(() => {
+    if (settingsQuery.data?.audienceLinks) {
+      const researchLink = settingsQuery.data.audienceLinks.find(
+        (l) => l.kind === 'research',
+      )
+      const employmentLink = settingsQuery.data.audienceLinks.find(
+        (l) => l.kind === 'employment',
+      )
+      setAudienceResearchLabel(
+        researchLink?.label ??
+          (locale === 'fa' ? 'جهت‌گیری پژوهشی' : 'Research Profile'),
+      )
+      setAudienceResearchHref(researchLink?.href ?? `/${locale}/research`)
+      setAudienceEmploymentLabel(
+        employmentLink?.label ??
+          (locale === 'fa' ? 'مهندسی و سیستم‌ها' : 'Selected Engineering'),
+      )
+      setAudienceEmploymentHref(employmentLink?.href ?? `/${locale}/projects`)
+    } else {
+      setAudienceResearchLabel(
+        locale === 'fa' ? 'جهت‌گیری پژوهشی' : 'Research Profile',
+      )
+      setAudienceResearchHref(`/${locale}/research`)
+      setAudienceEmploymentLabel(
+        locale === 'fa' ? 'مهندسی و سیستم‌ها' : 'Selected Engineering',
+      )
+      setAudienceEmploymentHref(`/${locale}/projects`)
+    }
+  }, [settingsQuery.data, locale])
 
   function updateModule(index: number, patch: Partial<HomeModuleIn>) {
     setDraft(
@@ -83,6 +132,22 @@ export function HomePage() {
     const [moved] = next.splice(index, 1)
     next.splice(target, 0, moved!)
     setDraft(next.map((module, at) => ({ ...module, order: at + 1 })))
+    setMessage(null)
+    setError(null)
+  }
+
+  function addCanonicalModule(key: string) {
+    if (current.some((m) => m.key === key)) return
+    setDraft([
+      ...current,
+      {
+        key,
+        visible: false,
+        order: current.length + 1,
+        selection_mode: 'manual',
+        provenance_note: '',
+      },
+    ])
     setMessage(null)
     setError(null)
   }
@@ -134,6 +199,64 @@ export function HomePage() {
     }
   }
 
+  async function handleSaveAudienceLinks(e: React.FormEvent) {
+    e.preventDefault()
+    setAudienceMessage(null)
+    setAudienceError(null)
+
+    if (!audienceResearchLabel.trim() || !audienceEmploymentLabel.trim()) {
+      setAudienceError('Both audience link labels are required.')
+      return
+    }
+
+    if (
+      !audienceResearchHref.startsWith(`/${locale}`) ||
+      !audienceEmploymentHref.startsWith(`/${locale}`)
+    ) {
+      setAudienceError(
+        `Audience links must be locale-prefixed routes starting with /${locale}.`,
+      )
+      return
+    }
+
+    const ifMatch = settingsQuery.data?.revision
+    if (!ifMatch) {
+      setAudienceError('Site settings revision unavailable. Please refresh.')
+      return
+    }
+
+    try {
+      await updateSettings.mutateAsync({
+        payload: {
+          audienceLinks: [
+            {
+              kind: 'research',
+              label: audienceResearchLabel.trim(),
+              href: audienceResearchHref.trim(),
+            },
+            {
+              kind: 'employment',
+              label: audienceEmploymentLabel.trim(),
+              href: audienceEmploymentHref.trim(),
+            },
+          ],
+        },
+        ifMatch,
+      })
+      setAudienceMessage('Audience entry links saved.')
+    } catch (caught) {
+      setAudienceError(
+        caught instanceof AdminApiError
+          ? caught.message
+          : 'Failed to save audience links.',
+      )
+    }
+  }
+
+  const missingCanonicalKeys = CANONICAL_MODULE_KEYS.filter(
+    (key) => !current.some((m) => m.key === key),
+  )
+
   return (
     <main className="page">
       <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
@@ -145,6 +268,8 @@ export function HomePage() {
           setDraft(null)
           setMessage(null)
           setError(null)
+          setAudienceMessage(null)
+          setAudienceError(null)
         }}
       />
 
@@ -181,7 +306,14 @@ export function HomePage() {
       ) : null}
 
       {data ? (
-        <>
+        <section aria-labelledby="modules-heading">
+          <h2 id="modules-heading">Module selection and order</h2>
+          <p className="muted">
+            Configure the vertical sequence and content selection mode of home
+            modules for this locale. Only canonical modules are permitted; no
+            unverified featured records are injected.
+          </p>
+
           <ol className="admin-home-modules">
             {current.map((module, index) => (
               <li key={module.key} className="admin-home-module">
@@ -213,6 +345,14 @@ export function HomePage() {
                     label: value,
                   }))}
                 />
+                <TextField
+                  id={`note-${module.key}`}
+                  label="Provenance note"
+                  value={module.provenance_note}
+                  onChange={(value) =>
+                    updateModule(index, { provenance_note: value })
+                  }
+                />
                 <button
                   type="button"
                   className="admin-button admin-button--secondary"
@@ -232,6 +372,24 @@ export function HomePage() {
               </li>
             ))}
           </ol>
+
+          {missingCanonicalKeys.length > 0 ? (
+            <div style={{ margin: '1rem 0' }}>
+              <span className="muted">Add missing canonical module: </span>
+              {missingCanonicalKeys.map((key) => (
+                <button
+                  key={key}
+                  type="button"
+                  className="admin-button admin-button--secondary"
+                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
+                  onClick={() => addCanonicalModule(key)}
+                >
+                  + {key}
+                </button>
+              ))}
+            </div>
+          ) : null}
+
           <p>
             <button
               type="button"
@@ -250,8 +408,91 @@ export function HomePage() {
               {save.isPending ? 'Saving…' : 'Save composition'}
             </button>
           </p>
-        </>
+        </section>
       ) : null}
+
+      <section
+        aria-labelledby="audience-heading"
+        style={{
+          marginTop: '2.5rem',
+          borderTop: '1px solid var(--border, #ccc)',
+          paddingTop: '1.5rem',
+        }}
+      >
+        <h2 id="audience-heading">Audience entry links</h2>
+        <p className="muted">
+          Two dedicated audience paths for {locale.toUpperCase()}: Research
+          (academic / PhD supervisors) and Employment (collaborators /
+          industry).
+        </p>
+
+        {audienceMessage ? <p role="status">{audienceMessage}</p> : null}
+        {audienceError ? (
+          <Notice tone="error" title="Audience links update failed">
+            {audienceError}
+          </Notice>
+        ) : null}
+
+        <form onSubmit={(e) => void handleSaveAudienceLinks(e)}>
+          <fieldset
+            style={{
+              border: '1px solid var(--border, #ccc)',
+              padding: '1rem',
+              borderRadius: '4px',
+              marginBottom: '1rem',
+            }}
+          >
+            <legend>
+              <strong>Research audience path</strong>
+            </legend>
+            <TextField
+              id="audience-research-label"
+              label="Label"
+              value={audienceResearchLabel}
+              onChange={setAudienceResearchLabel}
+            />
+            <TextField
+              id="audience-research-href"
+              label="Destination URL"
+              value={audienceResearchHref}
+              onChange={setAudienceResearchHref}
+            />
+          </fieldset>
+
+          <fieldset
+            style={{
+              border: '1px solid var(--border, #ccc)',
+              padding: '1rem',
+              borderRadius: '4px',
+              marginBottom: '1rem',
+            }}
+          >
+            <legend>
+              <strong>Employment audience path</strong>
+            </legend>
+            <TextField
+              id="audience-employment-label"
+              label="Label"
+              value={audienceEmploymentLabel}
+              onChange={setAudienceEmploymentLabel}
+            />
+            <TextField
+              id="audience-employment-href"
+              label="Destination URL"
+              value={audienceEmploymentHref}
+              onChange={setAudienceEmploymentHref}
+            />
+          </fieldset>
+
+          <button
+            type="submit"
+            className="admin-button"
+            disabled={updateSettings.isPending}
+          >
+            {updateSettings.isPending ? 'Saving…' : 'Save audience links'}
+          </button>
+        </form>
+      </section>
     </main>
   )
 }
