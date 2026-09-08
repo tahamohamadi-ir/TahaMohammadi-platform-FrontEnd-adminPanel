@@ -110,7 +110,10 @@ function ColumnListField({
   function addCol() {
     let suffix = cols.length + 1
     while (cols.some((col) => col.key === `col_${suffix}`)) suffix += 1
-    onChange([...cols, { key: `col_${suffix}`, label: `Column ${cols.length + 1}` }])
+    onChange([
+      ...cols,
+      { key: `col_${suffix}`, label: `Column ${cols.length + 1}` },
+    ])
   }
 
   function removeCol(idx: number) {
@@ -138,30 +141,92 @@ function ColumnListField({
           </button>
         </div>
       ))}
-      <button
-        type="button"
-        className="story-editor__btn-add"
-        onClick={addCol}
-      >
+      <button type="button" className="story-editor__btn-add" onClick={addCol}>
         + Add Column
       </button>
     </div>
   )
 }
 
-function RowListField({ inputId, value, columns = [], onChange }: {
-  inputId: string; value: unknown; columns?: TableCol[];
+function RowListField({
+  inputId,
+  value,
+  columns = [],
+  onChange,
+}: {
+  inputId: string
+  value: unknown
+  columns?: TableCol[]
   onChange: (rows: Array<Record<string, unknown>>) => void
 }) {
-  const rows = Array.isArray(value) ? value as Array<Record<string, unknown>> : []
-  return <div id={inputId} className="story-editor__table-wrap">
-    {columns.length ? <table><thead><tr>{columns.map((column) => <th key={column.key} scope="col">{column.label}</th>)}<th scope="col">Actions</th></tr></thead>
-      <tbody>{rows.map((row, index) => <tr key={index}>{columns.map((column) => <td key={column.key}>
-        <input aria-label={`Row ${index + 1}, ${column.label}`} value={String(row?.[column.key] ?? '')} dir="auto" onChange={(event) => onChange(rows.map((item, i) => i === index ? { ...item, [column.key]: event.target.value } : item))} />
-      </td>)}<td><button type="button" aria-label={`Remove row ${index + 1}`} onClick={() => onChange(rows.filter((_, i) => i !== index))}>Remove</button></td></tr>)}</tbody>
-    </table> : <p>Add a column before adding rows.</p>}
-    <button type="button" disabled={!columns.length} onClick={() => onChange([...rows, Object.fromEntries(columns.map((column) => [column.key, '']))])}>+ Add Row</button>
-  </div>
+  const rows = Array.isArray(value)
+    ? (value as Array<Record<string, unknown>>)
+    : []
+  return (
+    <div id={inputId} className="story-editor__table-wrap">
+      {columns.length ? (
+        <table>
+          <thead>
+            <tr>
+              {columns.map((column) => (
+                <th key={column.key} scope="col">
+                  {column.label}
+                </th>
+              ))}
+              <th scope="col">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row, index) => (
+              <tr key={index}>
+                {columns.map((column) => (
+                  <td key={column.key}>
+                    <input
+                      aria-label={`Row ${index + 1}, ${column.label}`}
+                      value={String(row?.[column.key] ?? '')}
+                      dir="auto"
+                      onChange={(event) =>
+                        onChange(
+                          rows.map((item, i) =>
+                            i === index
+                              ? { ...item, [column.key]: event.target.value }
+                              : item,
+                          ),
+                        )
+                      }
+                    />
+                  </td>
+                ))}
+                <td>
+                  <button
+                    type="button"
+                    aria-label={`Remove row ${index + 1}`}
+                    onClick={() => onChange(rows.filter((_, i) => i !== index))}
+                  >
+                    Remove
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <p>Add a column before adding rows.</p>
+      )}
+      <button
+        type="button"
+        disabled={!columns.length}
+        onClick={() =>
+          onChange([
+            ...rows,
+            Object.fromEntries(columns.map((column) => [column.key, ''])),
+          ])
+        }
+      >
+        + Add Row
+      </button>
+    </div>
+  )
 }
 
 function ReferenceListField({
@@ -212,7 +277,9 @@ function ReferenceListField({
             placeholder="URL (optional)"
             value={item.url || ''}
             aria-label={`Reference ${idx + 1} URL`}
-            onChange={(e) => updateItem(idx, { url: e.target.value || undefined })}
+            onChange={(e) =>
+              updateItem(idx, { url: e.target.value || undefined })
+            }
           />
           <button
             type="button"
@@ -224,11 +291,7 @@ function ReferenceListField({
           </button>
         </div>
       ))}
-      <button
-        type="button"
-        className="story-editor__btn-add"
-        onClick={addItem}
-      >
+      <button type="button" className="story-editor__btn-add" onClick={addItem}>
         + Add Reference
       </button>
     </div>
@@ -273,7 +336,11 @@ function ItemListField({
   }
 
   if (itemFields.length === 0) {
-    return <p role="alert">Item fields are unavailable. Reload the block schema before editing.</p>
+    return (
+      <p role="alert">
+        Item fields are unavailable. Reload the block schema before editing.
+      </p>
+    )
   }
 
   return (
@@ -327,11 +394,7 @@ function ItemListField({
           </div>
         </div>
       ))}
-      <button
-        type="button"
-        className="story-editor__btn-add"
-        onClick={addItem}
-      >
+      <button type="button" className="story-editor__btn-add" onClick={addItem}>
         + Add Item
       </button>
     </div>
@@ -355,9 +418,29 @@ function FieldInput({
   locale?: string
   blockType?: string
 }) {
-  if (spec.type === 'media' || spec.type === 'mediaList' || spec.type === 'download' || spec.type === 'relatedList') {
-    const mediaType = ['figure', 'gallery', 'before_after', 'slider'].includes(blockType) ? 'image' : ['video', 'audio'].includes(blockType) ? blockType : undefined
-    return <StoryLibraryField inputId={inputId} kind={spec.type} value={value} onChange={onChange} locale={locale} mediaType={mediaType} />
+  if (
+    spec.type === 'media' ||
+    spec.type === 'mediaList' ||
+    spec.type === 'download' ||
+    spec.type === 'relatedList'
+  ) {
+    const mediaType = ['figure', 'gallery', 'before_after', 'slider'].includes(
+      blockType,
+    )
+      ? 'image'
+      : ['video', 'audio'].includes(blockType)
+        ? blockType
+        : undefined
+    return (
+      <StoryLibraryField
+        inputId={inputId}
+        kind={spec.type}
+        value={value}
+        onChange={onChange}
+        locale={locale}
+        mediaType={mediaType}
+      />
+    )
   }
   if (spec.options && spec.options.length > 0) {
     return (
@@ -385,9 +468,7 @@ function FieldInput({
       />
     )
   }
-  if (
-    spec.type === 'number'
-  ) {
+  if (spec.type === 'number') {
     return (
       <input
         id={inputId}
@@ -398,7 +479,6 @@ function FieldInput({
             event.target.value === '' ? null : Number(event.target.value),
           )
         }
-
       />
     )
   }
@@ -416,7 +496,11 @@ function FieldInput({
       <RowListField
         inputId={inputId}
         value={value}
-        columns={Array.isArray(settings.columns) ? settings.columns as TableCol[] : []}
+        columns={
+          Array.isArray(settings.columns)
+            ? (settings.columns as TableCol[])
+            : []
+        }
         onChange={(val) => onChange(val)}
       />
     )
@@ -444,7 +528,11 @@ function FieldInput({
     )
   }
   if (Array.isArray(value) || (spec.type && spec.type.endsWith('List'))) {
-    return <p role="alert">This structured field needs an available editor schema.</p>
+    return (
+      <p role="alert">
+        This structured field needs an available editor schema.
+      </p>
+    )
   }
   if (
     spec.type === 'textarea' ||
@@ -522,7 +610,13 @@ export function StoryEditor({
             }
             if (key === 'columns' && Array.isArray(value)) {
               const keys = new Set(value.map((column: TableCol) => column.key))
-              settings.rows = (Array.isArray(settings.rows) ? settings.rows : []).map((row: Record<string, unknown>) => Object.fromEntries(Object.entries(row).filter(([column]) => keys.has(column))))
+              settings.rows = (
+                Array.isArray(settings.rows) ? settings.rows : []
+              ).map((row: Record<string, unknown>) =>
+                Object.fromEntries(
+                  Object.entries(row).filter(([column]) => keys.has(column)),
+                ),
+              )
             }
             return { ...block, settings }
           }),
@@ -605,7 +699,11 @@ export function StoryEditor({
             <button type="button" onClick={() => onResolveConflict('theirs')}>
               Reload latest
             </button>{' '}
-            <button type="button" disabled={validationIssues.length > 0} onClick={() => onResolveConflict('mine')}>
+            <button
+              type="button"
+              disabled={validationIssues.length > 0}
+              onClick={() => onResolveConflict('mine')}
+            >
               Save mine on top
             </button>
           </p>
@@ -623,7 +721,16 @@ export function StoryEditor({
         </p>
       ) : null}
 
-      {validationIssues.length > 0 ? <div role="alert" className="story-editor__error"><p>Complete these fields before saving:</p><ul>{validationIssues.map((issue) => <li key={issue}>{issue}</li>)}</ul></div> : null}
+      {validationIssues.length > 0 ? (
+        <div role="alert" className="story-editor__error">
+          <p>Complete these fields before saving:</p>
+          <ul>
+            {validationIssues.map((issue) => (
+              <li key={issue}>{issue}</li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       {sections.map((section, si) => (
         <fieldset key={si} className="story-editor__section">
           <legend>
@@ -740,7 +847,10 @@ export function StoryEditor({
                   fields.map((field) => {
                     const inputId = `story-s${si}-b${bi}-${field.key}`
                     return (
-                      <div key={field.key} className="story-editor__field-wrapper">
+                      <div
+                        key={field.key}
+                        className="story-editor__field-wrapper"
+                      >
                         <label htmlFor={inputId}>
                           {field.label}
                           {(spec?.required ?? []).includes(field.key)
@@ -807,8 +917,12 @@ export function StoryEditor({
         </button>{' '}
         <button
           type="button"
-          disabled={saving || sections.length === 0 || validationIssues.length > 0}
-          onClick={() => { if (validationIssues.length === 0) onSave() }}
+          disabled={
+            saving || sections.length === 0 || validationIssues.length > 0
+          }
+          onClick={() => {
+            if (validationIssues.length === 0) onSave()
+          }}
         >
           {saving ? 'Saving…' : 'Save story'}
         </button>
