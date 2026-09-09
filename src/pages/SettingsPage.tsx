@@ -326,8 +326,12 @@ function LocalizedSettingsSection() {
   const [saved, setSaved] = useState(false)
   const [published, setPublished] = useState(false)
   const [issues, setIssues] = useState<ValidationIssue[]>([])
-  const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>([])
-  const [copyEntries, setCopyEntries] = useState<{ key: string; value: string }[]>([])
+  const [navLinks, setNavLinks] = useState<{ label: string; href: string }[]>(
+    [],
+  )
+  const [copyEntries, setCopyEntries] = useState<
+    { key: string; value: string }[]
+  >([])
   const data = localized.data
 
   useEffect(() => {
@@ -664,12 +668,18 @@ function LocalizedSettingsSection() {
               Navigation links (§I04)
             </legend>
             <p className="muted" style={{ fontSize: '0.85rem' }}>
-              Order and target paths for the primary header and footer navigation (maximum 20 links).
+              Order and target paths for the primary header and footer
+              navigation (maximum 20 links).
             </p>
             {navLinks.length === 0 ? (
               <p className="admin-empty">No navigation links defined.</p>
             ) : (
-              <div className="admin-table-scroll" role="region" aria-label="Navigation links" tabIndex={0}>
+              <div
+                className="admin-table-scroll"
+                role="region"
+                aria-label="Navigation links"
+                tabIndex={0}
+              >
                 <table className="admin-table">
                   <thead>
                     <tr>
@@ -690,7 +700,10 @@ function LocalizedSettingsSection() {
                             value={link.label}
                             onChange={(e) => {
                               const next = [...navLinks]
-                              next[idx] = { ...next[idx], label: e.target.value }
+                              next[idx] = {
+                                ...next[idx],
+                                label: e.target.value,
+                              }
                               setNavLinks(next)
                             }}
                             className="admin-input"
@@ -762,7 +775,9 @@ function LocalizedSettingsSection() {
               <button
                 type="button"
                 className="admin-button admin-button--secondary"
-                onClick={() => setNavLinks([...navLinks, { label: '', href: '' }])}
+                onClick={() =>
+                  setNavLinks([...navLinks, { label: '', href: '' }])
+                }
                 style={{ marginTop: '0.5rem' }}
               >
                 + Add navigation link
@@ -781,12 +796,18 @@ function LocalizedSettingsSection() {
               Managed copy & UI text (§I04)
             </legend>
             <p className="muted" style={{ fontSize: '0.85rem' }}>
-              Editable interface strings, action labels, and section copy stored in CMS dictionary.
+              Editable interface strings, action labels, and section copy stored
+              in CMS dictionary.
             </p>
             {copyEntries.length === 0 ? (
               <p className="admin-empty">No copy entries defined.</p>
             ) : (
-              <div className="admin-table-scroll" role="region" aria-label="Content copy entries" tabIndex={0}>
+              <div
+                className="admin-table-scroll"
+                role="region"
+                aria-label="Content copy entries"
+                tabIndex={0}
+              >
                 <table className="admin-table">
                   <thead>
                     <tr>
@@ -820,7 +841,10 @@ function LocalizedSettingsSection() {
                             value={entry.value}
                             onChange={(e) => {
                               const next = [...copyEntries]
-                              next[idx] = { ...next[idx], value: e.target.value }
+                              next[idx] = {
+                                ...next[idx],
+                                value: e.target.value,
+                              }
                               setCopyEntries(next)
                             }}
                             className="admin-input"
@@ -832,7 +856,9 @@ function LocalizedSettingsSection() {
                             type="button"
                             className="admin-button admin-button--secondary"
                             onClick={() => {
-                              setCopyEntries(copyEntries.filter((_, i) => i !== idx))
+                              setCopyEntries(
+                                copyEntries.filter((_, i) => i !== idx),
+                              )
                             }}
                           >
                             Remove
@@ -848,7 +874,9 @@ function LocalizedSettingsSection() {
               <button
                 type="button"
                 className="admin-button admin-button--secondary"
-                onClick={() => setCopyEntries([...copyEntries, { key: '', value: '' }])}
+                onClick={() =>
+                  setCopyEntries([...copyEntries, { key: '', value: '' }])
+                }
                 style={{ marginTop: '0.5rem' }}
               >
                 + Add copy entry

@@ -333,8 +333,14 @@ describe('SettingsPage (ADMIN-150)', () => {
               tagline: 'Research',
               footerText: 'Footer',
               seo: { title: 'T', description: 'D' },
-              navLinks: (putPayload?.navLinks ?? []) as { label: string; href: string }[],
-              contentCopy: (putPayload?.contentCopy ?? {}) as Record<string, string>,
+              navLinks: (putPayload?.navLinks ?? []) as {
+                label: string
+                href: string
+              }[],
+              contentCopy: (putPayload?.contentCopy ?? {}) as Record<
+                string,
+                string
+              >,
               audienceLinks: [],
               scene: {
                 graphPreset: 'atlas-v2',
@@ -387,18 +393,24 @@ describe('SettingsPage (ADMIN-150)', () => {
     expect(screen.getByDisplayValue('old.key')).toBeInTheDocument()
 
     // Add navigation link
-    const addNavBtn = screen.getByRole('button', { name: /\+ add navigation link/i })
+    const addNavBtn = screen.getByRole('button', {
+      name: /\+ add navigation link/i,
+    })
     fireEvent.click(addNavBtn)
 
     const linkInputs = screen.getAllByLabelText(/navigation link 2 label/i)
     expect(linkInputs.length).toBeGreaterThan(0)
     fireEvent.change(linkInputs[0], { target: { value: 'Publications' } })
 
-    const destInputs = screen.getAllByLabelText(/navigation link 2 destination/i)
+    const destInputs = screen.getAllByLabelText(
+      /navigation link 2 destination/i,
+    )
     fireEvent.change(destInputs[0], { target: { value: '/en/publications' } })
 
     // Add copy entry
-    const addCopyBtn = screen.getByRole('button', { name: /\+ add copy entry/i })
+    const addCopyBtn = screen.getByRole('button', {
+      name: /\+ add copy entry/i,
+    })
     fireEvent.click(addCopyBtn)
 
     const keyInputs = screen.getAllByLabelText(/copy entry 2 key/i)

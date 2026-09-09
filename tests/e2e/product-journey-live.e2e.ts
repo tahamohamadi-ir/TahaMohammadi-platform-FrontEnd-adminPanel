@@ -26,7 +26,10 @@
 import { expect, test } from '@playwright/test'
 
 const ADMIN_URL = (process.env.ADMIN_JOURNEY_ADMIN_URL ?? '').replace(/\/$/, '')
-const PUBLIC_URL = (process.env.ADMIN_JOURNEY_PUBLIC_URL ?? '').replace(/\/$/, '')
+const PUBLIC_URL = (process.env.ADMIN_JOURNEY_PUBLIC_URL ?? '').replace(
+  /\/$/,
+  '',
+)
 const EMAIL = process.env.ADMIN_JOURNEY_EMAIL ?? ''
 const PASSWORD = process.env.ADMIN_JOURNEY_PASSWORD ?? ''
 const OTP = process.env.ADMIN_JOURNEY_OTP ?? undefined
