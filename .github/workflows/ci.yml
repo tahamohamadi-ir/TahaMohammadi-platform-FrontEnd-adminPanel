@@ -17,9 +17,8 @@ jobs:
       - run: npm ci
       - name: Dependency audit
         run: npm audit --audit-level=high
-      - uses: astral-sh/setup-uv@v5
       - name: Secret scan
-        run: uvx --from detect-secrets==1.5.0 detect-secrets scan --baseline .secrets.baseline --exclude-files '\.secrets\.baseline$'
+        run: pipx run --spec detect-secrets==1.5.0 detect-secrets scan --baseline .secrets.baseline --exclude-files '\.secrets\.baseline$'
       - run: npm run build
       - run: npm test
       - run: npx playwright install --with-deps chromium
