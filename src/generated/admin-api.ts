@@ -44,6 +44,407 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/admin/atlas/canonical-candidates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Canonical Candidates
+         * @description The admin picker rows for one canonical family (plan Task 3).
+         *
+         *     Reads the canonical allow-list registry; a family outside it is a 404, a
+         *     never-resolving query would invent a record — the picker only ever offers
+         *     rows that exist in the CMS, gated per locale by ``objects.public()``.
+         */
+        get: operations["apps_atlas_api_admin_canonical_candidates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/node-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Node Types */
+        get: operations["apps_atlas_api_admin_list_node_types"];
+        put?: never;
+        /** Create Node Type */
+        post: operations["apps_atlas_api_admin_create_node_type"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/node-types/{type_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Node Type */
+        delete: operations["apps_atlas_api_admin_delete_node_type"];
+        options?: never;
+        head?: never;
+        /** Patch Node Type */
+        patch: operations["apps_atlas_api_admin_patch_node_type"];
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/relation-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Relation Types */
+        get: operations["apps_atlas_api_admin_list_relation_types"];
+        put?: never;
+        /** Create Relation Type */
+        post: operations["apps_atlas_api_admin_create_relation_type"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/relation-types/{type_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Relation Type */
+        delete: operations["apps_atlas_api_admin_delete_relation_type"];
+        options?: never;
+        head?: never;
+        /** Patch Relation Type */
+        patch: operations["apps_atlas_api_admin_patch_relation_type"];
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Versions */
+        get: operations["apps_atlas_api_admin_list_versions"];
+        put?: never;
+        /** Create Version */
+        post: operations["apps_atlas_api_admin_create_version"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Version Detail */
+        get: operations["apps_atlas_api_admin_version_detail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/activate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Activate Version Endpoint */
+        post: operations["apps_atlas_api_admin_activate_version_endpoint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Archive Version */
+        post: operations["apps_atlas_api_admin_archive_version"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/clone": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Clone Version Route */
+        post: operations["apps_atlas_api_admin_clone_version_route"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/graph": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /**
+         * Bulk Replace Graph
+         * @description Transactional bulk replace (plan Task 5): delete-then-create only for
+         *     the rows the body owns; rows matching by public key keep their identity.
+         *     On any refusal nothing is written (one atomic block + the validator).
+         */
+        put: operations["apps_atlas_api_admin_bulk_replace_graph"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/groups": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Groups */
+        get: operations["apps_atlas_api_admin_list_groups"];
+        put?: never;
+        /** Create Group */
+        post: operations["apps_atlas_api_admin_create_group"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/groups/{group_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Group */
+        delete: operations["apps_atlas_api_admin_delete_group"];
+        options?: never;
+        head?: never;
+        /** Patch Group */
+        patch: operations["apps_atlas_api_admin_patch_group"];
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/groups/{group_key}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Replace Group Members */
+        put: operations["apps_atlas_api_admin_replace_group_members"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/layout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Recompute Version Layout
+         * @description Deterministic layout recompute (plan Task 5): no client-supplied body.
+         */
+        post: operations["apps_atlas_api_admin_recompute_version_layout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/nodes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Nodes */
+        get: operations["apps_atlas_api_admin_list_nodes"];
+        put?: never;
+        /** Create Node */
+        post: operations["apps_atlas_api_admin_create_node"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/nodes/{node_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Node */
+        get: operations["apps_atlas_api_admin_get_node"];
+        put?: never;
+        post?: never;
+        /** Delete Node */
+        delete: operations["apps_atlas_api_admin_delete_node"];
+        options?: never;
+        head?: never;
+        /** Patch Node */
+        patch: operations["apps_atlas_api_admin_patch_node"];
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/preview-token": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mint Preview Token */
+        post: operations["apps_atlas_api_admin_mint_preview_token"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Relations */
+        get: operations["apps_atlas_api_admin_list_relations"];
+        put?: never;
+        /** Create Relation */
+        post: operations["apps_atlas_api_admin_create_relation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/relations/{relation_key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Relation */
+        delete: operations["apps_atlas_api_admin_delete_relation"];
+        options?: never;
+        head?: never;
+        /** Patch Relation */
+        patch: operations["apps_atlas_api_admin_patch_relation"];
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Version Status */
+        get: operations["apps_atlas_api_admin_version_status"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/admin/atlas/versions/{version_id}/validate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Validate Version Endpoint */
+        get: operations["apps_atlas_api_admin_validate_version_endpoint"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/admin/auth/csrf": {
         parameters: {
             query?: never;
@@ -1139,6 +1540,432 @@ export interface components {
             counts: components["schemas"]["ApprovalQueueCountsOut"];
             /** Items */
             items: components["schemas"]["ApprovalQueueItemOut"][];
+        };
+        /** AtlasBulkGraphIn */
+        AtlasBulkGraphIn: {
+            /** Groups */
+            groups?: components["schemas"]["AtlasBulkGroupIn"][];
+            /** Nodes */
+            nodes?: components["schemas"]["AtlasBulkNodeIn"][];
+            /** Relations */
+            relations?: components["schemas"]["AtlasBulkRelationIn"][];
+        };
+        /** AtlasBulkGroupIn */
+        AtlasBulkGroupIn: {
+            /** Key */
+            key?: string | null;
+            /** Labels */
+            labels?: {
+                [key: string]: string;
+            };
+            /** Nodekeys */
+            nodeKeys?: string[];
+        };
+        /**
+         * AtlasBulkNodeIn
+         * @description One node of a bulk-graph PUT body (identity + mutable fields).
+         */
+        AtlasBulkNodeIn: {
+            /** Canonicaltranslationkey */
+            canonicalTranslationKey?: string | null;
+            /** Importance */
+            importance?: number | null;
+            /** Mobileoverviewpriority */
+            mobileOverviewPriority?: string | null;
+            /** Nodetypekey */
+            nodeTypeKey: string;
+            /** Overrides */
+            overrides?: {
+                [key: string]: components["schemas"]["AtlasNodeOverridesIn"];
+            } | null;
+            /** Publickey */
+            publicKey?: string | null;
+            /** Visible */
+            visible?: boolean | null;
+        };
+        /** AtlasBulkRelationIn */
+        AtlasBulkRelationIn: {
+            /** Directed */
+            directed?: boolean | null;
+            /** Relationtypekey */
+            relationTypeKey: string;
+            /** Sourcekey */
+            sourceKey: string;
+            /** Targetkey */
+            targetKey: string;
+        };
+        /**
+         * AtlasCanonicalCandidateOut
+         * @description One picker row (plan Task 3): identity + per-locale publish gates.
+         */
+        AtlasCanonicalCandidateOut: {
+            /** Localestatus */
+            localeStatus: {
+                [key: string]: boolean;
+            };
+            /** Publishable */
+            publishable: {
+                [key: string]: boolean;
+            };
+            /** Title */
+            title: string;
+            /** Translationkey */
+            translationKey: string;
+        };
+        /**
+         * AtlasGroupPatchIn
+         * @description PATCH groups/{key}: rename per-locale copy (identity key immutable).
+         */
+        AtlasGroupPatchIn: {
+            /** Labels */
+            labels?: {
+                [key: string]: string;
+            } | null;
+        };
+        /** AtlasGroupRowOut */
+        AtlasGroupRowOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Memberkeys */
+            memberKeys: string[];
+        };
+        /** AtlasGroupWriteIn */
+        AtlasGroupWriteIn: {
+            /** Label */
+            label: string;
+        };
+        /** AtlasMembersIn */
+        AtlasMembersIn: {
+            /** Nodekeys */
+            nodeKeys: string[];
+        };
+        /**
+         * AtlasNodeOverridesIn
+         * @description Per-locale overrides of one locale (spec §5): upserted translations.
+         */
+        AtlasNodeOverridesIn: {
+            /** Accessiblelabel */
+            accessibleLabel?: string | null;
+            /** Aliases */
+            aliases?: string[] | null;
+            /** Label */
+            label?: string | null;
+            /** Summary */
+            summary?: string | null;
+        };
+        /**
+         * AtlasNodePatchIn
+         * @description PATCH body — every field optional; ``publicKey`` is deliberately absent
+         *     (a node key is minted once and immutable: a PATCH carrying it answers 400).
+         */
+        AtlasNodePatchIn: {
+            /** Canonicaltranslationkey */
+            canonicalTranslationKey?: string | null;
+            /** Groupkeys */
+            groupKeys?: string[] | null;
+            /** Importance */
+            importance?: number | null;
+            /** Mobileoverviewpriority */
+            mobileOverviewPriority?: string | null;
+            /** Overrides */
+            overrides?: {
+                [key: string]: components["schemas"]["AtlasNodeOverridesIn"];
+            } | null;
+            pin?: components["schemas"]["AtlasNodePinIn"] | null;
+            /** Visible */
+            visible?: boolean | null;
+        };
+        /**
+         * AtlasNodePinIn
+         * @description An optional layout pin.
+         *
+         *     Fields are optional at the SCHEMA level on purpose: the paired rule
+         *     ("x and y together; z only with both") is the MODEL's ``clean()`` rule,
+         *     which surfaces as 400 ``VALIDATION`` with ``fields`` (plan Task 3); a
+         *     pin carrying only ``x`` must reach the model, not die at a schema 422.
+         */
+        AtlasNodePinIn: {
+            /** X */
+            x?: number | null;
+            /** Y */
+            y?: number | null;
+            /** Z */
+            z?: number | null;
+        };
+        /**
+         * AtlasNodeRowOut
+         * @description One node row of the admin surface (Task 3 row shape).
+         */
+        AtlasNodeRowOut: {
+            /** Canonicalsource */
+            canonicalSource: string;
+            /** Canonicaltranslationkey */
+            canonicalTranslationKey?: string | null;
+            /** Groupkeys */
+            groupKeys: string[];
+            /** Importance */
+            importance: number;
+            /** Localestatus */
+            localeStatus?: {
+                [key: string]: unknown;
+            } | null;
+            /** Mobileoverviewpriority */
+            mobileOverviewPriority: string;
+            /** Nodetypekey */
+            nodeTypeKey: string;
+            /** Pin */
+            pin?: {
+                [key: string]: unknown;
+            } | null;
+            /** Publickey */
+            publicKey: string;
+            /** Visible */
+            visible: boolean;
+        };
+        /** AtlasNodeTypePatchIn */
+        AtlasNodeTypePatchIn: {
+            /** Active */
+            active?: boolean | null;
+            /** Label En */
+            label_en?: string | null;
+            /** Label Fa */
+            label_fa?: string | null;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
+        /** AtlasNodeTypeRowOut */
+        AtlasNodeTypeRowOut: {
+            /** Active */
+            active: boolean;
+            /**
+             * Canonicalsource
+             * @default none
+             */
+            canonicalSource: string;
+            /**
+             * Defaultimportance
+             * @default 50
+             */
+            defaultImportance: number;
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Fa */
+            label_fa: string;
+            /** Sort Order */
+            sort_order: number;
+        };
+        /** AtlasNodeTypeWriteIn */
+        AtlasNodeTypeWriteIn: {
+            /** Active */
+            active?: boolean | null;
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Fa */
+            label_fa: string;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
+        /**
+         * AtlasNodeWriteIn
+         * @description POST /versions/<id>/nodes body (spec §5 fields, camelCase on the wire).
+         */
+        AtlasNodeWriteIn: {
+            /** Canonicalsource */
+            canonicalSource?: string | null;
+            /** Canonicaltranslationkey */
+            canonicalTranslationKey?: string | null;
+            /** Groupkeys */
+            groupKeys?: string[] | null;
+            /** Importance */
+            importance?: number | null;
+            /** Mobileoverviewpriority */
+            mobileOverviewPriority?: string | null;
+            /** Nodetypekey */
+            nodeTypeKey: string;
+            /** Overrides */
+            overrides?: {
+                [key: string]: components["schemas"]["AtlasNodeOverridesIn"];
+            } | null;
+            pin?: components["schemas"]["AtlasNodePinIn"] | null;
+            /** Visible */
+            visible?: boolean | null;
+        };
+        /** AtlasPreviewMintIn */
+        AtlasPreviewMintIn: {
+            /** Locale */
+            locale: string;
+        };
+        /**
+         * AtlasRelationPatchIn
+         * @description PATCH body — structural keys change nothing; only mutable fields land.
+         */
+        AtlasRelationPatchIn: {
+            /** Directed */
+            directed?: boolean | null;
+            /** Explanation */
+            explanation?: {
+                [key: string]: string | null;
+            } | null;
+            /** Visible */
+            visible?: boolean | null;
+            /** Weight */
+            weight?: number | null;
+        };
+        /**
+         * AtlasRelationRowOut
+         * @description One relation row — the key is the composed public key (spec §5.3).
+         */
+        AtlasRelationRowOut: {
+            /** Directed */
+            directed: boolean;
+            /** Key */
+            key: string;
+            /** Relationtypekey */
+            relationTypeKey: string;
+            /** Sourcekey */
+            sourceKey: string;
+            /** Targetkey */
+            targetKey: string;
+            /** Visible */
+            visible: boolean;
+            /** Weight */
+            weight: number;
+        };
+        /** AtlasRelationTypeRowOut */
+        AtlasRelationTypeRowOut: {
+            /** Active */
+            active: boolean;
+            /**
+             * Canonicalsource
+             * @default none
+             */
+            canonicalSource: string;
+            /**
+             * Defaultimportance
+             * @default 50
+             */
+            defaultImportance: number;
+            /**
+             * Directeddefault
+             * @default true
+             */
+            directedDefault: boolean;
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Fa */
+            label_fa: string;
+            /**
+             * Overridabledirection
+             * @default false
+             */
+            overridableDirection: boolean;
+            /** Sort Order */
+            sort_order: number;
+        };
+        /** AtlasRelationTypeWriteIn */
+        AtlasRelationTypeWriteIn: {
+            /** Active */
+            active?: boolean | null;
+            /** Allowedsourcetypes */
+            allowedSourceTypes?: string[] | null;
+            /** Allowedtargettypes */
+            allowedTargetTypes?: string[] | null;
+            /** Directeddefault */
+            directedDefault?: boolean | null;
+            /** Key */
+            key: string;
+            /** Label En */
+            label_en: string;
+            /** Label Fa */
+            label_fa: string;
+            /** Overridabledirection */
+            overridableDirection?: boolean | null;
+            /** Sort Order */
+            sort_order?: number | null;
+        };
+        /**
+         * AtlasRelationWriteIn
+         * @description POST /versions/<id>/relations body (spec §5.3, camelCase on the wire).
+         */
+        AtlasRelationWriteIn: {
+            /** Directed */
+            directed?: boolean | null;
+            /** Explanation */
+            explanation?: {
+                [key: string]: string;
+            } | null;
+            /** Relationtypekey */
+            relationTypeKey: string;
+            /** Sourcekey */
+            sourceKey: string;
+            /** Targetkey */
+            targetKey: string;
+            /** Visible */
+            visible?: boolean | null;
+            /** Weight */
+            weight?: number | null;
+        };
+        /**
+         * AtlasVersionCreateIn
+         * @description POST /versions body — a draft starts with only a label.
+         */
+        AtlasVersionCreateIn: {
+            /** Label */
+            label: string;
+        };
+        /**
+         * AtlasVersionDetailOut
+         * @description Detail row: publishedAt instead of createdAt duplication (plan Task 2).
+         */
+        AtlasVersionDetailOut: {
+            /** Createdat */
+            createdAt: string;
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Nodecount */
+            nodeCount: number;
+            /** Publishedat */
+            publishedAt?: string | null;
+            /** Relationcount */
+            relationCount: number;
+            /** Revision */
+            revision: string;
+            /** Status */
+            status: string;
+            /** Updatedat */
+            updatedAt: string;
+        };
+        /**
+         * AtlasVersionRowOut
+         * @description One row of ``GET /versions`` — camelCase on the wire (§20.3).
+         */
+        AtlasVersionRowOut: {
+            /** Createdat */
+            createdAt: string;
+            /** Id */
+            id: number;
+            /** Label */
+            label: string;
+            /** Nodecount */
+            nodeCount: number;
+            /** Relationcount */
+            relationCount: number;
+            /** Revision */
+            revision: string;
+            /** Status */
+            status: string;
+            /** Updatedat */
+            updatedAt: string;
         };
         /** BlockFieldSpecOut */
         BlockFieldSpecOut: {
@@ -2965,6 +3792,813 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ApprovalQueueOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_canonical_candidates: {
+        parameters: {
+            query?: {
+                source?: string;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasCanonicalCandidateOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_list_node_types: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeTypeRowOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_create_node_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasNodeTypeWriteIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeTypeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_delete_node_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_atlas_api_admin_patch_node_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasNodeTypePatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeTypeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_list_relation_types: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasRelationTypeRowOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_create_relation_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasRelationTypeWriteIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasRelationTypeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_delete_relation_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_atlas_api_admin_patch_relation_type: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                type_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasNodeTypePatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasRelationTypeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_list_versions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasVersionRowOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_create_version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasVersionCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasVersionDetailOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_version_detail: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasVersionDetailOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_activate_version_endpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_archive_version: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasVersionDetailOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_clone_version_route: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasVersionCreateIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasVersionDetailOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_bulk_replace_graph: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasBulkGraphIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_list_groups: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasGroupRowOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_create_group: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasGroupWriteIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasGroupRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_delete_group: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                group_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_atlas_api_admin_patch_group: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                group_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasGroupPatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasGroupRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_replace_group_members: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                group_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasMembersIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasGroupRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_recompute_version_layout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_list_nodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeRowOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_create_node: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasNodeWriteIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_get_node: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                node_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_delete_node: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                node_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_atlas_api_admin_patch_node: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                node_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasNodePatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasNodeRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_mint_preview_token: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasPreviewMintIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_list_relations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasRelationRowOut"][];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_create_relation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasRelationWriteIn"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasRelationRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_delete_relation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                relation_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    apps_atlas_api_admin_patch_relation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+                relation_key: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AtlasRelationPatchIn"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AtlasRelationRowOut"];
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_version_status: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+    };
+    apps_atlas_api_admin_validate_version_endpoint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
                 };
             };
         };
