@@ -73,3 +73,45 @@ describe('Atlas routes (Plan B Task 9)', () => {
     },
   )
 })
+describe('Atlas route resolution (Plan B Task 9 fix)', () => {
+  const AUTHED = {
+    id: 1,
+    email: 'admin@example.com',
+    displayName: 'Admin',
+    isStaff: true,
+    mfaEnrolled: true,
+    otpVerified: true,
+    featureFlags: {},
+  }
+
+  it.each([
+    ['/atlas', 'atlas-versions-placeholder'],
+    ['/atlas/7', 'atlas-editor-placeholder'],
+    ['/atlas/taxonomy', 'atlas-taxonomy-placeholder'],
+    ['/atlas/7/preview', 'atlas-preview-placeholder'],
+  ])('resolves %s to its protected placeholder target', async (path, id) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation(() =>
+        Promise.resolve(
+          new Response(JSON.stringify(AUTHED), {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          }),
+        ),
+      ),
+    )
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter initialEntries={[path]}>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await waitFor(() => {
+      expect(screen.getByTestId(id)).toBeInTheDocument()
+    })
+  })
+})
