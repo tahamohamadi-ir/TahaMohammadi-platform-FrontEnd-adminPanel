@@ -10,54 +10,24 @@ import type { components } from '@/generated/admin-api'
 import { adminJson } from '@/lib/api/auth'
 
 export type AtlasVersionRow = components['schemas']['AtlasVersionRowOut']
-export type AtlasNodeRow = { publicKey: string; [key: string]: unknown }
-export type AtlasRelationRow = {
-  key: string
-  sourceKey: string
-  relationTypeKey: string
-  targetKey: string
-  directed: boolean
-  weight: number
-  visible: boolean
-  [key: string]: unknown
-}
-export type AtlasGroupRow = {
-  key: string
-  label: string
-  memberKeys: string[]
-  [key: string]: unknown
-}
-export type AtlasValidationOut = {
-  blocking: Array<Record<string, unknown>>
-  warnings: Array<Record<string, unknown>>
-  [key: string]: unknown
-}
-export type AtlasTaxonomyRow = {
-  key: string
-  label_en: string
-  label_fa: string
-  active: boolean
-  sort_order: number
-  [key: string]: unknown
-}
-export interface AtlasNodeWriteBody {
-  nodeTypeKey: string
-  canonicalSource?: string
-  canonicalTranslationKey?: string | null
-  importance?: number | null
-  visible?: boolean | null
-  mobileOverviewPriority?: string | null
-  groupKeys?: string[] | null
-  pin?: { x?: number | null; y?: number | null; z?: number | null } | null
-  overrides?: Record<string, Record<string, unknown>> | null
-  [key: string]: unknown
-}
-export interface AtlasBulkGraphBody {
-  nodes: Array<Record<string, unknown>>
-  relations: Array<Record<string, unknown>>
-  groups: Array<Record<string, unknown>>
-  [key: string]: unknown
-}
+export type AtlasVersionDetail = components['schemas']['AtlasVersionDetailOut']
+export type AtlasNodeRow = components['schemas']['AtlasNodeRowOut']
+export type AtlasRelationRow = components['schemas']['AtlasRelationRowOut']
+export type AtlasGroupRow = components['schemas']['AtlasGroupRowOut']
+export type AtlasNodeTypeRow = components['schemas']['AtlasNodeTypeRowOut']
+export type AtlasRelationTypeRow =
+  components['schemas']['AtlasRelationTypeRowOut']
+export type AtlasNodeWriteBody = components['schemas']['AtlasNodeWriteIn']
+export type AtlasNodePatchBody = components['schemas']['AtlasNodePatchIn']
+export type AtlasRelationWriteBody =
+  components['schemas']['AtlasRelationWriteIn']
+export type AtlasRelationPatchBody =
+  components['schemas']['AtlasRelationPatchIn']
+export type AtlasGroupWriteBody = components['schemas']['AtlasGroupWriteIn']
+export type AtlasMembersBody = components['schemas']['AtlasMembersIn']
+export type AtlasBulkGraphBody = components['schemas']['AtlasBulkGraphIn']
+export type AtlasCanonicalCandidate =
+  components['schemas']['AtlasCanonicalCandidateOut']
 
 const BASE = '/atlas'
 
@@ -177,14 +147,7 @@ export async function listAtlasRelations(
 
 export async function createAtlasRelation(
   id: number,
-  body: {
-    sourceKey: string
-    relationTypeKey: string
-    targetKey: string
-    directed?: boolean | null
-    weight?: number | null
-    explanation?: Record<string, string> | null
-  },
+  body: AtlasRelationWriteBody,
   revision: string,
 ): Promise<AtlasRelationRow> {
   return adminJson(`${BASE}/versions/${id}/relations`, {
@@ -197,11 +160,7 @@ export async function createAtlasRelation(
 export async function updateAtlasRelation(
   id: number,
   key: string,
-  body: {
-    directed?: boolean | null
-    weight?: number | null
-    visible?: boolean | null
-  },
+  body: AtlasRelationPatchBody,
   revision: string,
 ): Promise<AtlasRelationRow> {
   return adminJson(`${BASE}/versions/${id}/relations/${key}`, {
@@ -241,7 +200,7 @@ export async function createAtlasGroup(
 export async function saveGroups(
   id: number,
   groupKey: string,
-  body: { nodeKeys: string[] },
+  body: AtlasMembersBody,
   revision: string,
 ): Promise<AtlasGroupRow> {
   return adminJson(`${BASE}/versions/${id}/groups/${groupKey}/members`, {
@@ -251,9 +210,11 @@ export async function saveGroups(
   })
 }
 
+export type AtlasTaxonomyRow = AtlasNodeTypeRow | AtlasRelationTypeRow
+
 export type AtlasTaxonomy = {
-  nodeTypes: Awaited<ReturnType<typeof listAtlasNodeTypes>>
-  relationTypes: Awaited<ReturnType<typeof listAtlasRelationTypes>>
+  nodeTypes: AtlasNodeTypeRow[]
+  relationTypes: AtlasRelationTypeRow[]
 }
 
 export async function listAtlasNodeTypes(): Promise<AtlasTaxonomyRow[]> {
@@ -273,7 +234,9 @@ export async function listTaxonomy(): Promise<AtlasTaxonomy> {
 }
 
 export async function saveNodeType(
-  body: { key: string; label_en: string; label_fa: string; active?: boolean },
+  body:
+    | components['schemas']['AtlasNodeTypeWriteIn']
+    | components['schemas']['AtlasNodeTypePatchIn'],
   revision?: string,
 ): Promise<AtlasTaxonomyRow> {
   return adminJson(`${BASE}/node-types`, {
@@ -287,14 +250,9 @@ export async function saveNodeType(
 }
 
 export async function saveRelationType(
-  body: {
-    key: string
-    label_en: string
-    label_fa: string
-    directedDefault?: boolean
-    allowedSourceTypes?: string[]
-    allowedTargetTypes?: string[]
-  },
+  body:
+    | components['schemas']['AtlasRelationTypeWriteIn']
+    | components['schemas']['AtlasRelationTypePatchIn'],
   revision?: string,
 ): Promise<AtlasTaxonomyRow> {
   return adminJson(`${BASE}/relation-types`, {
@@ -357,14 +315,7 @@ export async function fetchAtlasPreviewToken(
 export async function fetchCanonicalCandidates(
   source: string,
   query = '',
-): Promise<
-  Array<{
-    translationKey: string
-    title: string
-    localeStatus: Record<string, boolean>
-    publishable: Record<string, boolean>
-  }>
-> {
+): Promise<AtlasCanonicalCandidate[]> {
   const params = new URLSearchParams({ source })
   if (query) {
     params.set('q', query)
@@ -374,9 +325,4 @@ export async function fetchCanonicalCandidates(
   )
 }
 
-export type AtlasCanonicalCandidates = Array<{
-  translationKey: string
-  title: string
-  localeStatus: Record<string, boolean>
-  publishable: Record<string, boolean>
-}>
+export type AtlasCanonicalCandidates = AtlasCanonicalCandidate[]

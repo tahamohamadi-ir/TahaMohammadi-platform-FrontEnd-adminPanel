@@ -303,3 +303,116 @@ describe('atlas API client (Plan B Task 8)', () => {
     expect(new Headers(initOf().headers).get('If-Match')).toBe(OLD_REVISION)
   })
 })
+
+describe('atlas wire contract pins (Plan B Task 8 fix round)', () => {
+  beforeEach(() => {
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  function initOf(index = 0): RequestInit {
+    const [, init] = vi.mocked(fetch).mock.calls[index] as [string, RequestInit]
+    return init ?? {}
+  }
+
+  function respond(body: unknown, status = 200) {
+    vi.mocked(fetch).mockResolvedValue(
+      new Response(JSON.stringify(body), {
+        status,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    )
+  }
+
+  it('POST nodes sends If-Match and the write body', async () => {
+    respond({
+      publicKey: 'topic-1',
+      nodeTypeKey: 'topic',
+      canonicalSource: 'none',
+      importance: 50,
+      mobileOverviewPriority: 'none',
+      visible: true,
+      groupKeys: [],
+    })
+    const { createAtlasNode } = await import('@/lib/api/atlas')
+    await createAtlasNode(
+      3,
+      { nodeTypeKey: 'topic', importance: 50 },
+      OLD_REVISION,
+    )
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
+    expect(String(url)).toBe('/api/v1/admin/atlas/versions/3/nodes')
+    expect(init.method).toBe('POST')
+    expect(new Headers(init.headers).get('If-Match')).toBe(OLD_REVISION)
+    expect(JSON.parse(String(init.body))).toEqual({
+      nodeTypeKey: 'topic',
+      importance: 50,
+    })
+  })
+
+  it('node type create without revision sends no If-Match', async () => {
+    respond({
+      key: 'topic',
+      label_en: 'Topic',
+      label_fa: 'موضوع',
+      active: true,
+      canonicalSource: 'none',
+      defaultImportance: 50,
+      sort_order: 0,
+    })
+    const { saveNodeType } = await import('@/lib/api/atlas')
+    await saveNodeType({
+      key: 'topic',
+      label_en: 'Topic',
+      label_fa: 'موضوع',
+      active: true,
+    })
+    expect(new Headers(initOf().headers).get('If-Match')).toBeNull()
+  })
+
+  it('node type in use surfaces a 409 as kind conflict', async () => {
+    respond({ detail: 'Node type still referenced by nodes.' }, 409)
+    const { saveNodeType } = await import('@/lib/api/atlas')
+    await expect(
+      saveNodeType({ key: 'x', label_en: 'x', label_fa: 'x' }, '3-old'),
+    ).rejects.toMatchObject({ kind: 'conflict', status: 409 })
+  })
+
+  it('VALIDATION_BLOCKED (400) preserves the issued envelope', async () => {
+    respond(
+      {
+        code: 'VALIDATION_BLOCKED',
+        message: 'The graph blocked activation.',
+        issues: [{ code: 'DANGLING_RELATION_ENDPOINT', field: 'sourceKey' }],
+      },
+      400,
+    )
+    const { activateAtlasVersion } = await import('@/lib/api/atlas')
+    const { AdminApiError: AdminApiErrorClass } = await import('@/lib/api/auth')
+    const error = await activateAtlasVersion(3, OLD_REVISION).catch((e) => e)
+    expect(error).toBeInstanceOf(AdminApiErrorClass)
+    expect(error).toMatchObject({
+      status: 400,
+      code: 'VALIDATION_BLOCKED',
+      message: 'The graph blocked activation.',
+    })
+  })
+
+  it('activate uses If-Match header and POST method', async () => {
+    respond({
+      id: 3,
+      status: 'active',
+      publishedAt: '2026-09-18T00:00:00+00:00',
+      enqueuedPublicationJob: 12,
+    })
+    const { activateAtlasVersion } = await import('@/lib/api/atlas')
+    await activateAtlasVersion(3, OLD_REVISION)
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
+    expect(String(url)).toBe('/api/v1/admin/atlas/versions/3/activate')
+    expect(init.method).toBe('POST')
+    expect(new Headers(init.headers).get('If-Match')).toBe(OLD_REVISION)
+  })
+})
