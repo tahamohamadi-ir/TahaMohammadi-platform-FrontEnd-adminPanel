@@ -2121,6 +2121,16 @@ export interface components {
             label: string;
         };
         /**
+         * LocalizedFeaturedRecordOut
+         * @description Canonical resolver-family reference; content remains separately governed.
+         */
+        LocalizedFeaturedRecordOut: {
+            /** Family */
+            family: string;
+            /** Id */
+            id: string;
+        };
+        /**
          * LocalizedNavLinkOut
          * @description One navigation link for localized site settings.
          */
@@ -2209,12 +2219,16 @@ export interface components {
         LocalizedSiteSettingsAdminOut: {
             /** Audiencelinks */
             audienceLinks?: components["schemas"]["LocalizedAudienceLinkOut"][];
+            /** Brandmediaid */
+            brandMediaId?: number | null;
             /** Brandname */
             brandName: string;
             /** Contentcopy */
             contentCopy?: {
                 [key: string]: string;
             };
+            /** Featuredrecords */
+            featuredRecords?: components["schemas"]["LocalizedFeaturedRecordOut"][];
             /** Footertext */
             footerText: string;
             /** Locale */
@@ -2246,12 +2260,16 @@ export interface components {
             audienceLinks?: {
                 [key: string]: unknown;
             }[] | null;
+            /** Brandmediaid */
+            brandMediaId?: number | null;
             /** Brandname */
             brandName?: string | null;
             /** Contentcopy */
             contentCopy?: {
                 [key: string]: unknown;
             } | null;
+            /** Featuredrecords */
+            featuredRecords?: components["schemas"]["LocalizedFeaturedRecordOut"][] | null;
             /** Footertext */
             footerText?: string | null;
             /** Navlinks */
