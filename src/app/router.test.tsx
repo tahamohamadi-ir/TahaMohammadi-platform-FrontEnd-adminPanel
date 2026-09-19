@@ -37,3 +37,39 @@ describe('AppRouter', () => {
     })
   })
 })
+
+describe('Atlas routes (Plan B Task 9)', () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(new Response(null, { status: 401 })),
+    )
+  })
+
+  const ATLAS_PATHS = [
+    '/atlas',
+    '/atlas/7',
+    '/atlas/taxonomy',
+    '/atlas/7/preview',
+  ] as const
+
+  it.each(ATLAS_PATHS)(
+    'redirects unauthenticated users from %s to sign-in',
+    async (path) => {
+      render(
+        <QueryClientProvider client={createTestQueryClient()}>
+          <MemoryRouter initialEntries={[path]}>
+            <AuthProvider>
+              <AppRouter />
+            </AuthProvider>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      )
+      await waitFor(() => {
+        expect(
+          screen.getByRole('heading', { name: 'Sign in' }),
+        ).toBeInTheDocument()
+      })
+    },
+  )
+})

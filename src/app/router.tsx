@@ -2,6 +2,10 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
+import { AtlasEditorPage } from '@/pages/AtlasEditorPage'
+import { AtlasPreviewPage } from '@/pages/AtlasPreviewPage'
+import { AtlasTaxonomyPage } from '@/pages/AtlasTaxonomyPage'
+import { AtlasVersionsPage } from '@/pages/AtlasVersionsPage'
 import { ApprovalQueuePage } from '@/pages/ApprovalQueuePage'
 import { ContentEditPage } from '@/pages/ContentEditPage'
 import { ContentListPage } from '@/pages/ContentListPage'
@@ -132,6 +136,38 @@ export function AppRouter() {
         element={
           <ProtectedRoute requireStaff>
             <ContentEditPageRoute />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="atlas"
+        element={
+          <ProtectedRoute requireStaff>
+            <AtlasVersionsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="atlas/:versionId"
+        element={
+          <ProtectedRoute requireStaff>
+            <AtlasEditorPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="atlas/taxonomy"
+        element={
+          <ProtectedRoute requireStaff>
+            <AtlasTaxonomyPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="atlas/:versionId/preview"
+        element={
+          <ProtectedRoute requireStaff>
+            <AtlasPreviewPage />
           </ProtectedRoute>
         }
       />

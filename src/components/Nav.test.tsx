@@ -89,3 +89,20 @@ describe('permission-aware navigation (ADMIN-130)', () => {
     ).not.toBeInTheDocument()
   })
 })
+
+describe('Atlas navigation entry (Plan B Task 9)', () => {
+  it('ships the Atlas entry staff-only', () => {
+    const atlas = ADMIN_NAV_ITEMS.find((item) => item.to === '/atlas')
+    expect(atlas).toBeDefined()
+    expect(atlas?.label).toBe('Atlas')
+    expect(atlas?.requiresStaff).toBe(true)
+  })
+
+  it('hides Atlas from non-staff users', () => {
+    const visible = filterNavItems(
+      ADMIN_NAV_ITEMS,
+      staffUser({ isStaff: false }),
+    )
+    expect(visible.map((item) => item.to)).not.toContain('/atlas')
+  })
+})
