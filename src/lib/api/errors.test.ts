@@ -41,5 +41,33 @@ describe('normalizeAdminError', () => {
     const error = await normalizeAdminError(response)
     expect(error.kind).toBe('validation')
     expect(error.fieldErrors.email).toBe('Required')
+    expect(error.issues).toEqual([])
+  })
+
+  it('carries the validation issues array without dropping it', async () => {
+    const response = new Response(
+      JSON.stringify({
+        code: 'VALIDATION_BLOCKED',
+        message: 'The publish battery refused.',
+        issues: [
+          {
+            code: 'HIERARCHY_CYCLE',
+            relationKey: 'a~contains~b',
+            messageToken: 'atlas.hierarchyCycle',
+          },
+        ],
+      }),
+      { status: 409 },
+    )
+
+    const error = await normalizeAdminError(response)
+    expect(error.code).toBe('VALIDATION_BLOCKED')
+    expect(error.issues).toEqual([
+      {
+        code: 'HIERARCHY_CYCLE',
+        messageToken: 'atlas.hierarchyCycle',
+        relationKey: 'a~contains~b',
+      },
+    ])
   })
 })

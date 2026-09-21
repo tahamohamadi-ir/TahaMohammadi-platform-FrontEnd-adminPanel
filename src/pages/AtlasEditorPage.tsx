@@ -4,8 +4,13 @@ import { useParams } from 'react-router-dom'
 
 import { NodeForm } from '@/components/atlas/NodeForm'
 import { AuthoringGraph } from '@/components/atlas/AuthoringGraph'
+import {
+  PublishDialog,
+  type PublishResult,
+} from '@/components/atlas/PublishDialog'
 import { RelationForm } from '@/components/atlas/RelationForm'
 import { RelationTable } from '@/components/atlas/RelationTable'
+import { ValidationPanel } from '@/components/atlas/ValidationPanel'
 import { Notice, SelectField } from '@/components/ui/primitives'
 import {
   deleteAtlasRelation,
@@ -13,6 +18,8 @@ import {
   fetchAtlasVersion,
   listTaxonomy,
   updateAtlasNode,
+  validateAtlasVersion,
+  type AtlasValidationOut,
 } from '@/lib/api/atlas'
 import { AdminApiError } from '@/lib/api/auth'
 
@@ -30,7 +37,8 @@ function toErrorMessage(caught: unknown, fallback: string): string {
  * authoring graph (Task 14) selects nodes/relations into the same state
  * the pickers drive and writes pins through the node PATCH endpoint;
  * Inspect selects the relation's source node as the graph-selection
- * bridge. Validation panel and publish arrive in later tasks.
+ * bridge. Validation panel and publish (Task 15) close the authoring loop;
+ * a non-draft version renders a read-only status view.
  */
 export function AtlasEditorPage() {
   const { versionId } = useParams()
@@ -45,6 +53,12 @@ export function AtlasEditorPage() {
     null,
   )
   const [pinError, setPinError] = useState<string | null>(null)
+  const [showPublish, setShowPublish] = useState(false)
+  const [publishedResult, setPublishedResult] = useState<PublishResult | null>(
+    null,
+  )
+  const [blockedOverride, setBlockedOverride] =
+    useState<AtlasValidationOut | null>(null)
 
   const versionQuery = useQuery({
     queryKey: ['atlas', 'versions', validId ? id : 'unknown'],
@@ -59,6 +73,11 @@ export function AtlasEditorPage() {
   const taxonomyQuery = useQuery({
     queryKey: ['atlas', 'taxonomy'],
     queryFn: listTaxonomy,
+    enabled: validId,
+  })
+  const validationQuery = useQuery({
+    queryKey: ['atlas', 'versions', validId ? id : 'unknown', 'validation'],
+    queryFn: () => validateAtlasVersion(id),
     enabled: validId,
   })
 
@@ -107,9 +126,20 @@ export function AtlasEditorPage() {
   }
 
   const pending =
-    versionQuery.isPending || graphQuery.isPending || taxonomyQuery.isPending
+    versionQuery.isPending ||
+    graphQuery.isPending ||
+    taxonomyQuery.isPending ||
+    validationQuery.isPending
   const error =
-    versionQuery.error ?? graphQuery.error ?? taxonomyQuery.error ?? null
+    versionQuery.error ??
+    graphQuery.error ??
+    taxonomyQuery.error ??
+    validationQuery.error ??
+    null
+  const version = versionQuery.data ?? null
+  const isDraft = version?.status === 'draft'
+  const publishedAt =
+    (version as { publishedAt?: string } | null)?.publishedAt ?? null
   const nodes = graphQuery.data?.nodes ?? []
   const selected =
     nodes.find((row) => row.publicKey === selectedKey) ?? nodes[0] ?? null
@@ -137,7 +167,29 @@ export function AtlasEditorPage() {
           {toErrorMessage(error, 'Failed to load the Atlas editor.')}
         </Notice>
       ) : null}
-      {!pending && !error ? (
+      {!pending && !error && !isDraft ? (
+        <>
+          {version?.status === 'active' ? (
+            <Notice tone="success" title="This version is published">
+              Published {publishedAt ?? revision}. The active version is
+              read-only — clone it to author a new draft.
+            </Notice>
+          ) : (
+            <Notice tone="info" title="This version is archived">
+              Archived versions are read-only.
+            </Notice>
+          )}
+          {publishedResult ? (
+            <p role="status">
+              Published {publishedResult.publishedAt}
+              {publishedResult.enqueuedPublicationJob !== null
+                ? ` · Publication job ${publishedResult.enqueuedPublicationJob}`
+                : null}
+            </p>
+          ) : null}
+        </>
+      ) : null}
+      {!pending && !error && isDraft ? (
         <>
           <h2>Authoring graph</h2>
           <AuthoringGraph
@@ -230,6 +282,51 @@ export function AtlasEditorPage() {
             <Notice tone="error" title="Failed to delete the relation">
               {relationDeleteError}
             </Notice>
+          ) : null}
+
+          <ValidationPanel
+            issues={
+              blockedOverride ??
+              validationQuery.data ?? { blocking: [], warnings: [] }
+            }
+            onGoTo={(issue) => {
+              if (issue.nodeKey) {
+                setSelectedKey(issue.nodeKey)
+              } else if (issue.relationKey) {
+                setSelectedRelationKey(issue.relationKey)
+              }
+            }}
+            onPublish={() => setShowPublish(true)}
+          />
+          {showPublish && revision !== '' ? (
+            <PublishDialog
+              versionId={id}
+              revision={revision}
+              versionLabel={version?.label ?? `version ${id}`}
+              nodeCount={version?.nodeCount ?? nodes.length}
+              relationCount={version?.relationCount ?? relations.length}
+              warningCount={
+                (blockedOverride ?? validationQuery.data)?.warnings.length ?? 0
+              }
+              onPublished={(result) => {
+                setPublishedResult(result)
+                setShowPublish(false)
+                setBlockedOverride(null)
+                refreshAfterMutation()
+              }}
+              onValidationBlocked={(issues) => {
+                setBlockedOverride({
+                  blocking: issues,
+                  warnings: validationQuery.data?.warnings ?? [],
+                })
+              }}
+              onReload={() => {
+                setBlockedOverride(null)
+                setShowPublish(false)
+                refreshAfterMutation()
+              }}
+              onClose={() => setShowPublish(false)}
+            />
           ) : null}
         </>
       ) : null}
