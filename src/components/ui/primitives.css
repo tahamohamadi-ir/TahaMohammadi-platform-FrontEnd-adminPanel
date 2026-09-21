@@ -36,6 +36,8 @@
   padding-block: var(--admin-space-2);
   padding-inline: var(--admin-space-3);
   inline-size: 100%;
+  /* Keyboard- and touch-sized targets grow by padding, never by text. */
+  min-block-size: 2.75rem;
 }
 
 .admin-input[aria-invalid='true'] {
@@ -52,6 +54,8 @@
   grid-template-columns: auto minmax(0, 1fr);
   align-items: start;
   column-gap: var(--admin-space-2);
+  /* The label toggles the box, so the whole row is the 44px target. */
+  min-block-size: 2.75rem;
 }
 
 .admin-field--check .admin-field__description {

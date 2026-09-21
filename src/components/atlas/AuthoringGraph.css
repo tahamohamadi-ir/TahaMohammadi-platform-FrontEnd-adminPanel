@@ -1,0 +1,14 @@
+/* Atlas authoring-graph interaction styles. Coordinates stay physical
+ * (the svg carries direction:ltr inline); these rules only make focus
+ * visible and declare the pointer cursor. */
+
+.atlas-graph [role='graphics-symbol'],
+.atlas-graph [role='button'] {
+  cursor: pointer;
+}
+
+.atlas-graph [role='graphics-symbol']:focus-visible,
+.atlas-graph [role='button']:focus-visible {
+  outline: 3px solid var(--admin-color-brand);
+  outline-offset: 3px;
+}

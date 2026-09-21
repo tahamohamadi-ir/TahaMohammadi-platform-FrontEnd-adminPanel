@@ -1,5 +1,6 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 
+import './AuthoringGraph.css'
 import {
   GRAPH_VIEW,
   computeNodePositions,
@@ -68,7 +69,10 @@ export function AuthoringGraph({
   onPin,
 }: AuthoringGraphProps) {
   const [focusedKey, setFocusedKey] = useState<string | null>(null)
-  const [drag, setDrag] = useState<{
+  // The in-progress drag lives in a ref, not state: a fast down/move/up
+  // burst can land inside one render batch, and a state closure would
+  // still read the pre-drag null and drop the pin write.
+  const dragRef = useRef<{
     key: string
     startX: number
     startY: number
@@ -141,15 +145,35 @@ export function AuthoringGraph({
   function handlePointerDown(event: React.PointerEvent, key: string): void {
     const world = positions[key]
     if (!world) return
-    setDrag({
+    dragRef.current = {
       key,
       startX: event.clientX,
       startY: event.clientY,
       orig: world,
-    })
+    }
+    // Retarget the rest of this gesture to the pressed node: once the
+    // cursor leaves the node (or the SVG entirely) the move/up events
+    // would otherwise bubble outside the authoring surface and the pin
+    // write would be silently dropped. Release is implicit on pointerup;
+    // the guarded call keeps non-pointer test events working.
+    try {
+      const target = event.currentTarget as Element & {
+        setPointerCapture?: (pointerId: number) => void
+      }
+      if (
+        typeof target.setPointerCapture === 'function' &&
+        typeof event.pointerId === 'number'
+      ) {
+        target.setPointerCapture(event.pointerId)
+      }
+    } catch {
+      // Capture unavailable (test events, old engines): the SVG-level
+      // move/up listeners still serve drags that stay inside the surface.
+    }
   }
 
   function handlePointerMove(event: React.PointerEvent): void {
+    const drag = dragRef.current
     if (!drag) return
     setPreview({
       key: drag.key,
@@ -159,13 +183,14 @@ export function AuthoringGraph({
   }
 
   function handlePointerUp(event: React.PointerEvent): void {
+    const drag = dragRef.current
+    dragRef.current = null
+    setPreview(null)
     if (!drag) return
     const dx = event.clientX - drag.startX
     const dy = event.clientY - drag.startY
     const key = drag.key
     const orig = drag.orig
-    setDrag(null)
-    setPreview(null)
     // A press without movement is a selection click, never a pin write:
     // sub-pixel pointer jitter must not produce a PATCH.
     if (Math.hypot(dx, dy) < 2) return
@@ -185,6 +210,7 @@ export function AuthoringGraph({
     <svg
       role="graphics-document"
       aria-label="Atlas authoring graph"
+      className="atlas-graph"
       viewBox={`0 0 ${GRAPH_VIEW.width} ${GRAPH_VIEW.height}`}
       width="100%"
       data-scale={transform.scale}
@@ -194,7 +220,7 @@ export function AuthoringGraph({
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
       onPointerCancel={() => {
-        setDrag(null)
+        dragRef.current = null
         setPreview(null)
       }}
       onClick={handleBackgroundClick}
@@ -303,6 +329,8 @@ export function AuthoringGraph({
                 strokeWidth={2}
               />
             ) : null}
+            {/* Pointer hit halo: a 44px target over the 24px visual. */}
+            <circle data-hit="true" r={22} fill="transparent" stroke="none" />
             <circle
               r={selected ? 14 : 12}
               fill={selected ? '#38bdf8' : '#0ea5e9'}
