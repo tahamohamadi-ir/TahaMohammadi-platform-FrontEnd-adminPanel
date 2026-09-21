@@ -1842,6 +1842,16 @@ export interface components {
             /** Active */
             active: boolean;
             /**
+             * Allowedsourcetypes
+             * @default []
+             */
+            allowedSourceTypes: string[];
+            /**
+             * Allowedtargettypes
+             * @default []
+             */
+            allowedTargetTypes: string[];
+            /**
              * Canonicalsource
              * @default none
              */
@@ -1856,6 +1866,11 @@ export interface components {
              * @default true
              */
             directedDefault: boolean;
+            /**
+             * Hierarchyrole
+             * @default false
+             */
+            hierarchyRole: boolean;
             /** Key */
             key: string;
             /** Label En */

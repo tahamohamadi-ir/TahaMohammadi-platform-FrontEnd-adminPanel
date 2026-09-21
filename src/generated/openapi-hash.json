@@ -1,7 +1,7 @@
 {
   "schema": "admin-openapi.json",
-  "sha256": "43b8a666f1416412883b17b09c27571de52cbaec06e7bf3c9efe92bb03141dd3",
-  "acceptedBackendCommit": "5ce30a10484188a8f478e9a53300d49b13f258e0",
+  "sha256": "76f29ffb5ebbe25cb7f2129f4e5c224c556bc9e0d5e5fb822701551b53cd43c5",
+  "acceptedBackendCommit": "9d582d1c88330c5944de6b0431ce29aa7fe4daaf",
   "openapiVersion": "0.1.0",
   "pathCount": 79
 }
