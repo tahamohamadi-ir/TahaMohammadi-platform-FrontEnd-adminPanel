@@ -85,7 +85,6 @@ describe('Atlas route resolution (Plan B Task 9 fix)', () => {
   }
 
   it.each([
-    ['/atlas/7', 'atlas-editor-placeholder'],
     ['/atlas/taxonomy', 'atlas-taxonomy-placeholder'],
     ['/atlas/7/preview', 'atlas-preview-placeholder'],
   ])('resolves %s to its protected placeholder target', async (path, id) => {
@@ -153,6 +152,77 @@ describe('Atlas versions route (Plan B Task 10)', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('heading', { name: 'Atlas versions' }),
+      ).toBeInTheDocument()
+    })
+  })
+})
+
+describe('Atlas editor route (Plan B Task 11)', () => {
+  const AUTHED = {
+    id: 1,
+    email: 'admin@example.com',
+    displayName: 'Admin',
+    isStaff: true,
+    mfaEnrolled: true,
+    otpVerified: true,
+    featureFlags: {},
+  }
+
+  function jsonResponse(body: unknown, status = 200) {
+    return new Response(JSON.stringify(body), {
+      status,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+
+  it('resolves /atlas/7 to the editor host', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) => {
+        const target = String(url)
+        if (target.endsWith('/auth/me')) {
+          return Promise.resolve(jsonResponse(AUTHED))
+        }
+        if (target.endsWith('/atlas/versions/7')) {
+          return Promise.resolve(
+            jsonResponse({
+              id: 7,
+              label: 'Draft',
+              status: 'draft',
+              nodeCount: 0,
+              relationCount: 0,
+              revision: '7-2026-09-19T00:00:00+00:00',
+              createdAt: '2026-09-19T00:00:00+00:00',
+              updatedAt: '2026-09-19T00:00:00+00:00',
+            }),
+          )
+        }
+        if (target.endsWith('/atlas/versions/7/graph')) {
+          return Promise.resolve(
+            jsonResponse({ nodes: [], relations: [], groups: [] }),
+          )
+        }
+        if (target.endsWith('/atlas/node-types')) {
+          return Promise.resolve(jsonResponse([]))
+        }
+        if (target.endsWith('/atlas/relation-types')) {
+          return Promise.resolve(jsonResponse([]))
+        }
+        return Promise.resolve(jsonResponse({ detail: 'unused' }, 500))
+      }),
+    )
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter initialEntries={['/atlas/7']}>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Atlas editor' }),
       ).toBeInTheDocument()
     })
   })

@@ -2,6 +2,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
+import { AtlasEditorPage } from '@/pages/AtlasEditorPage'
 import { AtlasVersionsPage } from '@/pages/AtlasVersionsPage'
 import { ApprovalQueuePage } from '@/pages/ApprovalQueuePage'
 import { ContentEditPage } from '@/pages/ContentEditPage'
@@ -148,7 +149,7 @@ export function AppRouter() {
         path="atlas/:versionId"
         element={
           <ProtectedRoute requireStaff>
-            <div data-testid="atlas-editor-placeholder" />
+            <AtlasEditorPage />
           </ProtectedRoute>
         }
       />
