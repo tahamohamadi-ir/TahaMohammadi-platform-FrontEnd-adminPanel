@@ -198,12 +198,11 @@ describe('RelationForm (Plan B Task 12)', () => {
 
   it('creates a relation with the revision header', async () => {
     vi.mocked(fetch).mockImplementation((url: string | URL | Request) => {
-        if (String(url).endsWith('/atlas/versions/3/relations')) {
-          return Promise.resolve(jsonResponse(RELATION, 201))
-        }
-        return Promise.resolve(jsonResponse({ detail: 'unused' }, 500))
-      },
-    )
+      if (String(url).endsWith('/atlas/versions/3/relations')) {
+        return Promise.resolve(jsonResponse(RELATION, 201))
+      }
+      return Promise.resolve(jsonResponse({ detail: 'unused' }, 500))
+    })
     const onSaved = vi.fn()
     renderForm({ onSaved })
     fireEvent.change(screen.getByLabelText('Source'), {
