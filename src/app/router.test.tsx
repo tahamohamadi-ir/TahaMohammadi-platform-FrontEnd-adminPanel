@@ -73,7 +73,7 @@ describe('Atlas routes (Plan B Task 9)', () => {
     },
   )
 })
-describe('Atlas route resolution (Plan B Task 9 fix)', () => {
+describe('Atlas preview route (Plan B Task 16)', () => {
   const AUTHED = {
     id: 1,
     email: 'admin@example.com',
@@ -84,34 +84,46 @@ describe('Atlas route resolution (Plan B Task 9 fix)', () => {
     featureFlags: {},
   }
 
-  it.each([['/atlas/7/preview', 'atlas-preview-placeholder']])(
-    'resolves %s to its protected placeholder target',
-    async (path, id) => {
-      vi.stubGlobal(
-        'fetch',
-        vi.fn().mockImplementation(() =>
-          Promise.resolve(
-            new Response(JSON.stringify(AUTHED), {
+  it('resolves /atlas/7/preview to the preview page', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(
+              String(url).endsWith('/auth/me')
+                ? AUTHED
+                : String(url).endsWith('/atlas/versions/7/preview-token')
+                  ? {
+                      preview_url: '/en/atlas/preview/#token=t',
+                      expires_at: 1788243600,
+                      version_id: 7,
+                    }
+                  : [],
+            ),
+            {
               status: 200,
               headers: { 'content-type': 'application/json' },
-            }),
+            },
           ),
         ),
-      )
-      render(
-        <QueryClientProvider client={createTestQueryClient()}>
-          <MemoryRouter initialEntries={[path]}>
-            <AuthProvider>
-              <AppRouter />
-            </AuthProvider>
-          </MemoryRouter>
-        </QueryClientProvider>,
-      )
-      await waitFor(() => {
-        expect(screen.getByTestId(id)).toBeInTheDocument()
-      })
-    },
-  )
+      ),
+    )
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter initialEntries={['/atlas/7/preview']}>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Atlas preview' }),
+      ).toBeInTheDocument()
+    })
+  })
 })
 
 describe('Atlas versions route (Plan B Task 10)', () => {

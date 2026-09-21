@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AtlasEditorPage } from '@/pages/AtlasEditorPage'
+import { AtlasPreviewPage } from '@/pages/AtlasPreviewPage'
 import { AtlasTaxonomyPage } from '@/pages/AtlasTaxonomyPage'
 import { AtlasVersionsPage } from '@/pages/AtlasVersionsPage'
 import { ApprovalQueuePage } from '@/pages/ApprovalQueuePage'
@@ -166,7 +167,7 @@ export function AppRouter() {
         path="atlas/:versionId/preview"
         element={
           <ProtectedRoute requireStaff>
-            <div data-testid="atlas-preview-placeholder" />
+            <AtlasPreviewPage />
           </ProtectedRoute>
         }
       />
