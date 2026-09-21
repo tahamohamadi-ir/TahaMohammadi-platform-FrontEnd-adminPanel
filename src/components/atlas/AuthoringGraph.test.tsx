@@ -195,6 +195,23 @@ describe('AuthoringGraph (Plan B Task 14)', () => {
     expect(pin.y).toBeCloseTo(world['project-2b3c4d5e'].y - 10 / scale, 5)
   })
 
+  it('does not write a pin for a press without movement', () => {
+    const onPin = vi.fn()
+    const onSelect = vi.fn()
+    renderGraph({ onPin, onSelect })
+    const target = screen.getByRole('graphics-symbol', {
+      name: 'project-2b3c4d5e',
+    })
+    // A plain selection click: down and up at identical coordinates.
+    pointer(target, 'pointerdown', 100, 100)
+    pointer(target, 'pointerup', 100, 100)
+    expect(onPin).not.toHaveBeenCalled()
+    // Sub-pixel pointer jitter is still a click, not a drag.
+    pointer(target, 'pointerdown', 100, 100)
+    pointer(target, 'pointerup', 101, 100)
+    expect(onPin).not.toHaveBeenCalled()
+  })
+
   it('offers no drag-to-connect surface', () => {
     const { container } = renderGraph()
     expect(container.querySelectorAll('[data-connect]').length).toBe(0)

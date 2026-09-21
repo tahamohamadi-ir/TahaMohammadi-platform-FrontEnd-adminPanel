@@ -166,6 +166,9 @@ export function AuthoringGraph({
     const orig = drag.orig
     setDrag(null)
     setPreview(null)
+    // A press without movement is a selection click, never a pin write:
+    // sub-pixel pointer jitter must not produce a PATCH.
+    if (Math.hypot(dx, dy) < 2) return
     onPin(key, {
       x: orig.x + dx / transform.scale,
       y: orig.y + dy / transform.scale,
