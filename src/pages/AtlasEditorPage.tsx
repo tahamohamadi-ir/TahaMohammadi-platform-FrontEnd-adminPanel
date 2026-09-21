@@ -1,10 +1,13 @@
 import { useState } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
 import { NodeForm } from '@/components/atlas/NodeForm'
+import { RelationForm } from '@/components/atlas/RelationForm'
+import { RelationTable } from '@/components/atlas/RelationTable'
 import { Notice, SelectField } from '@/components/ui/primitives'
 import {
+  deleteAtlasRelation,
   fetchAtlasGraph,
   fetchAtlasVersion,
   listTaxonomy,
@@ -18,12 +21,14 @@ function toErrorMessage(caught: unknown, fallback: string): string {
   return fallback
 }
 
-/** Atlas editor host (Plan B Task 11 — minimal).
+/** Atlas editor host (Plan B Tasks 11–12 — minimal).
  *
- * Hosts the node form with live data: version revision, graph nodes and
- * groups, taxonomy. The full editor shell (authoring graph with selection,
- * relation form/table, validation panel, publish) arrives in later tasks;
- * until then a plain node picker selects the edited node.
+ * Hosts the node form plus the relation form/table with live data: version
+ * revision, graph nodes/relations/groups, taxonomy. The full editor shell
+ * (authoring graph with selection, validation panel, publish) arrives in
+ * later tasks; until then plain pickers select the edited node/relation,
+ * and Inspect selects the relation's source node as the interim bridge to
+ * graph selection (Task 14).
  */
 export function AtlasEditorPage() {
   const { versionId } = useParams()
@@ -31,6 +36,12 @@ export function AtlasEditorPage() {
   const validId = Number.isInteger(id) && id > 0
   const queryClient = useQueryClient()
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+  const [selectedRelationKey, setSelectedRelationKey] = useState<string | null>(
+    null,
+  )
+  const [relationDeleteError, setRelationDeleteError] = useState<string | null>(
+    null,
+  )
 
   const versionQuery = useQuery({
     queryKey: ['atlas', 'versions', validId ? id : 'unknown'],
@@ -46,6 +57,20 @@ export function AtlasEditorPage() {
     queryKey: ['atlas', 'taxonomy'],
     queryFn: listTaxonomy,
     enabled: validId,
+  })
+
+  const relationDeleteMutation = useMutation({
+    mutationFn: (key: string) => deleteAtlasRelation(id, key, revision),
+    onSuccess: (_data, key) => {
+      setRelationDeleteError(null)
+      if (selectedRelationKey === key) {
+        setSelectedRelationKey(null)
+      }
+      refreshAfterMutation()
+    },
+    onError: (caught) => {
+      setRelationDeleteError(toErrorMessage(caught, 'Failed to delete.'))
+    },
   })
 
   if (!validId) {
@@ -67,6 +92,10 @@ export function AtlasEditorPage() {
   const selected =
     nodes.find((row) => row.publicKey === selectedKey) ?? nodes[0] ?? null
   const revision = versionQuery.data?.revision ?? ''
+  const relations = graphQuery.data?.relations ?? []
+  const relationTypes = taxonomyQuery.data?.relationTypes ?? []
+  const editingRelation =
+    relations.find((row) => row.key === selectedRelationKey) ?? null
 
   function refreshAfterMutation() {
     void queryClient.invalidateQueries({
@@ -115,6 +144,49 @@ export function AtlasEditorPage() {
           ) : (
             <p>No nodes in this version yet.</p>
           )}
+
+          <h2>Relations</h2>
+          {revision !== '' ? (
+            <RelationForm
+              key={editingRelation?.key ?? 'new-relation'}
+              versionId={id}
+              revision={revision}
+              relation={editingRelation}
+              nodes={nodes}
+              nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
+              relationTypes={relationTypes}
+              onSaved={(row) => {
+                setSelectedRelationKey(row.key)
+                refreshAfterMutation()
+              }}
+              onDeleted={() => {
+                setSelectedRelationKey(null)
+                refreshAfterMutation()
+              }}
+            />
+          ) : null}
+          <RelationTable
+            relations={relations}
+            nodes={nodes}
+            nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
+            relationTypes={relationTypes}
+            onEdit={(key) => setSelectedRelationKey(key)}
+            onDelete={(key) => {
+              setRelationDeleteError(null)
+              relationDeleteMutation.mutate(key)
+            }}
+            onInspect={(key) => {
+              const target = relations.find((row) => row.key === key)
+              if (target) {
+                setSelectedKey(target.sourceKey)
+              }
+            }}
+          />
+          {relationDeleteError ? (
+            <Notice tone="error" title="Failed to delete the relation">
+              {relationDeleteError}
+            </Notice>
+          ) : null}
         </>
       ) : null}
     </main>
