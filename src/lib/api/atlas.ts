@@ -84,7 +84,16 @@ export async function fetchAtlasGraph(id: number): Promise<{
   relations: AtlasRelationRow[]
   groups: AtlasGroupRow[]
 }> {
-  return adminJson(`${BASE}/versions/${id}/graph`)
+  // Wire truth: `GET /versions/{id}/graph` does not exist backend-side
+  // (that path carries only the bulk `PUT`). The draft graph is composed
+  // from the three list endpoints, which is also what the editor host
+  // invalidates after every mutation.
+  const [nodes, relations, groups] = await Promise.all([
+    listAtlasNodes(id),
+    listAtlasRelations(id),
+    listAtlasGroups(id),
+  ])
+  return { nodes, relations, groups }
 }
 
 export async function saveAtlasGraph(

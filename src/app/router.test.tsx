@@ -197,10 +197,12 @@ describe('Atlas editor route (Plan B Task 11)', () => {
             }),
           )
         }
-        if (target.endsWith('/atlas/versions/7/graph')) {
-          return Promise.resolve(
-            jsonResponse({ nodes: [], relations: [], groups: [] }),
-          )
+        if (
+          target.endsWith('/atlas/versions/7/nodes') ||
+          target.endsWith('/atlas/versions/7/relations') ||
+          target.endsWith('/atlas/versions/7/groups')
+        ) {
+          return Promise.resolve(jsonResponse([]))
         }
         if (target.endsWith('/atlas/node-types')) {
           return Promise.resolve(jsonResponse([]))

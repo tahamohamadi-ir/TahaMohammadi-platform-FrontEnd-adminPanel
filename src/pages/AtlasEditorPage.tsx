@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 
 import { NodeForm } from '@/components/atlas/NodeForm'
+import { AuthoringGraph } from '@/components/atlas/AuthoringGraph'
 import { RelationForm } from '@/components/atlas/RelationForm'
 import { RelationTable } from '@/components/atlas/RelationTable'
 import { Notice, SelectField } from '@/components/ui/primitives'
@@ -11,6 +12,7 @@ import {
   fetchAtlasGraph,
   fetchAtlasVersion,
   listTaxonomy,
+  updateAtlasNode,
 } from '@/lib/api/atlas'
 import { AdminApiError } from '@/lib/api/auth'
 
@@ -24,11 +26,11 @@ function toErrorMessage(caught: unknown, fallback: string): string {
 /** Atlas editor host (Plan B Tasks 11–12 — minimal).
  *
  * Hosts the node form plus the relation form/table with live data: version
- * revision, graph nodes/relations/groups, taxonomy. The full editor shell
- * (authoring graph with selection, validation panel, publish) arrives in
- * later tasks; until then plain pickers select the edited node/relation,
- * and Inspect selects the relation's source node as the interim bridge to
- * graph selection (Task 14).
+ * revision, graph nodes/relations/groups, taxonomy. The deterministic 2D
+ * authoring graph (Task 14) selects nodes/relations into the same state
+ * the pickers drive and writes pins through the node PATCH endpoint;
+ * Inspect selects the relation's source node as the graph-selection
+ * bridge. Validation panel and publish arrive in later tasks.
  */
 export function AtlasEditorPage() {
   const { versionId } = useParams()
@@ -42,6 +44,7 @@ export function AtlasEditorPage() {
   const [relationDeleteError, setRelationDeleteError] = useState<string | null>(
     null,
   )
+  const [pinError, setPinError] = useState<string | null>(null)
 
   const versionQuery = useQuery({
     queryKey: ['atlas', 'versions', validId ? id : 'unknown'],
@@ -70,6 +73,25 @@ export function AtlasEditorPage() {
     },
     onError: (caught) => {
       setRelationDeleteError(toErrorMessage(caught, 'Failed to delete.'))
+    },
+  })
+
+  const pinMutation = useMutation({
+    mutationFn: ({
+      key,
+      pin,
+    }: {
+      key: string
+      pin: { x: number; y: number }
+    }) => updateAtlasNode(id, key, { pin }, revision),
+    onSuccess: () => {
+      setPinError(null)
+      refreshAfterMutation()
+    },
+    onError: (caught) => {
+      // The graph is controlled by the query data, so a failed write
+      // keeps the stored position and only communicates the failure.
+      setPinError(toErrorMessage(caught, 'Failed to save the pin.'))
     },
   })
 
@@ -117,6 +139,28 @@ export function AtlasEditorPage() {
       ) : null}
       {!pending && !error ? (
         <>
+          <h2>Authoring graph</h2>
+          <AuthoringGraph
+            graph={{
+              nodes,
+              relations,
+              groups: graphQuery.data?.groups ?? [],
+            }}
+            relationTypes={relationTypes}
+            selectedKey={selectedKey}
+            selectedRelationKey={selectedRelationKey}
+            onSelect={(key) => setSelectedKey(key)}
+            onSelectRelation={(key) => setSelectedRelationKey(key)}
+            onPin={(key, pin) => {
+              setPinError(null)
+              pinMutation.mutate({ key, pin })
+            }}
+          />
+          {pinError ? (
+            <Notice tone="error" title="Failed to save the pin">
+              {pinError}
+            </Notice>
+          ) : null}
           <SelectField
             id="atlas-editor-node"
             label="Node"

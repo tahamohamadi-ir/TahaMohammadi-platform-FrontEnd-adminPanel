@@ -99,11 +99,15 @@ describe('atlas API client (Plan B Task 8)', () => {
   })
 
   it('fetches the graph rows', async () => {
-    vi.mocked(fetch).mockResolvedValue(
-      jsonResponse({ nodes: [], relations: [], groups: [] }),
-    )
+    vi.mocked(fetch).mockImplementation(() => Promise.resolve(jsonResponse([])))
     const graph = await fetchAtlasGraph(3)
-    expect(urlOf()).toBe('/api/v1/admin/atlas/versions/3/graph')
+    // No GET /versions/{id}/graph exists backend-side (PUT only): the
+    // draft graph is composed from the three list endpoints.
+    expect(vi.mocked(fetch).mock.calls.map(([url]) => String(url))).toEqual([
+      '/api/v1/admin/atlas/versions/3/nodes',
+      '/api/v1/admin/atlas/versions/3/relations',
+      '/api/v1/admin/atlas/versions/3/groups',
+    ])
     expect(graph.nodes).toEqual([])
   })
 
