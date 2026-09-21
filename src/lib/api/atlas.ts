@@ -217,11 +217,13 @@ export type AtlasTaxonomy = {
   relationTypes: AtlasRelationTypeRow[]
 }
 
-export async function listAtlasNodeTypes(): Promise<AtlasTaxonomyRow[]> {
+export async function listAtlasNodeTypes(): Promise<AtlasNodeTypeRow[]> {
   return adminJson(`${BASE}/node-types`)
 }
 
-export async function listAtlasRelationTypes(): Promise<AtlasTaxonomyRow[]> {
+export async function listAtlasRelationTypes(): Promise<
+  AtlasRelationTypeRow[]
+> {
   return adminJson(`${BASE}/relation-types`)
 }
 
@@ -238,7 +240,7 @@ export async function saveNodeType(
     | components['schemas']['AtlasNodeTypeWriteIn']
     | components['schemas']['AtlasNodeTypePatchIn'],
   revision?: string,
-): Promise<AtlasTaxonomyRow> {
+): Promise<AtlasNodeTypeRow> {
   return adminJson(`${BASE}/node-types`, {
     method: 'POST',
     headers: {
@@ -252,9 +254,9 @@ export async function saveNodeType(
 export async function saveRelationType(
   body:
     | components['schemas']['AtlasRelationTypeWriteIn']
-    | components['schemas']['AtlasRelationTypePatchIn'],
+    | components['schemas']['AtlasNodeTypePatchIn'],
   revision?: string,
-): Promise<AtlasTaxonomyRow> {
+): Promise<AtlasRelationTypeRow> {
   return adminJson(`${BASE}/relation-types`, {
     method: 'POST',
     headers: {
@@ -283,6 +285,25 @@ export async function validateAtlasVersion(
   id: number,
 ): Promise<AtlasValidationOut> {
   return adminJson(`${BASE}/versions/${id}/validate`)
+}
+
+/** One wire issue from `validate_version(...).to_dict()` (spec §20).
+ *
+ * The validate endpoint answers `response={200: dict}` — no generated
+ * schema — so this shape is hand-written from the wire truth
+ * (`{code, nodeKey?, relationKey?, groupKey?, messageToken}`).
+ */
+export interface AtlasValidationIssue {
+  code: string
+  nodeKey?: string
+  relationKey?: string
+  groupKey?: string
+  messageToken: string
+}
+
+export interface AtlasValidationOut {
+  blocking: AtlasValidationIssue[]
+  warnings: AtlasValidationIssue[]
 }
 
 export async function activateAtlasVersion(

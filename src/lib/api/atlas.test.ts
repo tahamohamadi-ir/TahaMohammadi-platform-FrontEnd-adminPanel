@@ -165,13 +165,18 @@ describe('atlas API client (Plan B Task 8)', () => {
         201,
       ),
     )
-    await createAtlasRelation(3, {
-      sourceKey: 'project-x',
-      relationTypeKey: 'uses',
-      targetKey: 'method-y',
-    })
+    await createAtlasRelation(
+      3,
+      {
+        sourceKey: 'project-x',
+        relationTypeKey: 'uses',
+        targetKey: 'method-y',
+      },
+      OLD_REVISION,
+    )
     expect(urlOf()).toBe('/api/v1/admin/atlas/versions/3/relations')
     expect(initOf().method).toBe('POST')
+    expect(new Headers(initOf().headers).get('If-Match')).toBe(OLD_REVISION)
   })
 
   it('updates and deletes relations by composed key', async () => {
