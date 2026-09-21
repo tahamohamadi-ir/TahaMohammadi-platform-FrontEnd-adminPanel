@@ -3,6 +3,7 @@ import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AtlasEditorPage } from '@/pages/AtlasEditorPage'
+import { AtlasTaxonomyPage } from '@/pages/AtlasTaxonomyPage'
 import { AtlasVersionsPage } from '@/pages/AtlasVersionsPage'
 import { ApprovalQueuePage } from '@/pages/ApprovalQueuePage'
 import { ContentEditPage } from '@/pages/ContentEditPage'
@@ -157,7 +158,7 @@ export function AppRouter() {
         path="atlas/taxonomy"
         element={
           <ProtectedRoute requireStaff>
-            <div data-testid="atlas-taxonomy-placeholder" />
+            <AtlasTaxonomyPage />
           </ProtectedRoute>
         }
       />

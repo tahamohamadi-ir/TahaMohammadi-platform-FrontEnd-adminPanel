@@ -84,34 +84,34 @@ describe('Atlas route resolution (Plan B Task 9 fix)', () => {
     featureFlags: {},
   }
 
-  it.each([
-    ['/atlas/taxonomy', 'atlas-taxonomy-placeholder'],
-    ['/atlas/7/preview', 'atlas-preview-placeholder'],
-  ])('resolves %s to its protected placeholder target', async (path, id) => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockImplementation(() =>
-        Promise.resolve(
-          new Response(JSON.stringify(AUTHED), {
-            status: 200,
-            headers: { 'content-type': 'application/json' },
-          }),
+  it.each([['/atlas/7/preview', 'atlas-preview-placeholder']])(
+    'resolves %s to its protected placeholder target',
+    async (path, id) => {
+      vi.stubGlobal(
+        'fetch',
+        vi.fn().mockImplementation(() =>
+          Promise.resolve(
+            new Response(JSON.stringify(AUTHED), {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            }),
+          ),
         ),
-      ),
-    )
-    render(
-      <QueryClientProvider client={createTestQueryClient()}>
-        <MemoryRouter initialEntries={[path]}>
-          <AuthProvider>
-            <AppRouter />
-          </AuthProvider>
-        </MemoryRouter>
-      </QueryClientProvider>,
-    )
-    await waitFor(() => {
-      expect(screen.getByTestId(id)).toBeInTheDocument()
-    })
-  })
+      )
+      render(
+        <QueryClientProvider client={createTestQueryClient()}>
+          <MemoryRouter initialEntries={[path]}>
+            <AuthProvider>
+              <AppRouter />
+            </AuthProvider>
+          </MemoryRouter>
+        </QueryClientProvider>,
+      )
+      await waitFor(() => {
+        expect(screen.getByTestId(id)).toBeInTheDocument()
+      })
+    },
+  )
 })
 
 describe('Atlas versions route (Plan B Task 10)', () => {
@@ -223,6 +223,49 @@ describe('Atlas editor route (Plan B Task 11)', () => {
     await waitFor(() => {
       expect(
         screen.getByRole('heading', { name: 'Atlas editor' }),
+      ).toBeInTheDocument()
+    })
+  })
+})
+
+describe('Atlas taxonomy route (Plan B Task 13)', () => {
+  const AUTHED = {
+    id: 1,
+    email: 'admin@example.com',
+    displayName: 'Admin',
+    isStaff: true,
+    mfaEnrolled: true,
+    otpVerified: true,
+    featureFlags: {},
+  }
+
+  it('resolves /atlas/taxonomy to the taxonomy page', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockImplementation((url: string) =>
+        Promise.resolve(
+          new Response(
+            JSON.stringify(String(url).endsWith('/auth/me') ? AUTHED : []),
+            {
+              status: 200,
+              headers: { 'content-type': 'application/json' },
+            },
+          ),
+        ),
+      ),
+    )
+    render(
+      <QueryClientProvider client={createTestQueryClient()}>
+        <MemoryRouter initialEntries={['/atlas/taxonomy']}>
+          <AuthProvider>
+            <AppRouter />
+          </AuthProvider>
+        </MemoryRouter>
+      </QueryClientProvider>,
+    )
+    await waitFor(() => {
+      expect(
+        screen.getByRole('heading', { name: 'Atlas taxonomy' }),
       ).toBeInTheDocument()
     })
   })

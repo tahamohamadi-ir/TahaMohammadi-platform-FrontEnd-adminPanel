@@ -267,6 +267,43 @@ export async function saveRelationType(
   })
 }
 
+export async function updateNodeType(
+  key: string,
+  body: components['schemas']['AtlasNodeTypePatchIn'],
+): Promise<AtlasNodeTypeRow> {
+  return adminJson(`${BASE}/node-types/${encodeURIComponent(key)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function deleteNodeType(key: string): Promise<void> {
+  await adminJson(`${BASE}/node-types/${encodeURIComponent(key)}`, {
+    method: 'DELETE',
+  })
+}
+
+export async function updateRelationType(
+  key: string,
+  // Backend `patch_relation_type` declares `AtlasNodeTypePatchIn` (Task 8
+  // fix): the relation PATCH carries labels/active/sort only — hierarchy
+  // role and the allowed-pair lists are creation-time metadata.
+  body: components['schemas']['AtlasNodeTypePatchIn'],
+): Promise<AtlasRelationTypeRow> {
+  return adminJson(`${BASE}/relation-types/${encodeURIComponent(key)}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  })
+}
+
+export async function deleteRelationType(key: string): Promise<void> {
+  await adminJson(`${BASE}/relation-types/${encodeURIComponent(key)}`, {
+    method: 'DELETE',
+  })
+}
+
 export async function recomputeLayout(
   id: number,
   revision: string,

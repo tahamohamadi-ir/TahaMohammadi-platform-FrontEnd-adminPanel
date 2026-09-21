@@ -15,11 +15,15 @@ import {
   listTaxonomy,
   saveNodeType,
   saveRelationType,
+  deleteNodeType,
+  deleteRelationType,
   recomputeLayout,
   saveAtlasGraph,
   saveGroups,
   updateAtlasNode,
   updateAtlasRelation,
+  updateNodeType,
+  updateRelationType,
   updateAtlasVersionStatus,
   validateAtlasVersion,
 } from '@/lib/api/atlas'
@@ -244,6 +248,34 @@ describe('atlas API client (Plan B Task 8)', () => {
       label_fa: 'مطلع از',
     })
     expect(urlOf(1)).toBe('/api/v1/admin/atlas/relation-types')
+  })
+
+  it('patches and deletes taxonomy rows by key', async () => {
+    vi.mocked(fetch).mockImplementation(
+      (_url: string | URL | Request, init?: RequestInit) =>
+        Promise.resolve(
+          init?.method === 'DELETE'
+            ? new Response(null, { status: 204 })
+            : jsonResponse({
+                key: 'dataset',
+                label_en: 'Dataset',
+                label_fa: 'd',
+              }),
+        ),
+    )
+    await updateNodeType('dataset', { label_en: 'Dataset' })
+    expect(initOf(0).method).toBe('PATCH')
+    expect(urlOf(0)).toBe('/api/v1/admin/atlas/node-types/dataset')
+    await updateRelationType('informed-by', { active: false })
+    expect(initOf(1).method).toBe('PATCH')
+    expect(urlOf(1)).toBe('/api/v1/admin/atlas/relation-types/informed-by')
+    vi.mocked(fetch).mockResolvedValue(new Response(null, { status: 204 }))
+    await deleteNodeType('dataset')
+    expect(initOf(2).method).toBe('DELETE')
+    expect(urlOf(2)).toBe('/api/v1/admin/atlas/node-types/dataset')
+    await deleteRelationType('informed-by')
+    expect(initOf(3).method).toBe('DELETE')
+    expect(urlOf(3)).toBe('/api/v1/admin/atlas/relation-types/informed-by')
   })
 
   it('recomputes the layout with If-Match', async () => {
