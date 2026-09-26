@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest'
 const testDir = path.dirname(fileURLToPath(import.meta.url))
 const repositoryRoot = path.resolve(testDir, '..', '..', '..')
 const acceptedAdminSchemaSha256 =
-  'e03cacb02df14b6be68b2ad6aa8c22b19467b3b3b2ace542a7f971f58000d3ed'
+  '76f29ffb5ebbe25cb7f2129f4e5c224c556bc9e0d5e5fb822701551b53cd43c5'
 const pinPath = path.join(
   repositoryRoot,
   'src',

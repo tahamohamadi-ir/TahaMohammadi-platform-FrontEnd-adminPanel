@@ -1,6 +1,10 @@
 import type { components } from '@/generated/admin-api'
 import { adminFetch, setCsrfTokenProvider } from '@/lib/api/client'
-import { normalizeAdminError, normalizeNetworkError } from '@/lib/api/errors'
+import {
+  normalizeAdminError,
+  normalizeNetworkError,
+  type AdminErrorIssue,
+} from '@/lib/api/errors'
 
 export type AdminUserOut = components['schemas']['AdminUserOut']
 export type LoginIn = components['schemas']['LoginIn']
@@ -10,6 +14,7 @@ export class AdminApiError extends Error {
   readonly code: string
   readonly status?: number
   readonly fieldErrors: Record<string, string>
+  readonly issues: AdminErrorIssue[]
 
   constructor(
     message: string,
@@ -17,6 +22,7 @@ export class AdminApiError extends Error {
     code: string,
     status?: number,
     fieldErrors: Record<string, string> = {},
+    issues: AdminErrorIssue[] = [],
   ) {
     super(message)
     this.name = 'AdminApiError'
@@ -24,6 +30,7 @@ export class AdminApiError extends Error {
     this.code = code
     this.status = status
     this.fieldErrors = fieldErrors
+    this.issues = issues
   }
 }
 
@@ -37,6 +44,7 @@ async function toAdminApiError(response: Response): Promise<AdminApiError> {
     normalized.code,
     normalized.status,
     normalized.fieldErrors,
+    normalized.issues,
   )
 }
 
