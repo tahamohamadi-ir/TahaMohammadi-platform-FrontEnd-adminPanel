@@ -1,5 +1,9 @@
 import type { components } from '@/generated/admin-api'
-import { adminFetch, setCsrfTokenProvider } from '@/lib/api/client'
+import {
+  adminFetch,
+  setCsrfRejectedHandler,
+  setCsrfTokenProvider,
+} from '@/lib/api/client'
 import {
   normalizeAdminError,
   normalizeNetworkError,
@@ -82,22 +86,38 @@ export async function fetchCsrfToken(): Promise<string> {
   return body.csrfToken
 }
 
+/**
+ * Drop the cached token so the next mutation re-reads it from the server.
+ *
+ * `django.contrib.auth.login` rotates the CSRF secret and re-issues the
+ * `csrftoken` cookie, so any token captured before sign-in no longer matches
+ * the cookie and `admin_common._check_csrf` answers 403 `CSRF_FAILED`. Called
+ * after login and after any 403 so a rotated token is picked up exactly once.
+ */
+function invalidateCsrfToken(): void {
+  cachedCsrfToken = null
+}
+
 export function installDefaultCsrfProvider(): void {
-  setCsrfTokenProvider(async () => {
-    if (cachedCsrfToken) {
+  setCsrfTokenProvider(async (forceRefresh = false) => {
+    if (cachedCsrfToken && !forceRefresh) {
       return cachedCsrfToken
     }
     return fetchCsrfToken()
   })
+  setCsrfRejectedHandler(invalidateCsrfToken)
 }
 
 export async function loginAdmin(payload: LoginIn): Promise<AdminUserOut> {
   await fetchCsrfToken()
-  return adminJson<AdminUserOut>('/auth/login', {
+  const user = await adminJson<AdminUserOut>('/auth/login', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   })
+  // Login rotated the cookie; the pre-login token is now stale.
+  invalidateCsrfToken()
+  return user
 }
 
 export async function fetchCurrentAdmin(): Promise<AdminUserOut | null> {
@@ -112,6 +132,9 @@ export async function fetchCurrentAdmin(): Promise<AdminUserOut | null> {
 }
 
 export async function logoutAdmin(): Promise<void> {
-  await adminJson('/auth/logout', { method: 'POST' })
-  cachedCsrfToken = null
+  try {
+    await adminJson('/auth/logout', { method: 'POST' })
+  } finally {
+    invalidateCsrfToken()
+  }
 }

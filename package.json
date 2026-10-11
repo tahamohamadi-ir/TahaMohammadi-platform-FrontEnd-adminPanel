@@ -13,6 +13,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
+    "test:hermetic": "node tests/hermetic/run-hermetic.mjs",
     "generate:api-types": "openapi-typescript ../../Back-End/docs/contracts/openapi/current/admin-openapi.json -o src/generated/admin-api.ts"
   },
   "dependencies": {
