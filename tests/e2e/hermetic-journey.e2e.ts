@@ -469,4 +469,63 @@ test.describe('PU-25 hermetic admin journey', () => {
     expect(publicRead.status()).toBe(200)
     expect((await publicRead.json()).body).toBe('version two')
   })
+
+  test('a project draft stays private, publish is exact-locale, and archive removes it', async ({
+    page,
+  }) => {
+    await signIn(page)
+    const request = page.request
+    const slug = `hermetic-project-${Date.now()}`
+
+    const created = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/content/project',
+      {
+        locale: 'en',
+        slug,
+        title: 'Synthetic hermetic project',
+        status: 'draft',
+        fields: {},
+      },
+    )
+    expect(created.status).toBe('draft')
+    expect(
+      (
+        await request.get(`/api/projects/en/${encodeURIComponent(slug)}`)
+      ).status(),
+    ).toBe(404)
+
+    const published = await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/project/${created.id}/transition`,
+      { to: 'published' },
+    )
+    expect(published.status).toBe('published')
+
+    const publicRead = await request.get(
+      `/api/projects/en/${encodeURIComponent(slug)}`,
+    )
+    expect(publicRead.status()).toBe(200)
+    expect((await publicRead.json()).slug).toBe(slug)
+    expect(
+      (
+        await request.get(`/api/projects/fa/${encodeURIComponent(slug)}`)
+      ).status(),
+    ).toBe(404)
+
+    const archived = await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/project/${created.id}/transition`,
+      { to: 'archived' },
+    )
+    expect(archived.status).toBe('archived')
+    expect(
+      (
+        await request.get(`/api/projects/en/${encodeURIComponent(slug)}`)
+      ).status(),
+    ).toBe(404)
+  })
 })
