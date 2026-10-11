@@ -5,6 +5,9 @@ const PORT = 5173
 export default defineConfig({
   testDir: 'tests/e2e',
   testMatch: '**/*.e2e.ts',
+  // The hermetic journey needs the disposable Django stack from
+  // `npm run test:hermetic`. The default Vite server has no backend.
+  testIgnore: '**/hermetic-journey.e2e.ts',
   timeout: 30_000,
   retries: process.env.CI ? 1 : 0,
   use: {
