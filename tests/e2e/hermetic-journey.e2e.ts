@@ -528,4 +528,88 @@ test.describe('PU-25 hermetic admin journey', () => {
       ).status(),
     ).toBe(404)
   })
+
+  test('an Atlas draft accepts one real relation between two nodes', async ({
+    page,
+  }) => {
+    await signIn(page)
+    const request = page.request
+    const stamp = Date.now()
+    const nodeTypeKey = `hnode${stamp}`
+    const relationTypeKey = `hlink${stamp}`
+
+    await adminJson(request, 'POST', '/api/v1/admin/atlas/node-types', {
+      key: nodeTypeKey,
+      label_en: 'Hermetic node',
+      label_fa: 'گره آزمایشی',
+    })
+    await adminJson(request, 'POST', '/api/v1/admin/atlas/relation-types', {
+      key: relationTypeKey,
+      label_en: 'Hermetic link',
+      label_fa: 'پیوند آزمایشی',
+      allowedSourceTypes: [nodeTypeKey],
+      allowedTargetTypes: [nodeTypeKey],
+    })
+
+    const version = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/atlas/versions',
+      { label: `Hermetic graph ${stamp}` },
+    )
+    let revision = String(version.revision)
+
+    async function currentRevision(): Promise<string> {
+      const detail = await adminJson(
+        request,
+        'GET',
+        `/api/v1/admin/atlas/versions/${version.id}`,
+      )
+      return String(detail.revision)
+    }
+
+    const source = await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/atlas/versions/${version.id}/nodes`,
+      { nodeTypeKey },
+      revision,
+    )
+    revision = await currentRevision()
+    const target = await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/atlas/versions/${version.id}/nodes`,
+      { nodeTypeKey },
+      revision,
+    )
+    revision = await currentRevision()
+
+    const relation = await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/atlas/versions/${version.id}/relations`,
+      {
+        sourceKey: source.publicKey,
+        relationTypeKey,
+        targetKey: target.publicKey,
+      },
+      revision,
+    )
+    expect(relation.sourceKey).toBe(source.publicKey)
+    expect(relation.relationTypeKey).toBe(relationTypeKey)
+    expect(relation.targetKey).toBe(target.publicKey)
+
+    const listed = await adminJson(
+      request,
+      'GET',
+      `/api/v1/admin/atlas/versions/${version.id}/relations`,
+    )
+    expect(Array.isArray(listed)).toBe(true)
+    expect(
+      (listed as unknown as Array<{ key: string }>).some(
+        (row) => row.key === relation.key,
+      ),
+    ).toBe(true)
+  })
 })
