@@ -18,6 +18,10 @@ export const CONTENT_ENTITIES = [
   'download',
   'course',
   'creative-work',
+  'lesson',
+  'collection',
+  'landing',
+  'profile',
 ] as const
 
 export type ContentEntity = (typeof CONTENT_ENTITIES)[number]

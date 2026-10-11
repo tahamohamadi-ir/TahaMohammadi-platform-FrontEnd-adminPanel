@@ -62,6 +62,10 @@ describe('content API client (ADMIN-160/170)', () => {
     expect(CONTENT_ENTITIES).toContain('research-topic')
     expect(CONTENT_ENTITIES).toContain('project')
     expect(CONTENT_ENTITIES).toContain('publication')
+    expect(CONTENT_ENTITIES).toContain('lesson')
+    expect(CONTENT_ENTITIES).toContain('collection')
+    expect(CONTENT_ENTITIES).toContain('profile')
+    expect(CONTENT_ENTITIES).toContain('landing')
     expect(CONTENT_STATUSES).toEqual([
       'draft',
       'review',

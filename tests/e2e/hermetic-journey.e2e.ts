@@ -62,12 +62,21 @@ async function signIn(page: import('@playwright/test').Page): Promise<void> {
   await page.getByRole('button', { name: 'Sign in' }).click()
   await otp.waitFor({ state: 'visible', timeout: 10_000 })
 
-  // Clear the real one-failure throttle before submitting the valid code.
-  await page.waitForTimeout(2_000)
-  signInAttempts += 1
-  await otp.fill(await totpForStep(signInAttempts))
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(/\/dashboard/, { timeout: 15_000 })
+  // The first submit is the expected password-only refusal. django-otp then
+  // throttles, and it will not accept the same time step twice, so each
+  // attempt waits and uses a later step until the dashboard opens.
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    await page.waitForTimeout(2_000 * (attempt + 1))
+    signInAttempts += 1
+    await otp.fill(await totpForStep(signInAttempts))
+    await page.getByRole('button', { name: 'Sign in' }).click()
+    try {
+      await expect(page).toHaveURL(/\/dashboard/, { timeout: 4_000 })
+      return
+    } catch (error) {
+      if (attempt === 3) throw error
+    }
+  }
 }
 
 /**
@@ -611,5 +620,145 @@ test.describe('PU-25 hermetic admin journey', () => {
         (row) => row.key === relation.key,
       ),
     ).toBe(true)
+  })
+
+  test('lesson, collection, landing, and profile publish onto the public API', async ({
+    page,
+  }) => {
+    await signIn(page)
+    const request = page.request
+    const stamp = Date.now()
+
+    const course = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/content/course',
+      {
+        locale: 'en',
+        slug: `hermetic-course-${stamp}`,
+        title: 'Synthetic hermetic course',
+        status: 'draft',
+        fields: {},
+      },
+    )
+    await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/course/${course.id}/transition`,
+      { to: 'published' },
+    )
+
+    const lessonSlug = `hermetic-lesson-${stamp}`
+    const lesson = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/content/lesson',
+      {
+        locale: 'en',
+        slug: lessonSlug,
+        title: 'Synthetic hermetic lesson',
+        status: 'draft',
+        fields: { courseId: course.id, position: 1 },
+      },
+    )
+    expect(
+      (
+        await request.get(
+          `/api/v1/lessons/en/${course.slug}/${encodeURIComponent(lessonSlug)}`,
+        )
+      ).status(),
+    ).toBe(404)
+    await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/lesson/${lesson.id}/transition`,
+      { to: 'published' },
+    )
+    const lessonPublic = await request.get(
+      `/api/v1/lessons/en/${course.slug}/${encodeURIComponent(lessonSlug)}`,
+    )
+    expect(lessonPublic.status()).toBe(200)
+    expect((await lessonPublic.json()).slug).toBe(lessonSlug)
+    expect(
+      (
+        await request.get(
+          `/api/v1/lessons/fa/${course.slug}/${encodeURIComponent(lessonSlug)}`,
+        )
+      ).status(),
+    ).toBe(404)
+
+    const collectionSlug = `hermetic-collection-${stamp}`
+    const collection = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/content/collection',
+      {
+        locale: 'en',
+        slug: collectionSlug,
+        title: 'Synthetic hermetic collection',
+        status: 'draft',
+        fields: {},
+      },
+    )
+    await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/collection/${collection.id}/transition`,
+      { to: 'published' },
+    )
+    const collectionPublic = await request.get(
+      `/api/v1/collections/en/${encodeURIComponent(collectionSlug)}`,
+    )
+    expect(collectionPublic.status()).toBe(200)
+    expect((await collectionPublic.json()).slug).toBe(collectionSlug)
+
+    const landingSlug = `hermetic-landing-${stamp}`
+    const landing = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/content/landing',
+      {
+        locale: 'en',
+        slug: landingSlug,
+        title: 'Synthetic hermetic landing',
+        status: 'draft',
+        fields: {},
+      },
+    )
+    await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/landing/${landing.id}/transition`,
+      { to: 'published' },
+    )
+    const landingPublic = await request.get(
+      `/api/landings/en/${encodeURIComponent(landingSlug)}`,
+    )
+    expect(landingPublic.status()).toBe(200)
+    expect((await landingPublic.json()).slug).toBe(landingSlug)
+
+    expect((await request.get('/api/v1/site/en/journey')).status()).toBe(404)
+    const profile = await adminJson(
+      request,
+      'POST',
+      '/api/v1/admin/content/profile',
+      {
+        locale: 'en',
+        slug: 'about',
+        title: 'Synthetic hermetic profile',
+        status: 'draft',
+        fields: {},
+      },
+    )
+    await adminJson(
+      request,
+      'POST',
+      `/api/v1/admin/content/profile/${profile.id}/transition`,
+      { to: 'published' },
+    )
+    const journey = await request.get('/api/v1/site/en/journey')
+    expect(journey.status()).toBe(200)
+    expect((await journey.json()).locale).toBe('en')
+    expect((await request.get('/api/v1/site/fa/journey')).status()).toBe(404)
   })
 })

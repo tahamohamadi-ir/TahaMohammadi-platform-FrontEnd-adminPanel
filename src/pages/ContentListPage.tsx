@@ -26,6 +26,8 @@ const ENTITY_LABELS: Record<string, string> = {
   talk: 'Talks',
   download: 'Downloads',
   course: 'Courses',
+  lesson: 'Lessons',
+  collection: 'Collections',
   'creative-work': 'Creative work',
   landing: 'Landings',
   profile: 'Profiles',

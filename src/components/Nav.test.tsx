@@ -47,7 +47,11 @@ describe('permission-aware navigation (ADMIN-130)', () => {
       'Talks',
       'Downloads',
       'Courses',
+      'Lessons',
+      'Collections',
       'Creative work',
+      'Profiles',
+      'Landings',
     ]) {
       expect(labels, label).toContain(label)
     }
