@@ -47,3 +47,13 @@ The two helper paths extend the original packet allowlist under the owner's curr
 No screenshot or browser visual acceptance captured. No authenticated live-backend save/publication cycle or generated-public-page comparison performed. No deployment, commit, push, production data write, or owner acceptance is claimed. Browser RTL, keyboard/focus and responsive table/library review remain required alongside coordinator checks.
 
 **PU-09-editor_HANDOFF_READY** — focused implementation handoff only.
+
+## 2026-10-11 — autosave mechanism
+
+The 2026-09-27 re-review stayed at REVISE because `StoryEditor` rendered `saving` / `saved` only when a parent injected those props, and `ContentEditPage` passed `dirty ? 'dirty' : 'idle'`.
+
+- A local edit sets `pendingEdit`. After `AUTOSAVE_DELAY_MS` (800) the editor calls `onSave` once, unless validation fails or the save is already in conflict, error, or in flight. The section carries `data-autosave-armed="true"` only while that timer is live.
+- `ContentEditPage` now reports `saving` while the composition mutation is pending and `saved` only after that mutation succeeds.
+- Manual Save story still saves immediately and cancels the pending timer.
+- Focused check: `npm test -- src/components/editor/StoryEditor.test.tsx src/lib/api/auth.test.ts src/pages/ContentEditPage.test.tsx` — **34 passed**.
+- Not committed, not deployed, not owner-accepted. Queue status stays a coordinator decision.

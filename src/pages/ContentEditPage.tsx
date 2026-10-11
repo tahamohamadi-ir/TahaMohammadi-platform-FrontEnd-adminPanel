@@ -312,6 +312,9 @@ function StoryAttachedEditor({
   )
   const [editing, setEditing] = useState(false)
   const [dirty, setDirty] = useState(false)
+  const [autosaveOutcome, setAutosaveOutcome] = useState<'idle' | 'saved'>(
+    'idle',
+  )
   const [conflictDetail, setConflictDetail] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
 
@@ -352,6 +355,7 @@ function StoryAttachedEditor({
         })),
       )
       setDirty(false)
+      setAutosaveOutcome('saved')
     } catch (error) {
       if (error instanceof AdminApiError && error.kind === 'conflict') {
         setConflictDetail(error.message)
@@ -386,6 +390,7 @@ function StoryAttachedEditor({
         setSections(null)
       }
       setDirty(false)
+      setAutosaveOutcome('idle')
       setConflictDetail(null)
       return
     }
@@ -414,6 +419,7 @@ function StoryAttachedEditor({
         })),
       )
       setDirty(false)
+      setAutosaveOutcome('saved')
     } catch (error) {
       if (error instanceof AdminApiError && error.kind === 'conflict') {
         setConflictDetail(error.message)
@@ -477,6 +483,7 @@ function StoryAttachedEditor({
           onChange={(next) => {
             setSections(next)
             setDirty(true)
+            setAutosaveOutcome('idle')
           }}
           onSave={() => void handleSave()}
           saveState={
@@ -490,7 +497,15 @@ function StoryAttachedEditor({
                     ? 'saved'
                     : 'idle'
           }
-          autosaveState={dirty ? 'dirty' : 'idle'}
+          autosaveState={
+            save.isPending
+              ? 'saving'
+              : dirty
+                ? 'dirty'
+                : autosaveOutcome === 'saved'
+                  ? 'saved'
+                  : 'idle'
+          }
           conflictDetail={conflictDetail}
           serverError={serverError}
           onResolveConflict={(choice) => void handleResolve(choice)}

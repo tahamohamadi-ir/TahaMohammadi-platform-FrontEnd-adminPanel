@@ -1,3 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
+
 import { StoryLibraryField } from './story-library-fields'
 import { validateStoryDraft } from './story-validation'
 
@@ -12,6 +14,9 @@ import './story-editor.css'
 
 export type StorySaveState = 'idle' | 'saving' | 'saved' | 'conflict' | 'error'
 export type StoryAutosaveState = 'idle' | 'dirty' | 'saving' | 'saved'
+
+/** Quiet period after an edit before the editor asks the parent to save. */
+export const AUTOSAVE_DELAY_MS = 800
 
 type BlockSpec = components['schemas']['BlockTypeOut']
 type FieldSpec = components['schemas']['BlockFieldSpecOut']
@@ -575,6 +580,26 @@ export function StoryEditor({
 }: StoryEditorProps) {
   const saving = saveState === 'saving'
   const validationIssues = validateStoryDraft(sections, schema)
+  const [pendingEdit, setPendingEdit] = useState(false)
+  const onSaveRef = useRef(onSave)
+  onSaveRef.current = onSave
+  const blocked =
+    validationIssues.length > 0 ||
+    saveState === 'conflict' ||
+    saveState === 'error' ||
+    saveState === 'saving' ||
+    autosaveState === 'saving'
+  const autosaveArmed = pendingEdit && !blocked
+
+  useEffect(() => {
+    if (!autosaveArmed) return
+    const timer = window.setTimeout(() => {
+      setPendingEdit(false)
+      onSaveRef.current()
+    }, AUTOSAVE_DELAY_MS)
+    return () => window.clearTimeout(timer)
+  }, [autosaveArmed, sections])
+
   const schemaTypes = schema?.blockTypes ?? []
   const availableTypes =
     schemaTypes.length > 0
@@ -587,6 +612,7 @@ export function StoryEditor({
     ) => CompositionSectionUpdateIn[],
   ) {
     onChange(updater(sections))
+    setPendingEdit(true)
   }
 
   function setBlockSetting(
@@ -671,6 +697,7 @@ export function StoryEditor({
       aria-labelledby="story-editor-title"
       className="story-editor"
       dir={dir}
+      data-autosave-armed={autosaveArmed ? 'true' : undefined}
     >
       <h2 id="story-editor-title">
         Story blocks — {page.title} ({page.locale})
@@ -921,7 +948,10 @@ export function StoryEditor({
             saving || sections.length === 0 || validationIssues.length > 0
           }
           onClick={() => {
-            if (validationIssues.length === 0) onSave()
+            if (validationIssues.length === 0) {
+              setPendingEdit(false)
+              onSave()
+            }
           }}
         >
           {saving ? 'Saving…' : 'Save story'}

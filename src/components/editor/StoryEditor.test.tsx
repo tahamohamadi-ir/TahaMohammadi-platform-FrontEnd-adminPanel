@@ -3,7 +3,11 @@ import { useState } from 'react'
 import { describe, expect, it, vi } from 'vitest'
 
 import type { CompositionSectionUpdateIn } from '@/lib/api/composition'
-import { STORY_BLOCK_TYPES, StoryEditor } from '@/components/editor/StoryEditor'
+import {
+  AUTOSAVE_DELAY_MS,
+  STORY_BLOCK_TYPES,
+  StoryEditor,
+} from '@/components/editor/StoryEditor'
 import { fetchMediaList, fetchMediaItem } from '@/lib/api/media'
 import { listContent, fetchContentDetail } from '@/lib/api/content'
 import { validateStoryDraft } from '@/components/editor/story-validation'
@@ -189,6 +193,34 @@ describe('story editor (PU-09-editor)', () => {
 
     rerender(<Harness saveState="error" />)
     expect(screen.getByRole('alert').textContent).toMatch(/saving failed/i)
+  })
+
+  it('autosaves one valid edit after the quiet period and holds an invalid draft', async () => {
+    vi.useFakeTimers()
+    try {
+      const onSave = vi.fn()
+      render(<Harness autosaveState="idle" onSave={onSave} />)
+      fireEvent.change(screen.getByLabelText(/markdown \(required\)/i), {
+        target: { value: 'Hello there' },
+      })
+      expect(onSave).not.toHaveBeenCalled()
+      expect(
+        document.querySelector('[data-autosave-armed="true"]'),
+      ).not.toBeNull()
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS)
+      expect(onSave).toHaveBeenCalledTimes(1)
+
+      fireEvent.change(screen.getByLabelText(/markdown \(required\)/i), {
+        target: { value: '' },
+      })
+      expect(
+        document.querySelector('[data-autosave-armed="true"]'),
+      ).toBeNull()
+      await vi.advanceTimersByTimeAsync(AUTOSAVE_DELAY_MS)
+      expect(onSave).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('saves via keyboard-operable controls and honors RTL', () => {
