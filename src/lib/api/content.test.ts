@@ -66,6 +66,7 @@ describe('content API client (ADMIN-160/170)', () => {
     expect(CONTENT_ENTITIES).toContain('collection')
     expect(CONTENT_ENTITIES).toContain('profile')
     expect(CONTENT_ENTITIES).toContain('landing')
+    expect(new Set(CONTENT_ENTITIES).size).toBe(CONTENT_ENTITIES.length)
     expect(CONTENT_STATUSES).toEqual([
       'draft',
       'review',
