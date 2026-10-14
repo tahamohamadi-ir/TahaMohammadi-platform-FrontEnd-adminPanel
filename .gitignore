@@ -13,3 +13,22 @@ Thumbs.db
 
 # graft's local graph cache — regenerable, not committed (run `graft build`).
 /graft/
+
+# Local agent tooling copies and hermetic bytecode
+__pycache__/
+*.py[cod]
+/.adal/
+/.agents/
+/.claude/
+/.gemini/
+/.grok/
+/.kiro/
+/.windsurf/
+/.cursor/hooks/
+/.cursor/hooks.json
+/.cursor/mcp.json
+/.cursor/rules/graft.mdc
+/GEMINI.md
+/opencode.json
+/.mcp.json
+/.ignore
