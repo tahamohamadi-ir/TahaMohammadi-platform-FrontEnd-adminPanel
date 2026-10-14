@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
@@ -62,6 +62,18 @@ import {
 } from '@/lib/api/preview'
 import { useAuth } from '@/lib/auth/AuthProvider'
 import { entityLabel } from '@/pages/ContentListPage'
+
+/** Draft and review stay on the metadata form. Publish, schedule, and
+ * archive go through the lifecycle actions so a save cannot skip the
+ * confirmation dialog or the owner approval gate. The current lifecycle
+ * value stays selectable so a resave does not change it by accident. */
+function metadataStatusOptions(current: string | undefined) {
+  const currentStatus = current ?? 'draft'
+  return CONTENT_STATUSES.filter(
+    (value) =>
+      value === 'draft' || value === 'review' || value === currentStatus,
+  ).map((value) => ({ value, label: value }))
+}
 
 /** Media-typed schema field backed by the media library (ADMIN-180):
  * pick an existing library item; uploads happen on the Media page. */
@@ -317,6 +329,7 @@ function StoryAttachedEditor({
   )
   const [conflictDetail, setConflictDetail] = useState<string | null>(null)
   const [serverError, setServerError] = useState<string | null>(null)
+  const editGeneration = useRef(0)
 
   const page = detail.data
   const draft =
@@ -333,15 +346,27 @@ function StoryAttachedEditor({
     })) ??
     []
 
+  function storyPayload(sectionsToSave: CompositionSectionUpdateIn[]) {
+    if (page?.status === 'published') {
+      return { sections: sectionsToSave, status: 'draft' as const }
+    }
+    return { sections: sectionsToSave }
+  }
+
   async function handleSave() {
     if (!page) return
+    const generation = editGeneration.current
+    const sectionsToSave = draft
     setConflictDetail(null)
     setServerError(null)
     try {
       const updated = await save.mutateAsync({
-        payload: { sections: draft },
+        payload: storyPayload(sectionsToSave),
         ifMatch: page.updatedAt,
       })
+      if (editGeneration.current !== generation) {
+        return
+      }
       setSections(
         (updated.sections ?? []).map((section) => ({
           layout: section.layout,
@@ -403,7 +428,7 @@ function StoryAttachedEditor({
     }
     try {
       const updated = await save.mutateAsync({
-        payload: { sections: draft },
+        payload: storyPayload(draft),
         ifMatch: fresh.updatedAt,
       })
       setSections(
@@ -481,6 +506,7 @@ function StoryAttachedEditor({
           schema={schema.data ?? null}
           sections={draft}
           onChange={(next) => {
+            editGeneration.current += 1
             setSections(next)
             setDirty(true)
             setAutosaveOutcome('idle')
@@ -901,7 +927,7 @@ export function ContentEditPage({ entity }: { entity: string }) {
             id="status"
             label="Status"
             defaultValue={data?.status ?? 'draft'}
-            options={CONTENT_STATUSES.map((value) => ({ value, label: value }))}
+            options={metadataStatusOptions(data?.status)}
           />
 
           {entityFields.map((spec) => (
@@ -1231,7 +1257,7 @@ export function ContentEditPage({ entity }: { entity: string }) {
               type="button"
               className="admin-button admin-button--secondary"
               disabled={busy}
-              onClick={() => void runTransition('archive')}
+              onClick={() => void runTransition('archived')}
             >
               Archive
             </button>
