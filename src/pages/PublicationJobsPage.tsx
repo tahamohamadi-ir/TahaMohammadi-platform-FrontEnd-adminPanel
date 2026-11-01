@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import { Notice, SelectField } from '@/components/ui/primitives'
 import { AdminApiError, adminJson } from '@/lib/api/auth'
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 export interface PublicationJobOut {
   id: string
@@ -31,7 +30,6 @@ export interface PublicationJobListOut {
  * Distinguishes CMS data saves from asynchronous site deployments.
  * Surfaces pending removals, safe error codes, and idempotent retry. */
 export function PublicationJobsPage() {
-  const { user } = useAuth()
   const queryClient = useQueryClient()
   const [stateFilter, setStateFilter] = useState<string>('all')
   const [localeFilter, setLocaleFilter] = useState<string>('all')
@@ -81,27 +79,17 @@ export function PublicationJobsPage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Publication jobs</h1>
 
       {/* Save vs. Site Deployment Distinction Banner */}
       <section
         aria-labelledby="deployment-explainer"
-        style={{
-          padding: '1rem',
-          backgroundColor: 'var(--surface-muted, #f8f9fa)',
-          border: '1px solid var(--border, #e9ecef)',
-          borderRadius: '6px',
-          marginBottom: '1.5rem',
-        }}
+        className="admin-panel max-w-4xl bg-muted"
       >
-        <h2
-          id="deployment-explainer"
-          style={{ fontSize: '1.1rem', marginTop: 0 }}
-        >
+        <h2 id="deployment-explainer" className="text-base">
           Save vs. Site Deployment
         </h2>
-        <p style={{ margin: 0 }}>
+        <p className="m-0">
           <strong>CMS Saves</strong> persist content changes immediately to the
           database with lifecycle controls.
           <strong> Site Deployment</strong> is an asynchronous background
@@ -118,15 +106,7 @@ export function PublicationJobsPage() {
       ) : null}
 
       {/* Filters */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="admin-filter-bar">
         <SelectField
           id="state-filter"
           label="Filter by state"
@@ -154,7 +134,6 @@ export function PublicationJobsPage() {
         <button
           type="button"
           className="admin-button admin-button--secondary"
-          style={{ alignSelf: 'flex-end', marginBottom: '0.25rem' }}
           onClick={() => void jobsQuery.refetch()}
           disabled={jobsQuery.isFetching}
         >
@@ -163,7 +142,7 @@ export function PublicationJobsPage() {
       </div>
 
       {jobsQuery.isPending ? (
-        <p role="status">Loading publication jobs…</p>
+        <LoadingState label="Loading publication jobs…" variant="table" />
       ) : null}
       {jobsQuery.error ? (
         <Notice tone="error" title="Failed to load publication jobs">
@@ -214,39 +193,13 @@ export function PublicationJobsPage() {
                     <td>
                       <code>{job.id}</code>
                       {job.errorCode ? (
-                        <div
-                          style={{
-                            color: 'var(--color-error, #c92a2a)',
-                            fontSize: '0.85rem',
-                            marginTop: '0.25rem',
-                          }}
-                        >
+                        <div className="admin-small mt-1 text-destructive">
                           Error: <strong>{job.errorCode}</strong>
                         </div>
                       ) : null}
                     </td>
                     <td>
-                      <span
-                        className={`badge badge--${job.state}`}
-                        style={{
-                          padding: '0.2rem 0.5rem',
-                          borderRadius: '4px',
-                          fontSize: '0.85rem',
-                          fontWeight: 600,
-                          backgroundColor:
-                            job.state === 'completed'
-                              ? '#d3f9d8'
-                              : job.state === 'failed'
-                                ? '#ffe3e3'
-                                : '#e7f5ff',
-                          color:
-                            job.state === 'completed'
-                              ? '#2b8a3e'
-                              : job.state === 'failed'
-                                ? '#c92a2a'
-                                : '#1864ab',
-                        }}
-                      >
+                      <span className={`badge badge--${job.state}`}>
                         {job.state}
                       </span>
                     </td>
@@ -267,13 +220,7 @@ export function PublicationJobsPage() {
                       {job.affectedPaths.length > 0 ? (
                         <div>
                           <small>Affected ({job.affectedPaths.length}):</small>
-                          <ul
-                            style={{
-                              margin: 0,
-                              paddingLeft: '1.2rem',
-                              fontSize: '0.85rem',
-                            }}
-                          >
+                          <ul className="admin-small m-0 ps-5">
                             {job.affectedPaths.slice(0, 3).map((p) => (
                               <li key={p}>{p}</li>
                             ))}
@@ -282,17 +229,11 @@ export function PublicationJobsPage() {
                         </div>
                       ) : null}
                       {job.revokedPaths.length > 0 ? (
-                        <div style={{ marginTop: '0.25rem' }}>
-                          <small style={{ color: '#c92a2a' }}>
+                        <div className="mt-1">
+                          <small className="text-destructive">
                             Revoked ({job.revokedPaths.length}):
                           </small>
-                          <ul
-                            style={{
-                              margin: 0,
-                              paddingLeft: '1.2rem',
-                              fontSize: '0.85rem',
-                            }}
-                          >
+                          <ul className="admin-small m-0 ps-5">
                             {job.revokedPaths.slice(0, 3).map((p) => (
                               <li key={p}>{p}</li>
                             ))}
@@ -303,20 +244,17 @@ export function PublicationJobsPage() {
                     </td>
                     <td>
                       <span
-                        style={{
-                          fontWeight:
-                            job.removalState === 'pending' ? 'bold' : 'normal',
-                          color:
-                            job.removalState === 'pending'
-                              ? '#e67700'
-                              : 'inherit',
-                        }}
+                        className={
+                          job.removalState === 'pending'
+                            ? 'font-bold text-warning'
+                            : undefined
+                        }
                       >
                         {job.removalState}
                       </span>
                     </td>
                     <td>
-                      <div style={{ fontSize: '0.8rem' }}>
+                      <div className="text-xs">
                         <div>
                           Created: {new Date(job.createdAt).toLocaleString()}
                         </div>

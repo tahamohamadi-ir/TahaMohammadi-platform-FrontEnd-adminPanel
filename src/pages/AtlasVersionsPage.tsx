@@ -10,6 +10,7 @@ import {
   type AtlasVersionRow,
 } from '@/lib/api/atlas'
 import { AdminApiError } from '@/lib/api/auth'
+import { LoadingState } from '@/components/ui/states'
 
 /** Stable key for the Atlas version list — the only query this page owns. */
 export const ATLAS_VERSIONS_QUERY_KEY = ['atlas', 'versions'] as const
@@ -138,7 +139,7 @@ export function AtlasVersionsPage() {
       ) : null}
 
       {versionsQuery.isPending ? (
-        <p role="status">Loading Atlas versions…</p>
+        <LoadingState label="Loading Atlas versions…" variant="table" />
       ) : null}
       {versionsQuery.error ? (
         <Notice tone="error" title="Failed to load Atlas versions">

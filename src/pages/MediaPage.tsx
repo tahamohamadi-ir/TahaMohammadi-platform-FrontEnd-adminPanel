@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
   CheckboxField,
   Dialog,
@@ -18,7 +17,7 @@ import {
   useUploadMedia,
 } from '@/lib/api/hooks/useMedia'
 import type { MediaItemOut } from '@/lib/api/media'
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 function formatBytes(size: number): string {
   if (size < 1024) return `${size} B`
@@ -30,7 +29,6 @@ function formatBytes(size: number): string {
  * focal point, usage counts, and version-aware metadata update.
  * The backend blocks deleting referenced rows with 409 MEDIA_IN_USE. */
 export function MediaPage() {
-  const { user } = useAuth()
   const [q, setQ] = useState('')
   const [page, setPage] = useState(1)
 
@@ -178,7 +176,6 @@ export function MediaPage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Media library</h1>
 
       <section aria-labelledby="upload-title">
@@ -271,7 +268,9 @@ export function MediaPage() {
             setPage(1)
           }}
         />
-        {list.isPending ? <p role="status">Loading media…</p> : null}
+        {list.isPending ? (
+          <LoadingState label="Loading media…" variant="table" />
+        ) : null}
         {list.error ? (
           <Notice tone="error" title="Media unavailable">
             The backend did not answer.{' '}

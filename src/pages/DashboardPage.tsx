@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import { Notice } from '@/components/ui/primitives'
 import { Table } from '@/components/ui/primitives'
 import { useAuth } from '@/lib/auth/AuthProvider'
@@ -8,6 +7,7 @@ import {
   useContentHealth,
   useDashboardSummary,
 } from '@/lib/api/hooks/useDashboard'
+import { LoadingState } from '@/components/ui/states'
 
 /** Dashboard + backend health/degraded status (ADMIN-140). Reads the real
  * dashboard-summary and content-health operations; every number shown comes
@@ -42,14 +42,15 @@ export function DashboardPage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Dashboard</h1>
       <p className="muted">
         Signed in as <strong>{user?.displayName ?? user?.email}</strong>
         {user?.mfaEnrolled ? ' · MFA enrolled' : ''}
       </p>
 
-      {isPending ? <p role="status">Loading dashboard…</p> : null}
+      {isPending ? (
+        <LoadingState label="Loading dashboard…" variant="cards" />
+      ) : null}
 
       {failure ? (
         <>
@@ -117,10 +118,7 @@ export function DashboardPage() {
         </section>
       ) : null}
 
-      <section
-        aria-labelledby="dashboard-deployment"
-        style={{ marginTop: '2rem' }}
-      >
+      <section aria-labelledby="dashboard-deployment" className="admin-section">
         <h2 id="dashboard-deployment">Deployment & publication</h2>
         <p className="muted">
           Content saves in the CMS update records directly. Public site

@@ -95,7 +95,7 @@ describe('AnalyticsPage (PU-22-analytics)', () => {
       screen.getByText(/metric definitions & privacy notice/i),
     ).toBeInTheDocument()
     expect(screen.getAllByText(/received events/i).length).toBeGreaterThan(0)
-    expect(screen.getByText('/en/research')).toBeInTheDocument()
+    expect(await screen.findByText('/en/research')).toBeInTheDocument()
     expect(screen.getByText('42')).toBeInTheDocument()
     expect(screen.getAllByText('academic_cv').length).toBeGreaterThan(0)
   })

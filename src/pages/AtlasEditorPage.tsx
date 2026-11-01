@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useParams } from 'react-router-dom'
+import { EyeIcon, NetworkIcon } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
 
 import { NodeForm } from '@/components/atlas/NodeForm'
 import { AuthoringGraph } from '@/components/atlas/AuthoringGraph'
@@ -12,6 +13,7 @@ import { RelationForm } from '@/components/atlas/RelationForm'
 import { RelationTable } from '@/components/atlas/RelationTable'
 import { ValidationPanel } from '@/components/atlas/ValidationPanel'
 import { Notice, SelectField } from '@/components/ui/primitives'
+import { EmptyState, LoadingState } from '@/components/ui/states'
 import {
   deleteAtlasRelation,
   fetchAtlasGraph,
@@ -23,6 +25,8 @@ import {
 } from '@/lib/api/atlas'
 import { AdminApiError } from '@/lib/api/auth'
 
+import '@/components/atlas/atlas-editor.css'
+
 function toErrorMessage(caught: unknown, fallback: string): string {
   if (caught instanceof AdminApiError) {
     return caught.message
@@ -30,15 +34,17 @@ function toErrorMessage(caught: unknown, fallback: string): string {
   return fallback
 }
 
-/** Atlas editor host (Plan B Tasks 11–12 — minimal).
+/** Atlas editor host (Plan B Tasks 11–12; three-pane layout in Phase 6).
  *
- * Hosts the node form plus the relation form/table with live data: version
- * revision, graph nodes/relations/groups, taxonomy. The deterministic 2D
- * authoring graph (Task 14) selects nodes/relations into the same state
- * the pickers drive and writes pins through the node PATCH endpoint;
- * Inspect selects the relation's source node as the graph-selection
- * bridge. Validation panel and publish (Task 15) close the authoring loop;
- * a non-draft version renders a read-only status view.
+ * Follows the graph-editor concept as layout only: an outline rail (counts,
+ * node picker, validation and publish), the deterministic 2D authoring graph
+ * with relations underneath, and a node-settings drawer. Hosts the node form
+ * plus the relation form/table with live data: version revision, graph
+ * nodes/relations/groups, taxonomy. The graph selects nodes/relations into
+ * the same state the pickers drive and writes pins through the node PATCH
+ * endpoint; Inspect selects the relation's source node as the
+ * graph-selection bridge. A non-draft version renders a read-only status
+ * view.
  */
 export function AtlasEditorPage() {
   const { versionId } = useParams()
@@ -148,6 +154,8 @@ export function AtlasEditorPage() {
   const relationTypes = taxonomyQuery.data?.relationTypes ?? []
   const editingRelation =
     relations.find((row) => row.key === selectedRelationKey) ?? null
+  const validation = blockedOverride ??
+    validationQuery.data ?? { blocking: [], warnings: [] }
 
   function refreshAfterMutation() {
     void queryClient.invalidateQueries({
@@ -159,9 +167,33 @@ export function AtlasEditorPage() {
   }
 
   return (
-    <main className="page">
-      <h1>Atlas editor</h1>
-      {pending ? <p role="status">Loading Atlas editor…</p> : null}
+    <main className="page atlas-editor">
+      <header className="atlas-editor__header">
+        <div className="min-w-0">
+          <h1 className="mb-1">Atlas editor</h1>
+          {version ? (
+            <p className="admin-meta m-0">
+              <span className="font-semibold">
+                {version.label || `Version ${id}`}
+              </span>
+              <span className={`badge badge--${version.status}`}>
+                {version.status}
+              </span>
+              <span className="muted">Revision {revision}</span>
+            </p>
+          ) : null}
+        </div>
+        <Link
+          className="admin-button admin-button--secondary"
+          to={`/atlas/${id}/preview`}
+        >
+          <EyeIcon className="size-4" aria-hidden="true" />
+          2D preview
+        </Link>
+      </header>
+      {pending ? (
+        <LoadingState label="Loading Atlas editor…" variant="cards" />
+      ) : null}
       {error ? (
         <Notice tone="error" title="Failed to load the Atlas editor">
           {toErrorMessage(error, 'Failed to load the Atlas editor.')}
@@ -190,145 +222,182 @@ export function AtlasEditorPage() {
         </>
       ) : null}
       {!pending && !error && isDraft ? (
-        <>
-          <h2>Authoring graph</h2>
-          <AuthoringGraph
-            graph={{
-              nodes,
-              relations,
-              groups: graphQuery.data?.groups ?? [],
-            }}
-            relationTypes={relationTypes}
-            selectedKey={selectedKey}
-            selectedRelationKey={selectedRelationKey}
-            onSelect={(key) => setSelectedKey(key)}
-            onSelectRelation={(key) => setSelectedRelationKey(key)}
-            onPin={(key, pin) => {
-              setPinError(null)
-              pinMutation.mutate({ key, pin })
-            }}
-          />
-          {pinError ? (
-            <Notice tone="error" title="Failed to save the pin">
-              {pinError}
-            </Notice>
-          ) : null}
-          <SelectField
-            id="atlas-editor-node"
-            label="Node"
-            value={selected?.publicKey ?? ''}
-            onChange={(value) => setSelectedKey(value)}
-            options={nodes.map((row) => ({
-              value: row.publicKey,
-              label: row.publicKey,
-            }))}
-          />
-          {selected !== null && revision !== '' ? (
-            <NodeForm
-              key={selected.publicKey}
-              versionId={id}
-              revision={revision}
-              node={selected}
-              nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
-              groups={graphQuery.data?.groups ?? []}
-              onSaved={refreshAfterMutation}
-              onDeleted={() => {
-                setSelectedKey(null)
-                refreshAfterMutation()
-              }}
+        <div className="atlas-workspace">
+          <aside
+            className="atlas-pane atlas-pane--rail"
+            aria-label="Atlas outline"
+          >
+            <dl className="atlas-stats">
+              <div>
+                <dt>Nodes</dt>
+                <dd>{nodes.length}</dd>
+              </div>
+              <div>
+                <dt>Relations</dt>
+                <dd>{relations.length}</dd>
+              </div>
+              <div>
+                <dt>Blocking</dt>
+                <dd>{validation.blocking.length}</dd>
+              </div>
+            </dl>
+            <SelectField
+              id="atlas-editor-node"
+              label="Node"
+              value={selected?.publicKey ?? ''}
+              onChange={(value) => setSelectedKey(value)}
+              options={nodes.map((row) => ({
+                value: row.publicKey,
+                label: row.publicKey,
+              }))}
             />
-          ) : (
-            <p>No nodes in this version yet.</p>
-          )}
+            <ValidationPanel
+              issues={validation}
+              onGoTo={(issue) => {
+                if (issue.nodeKey) {
+                  setSelectedKey(issue.nodeKey)
+                } else if (issue.relationKey) {
+                  setSelectedRelationKey(issue.relationKey)
+                }
+              }}
+              onPublish={() => setShowPublish(true)}
+            />
+            {showPublish && revision !== '' ? (
+              <PublishDialog
+                versionId={id}
+                revision={revision}
+                versionLabel={version?.label ?? `version ${id}`}
+                nodeCount={version?.nodeCount ?? nodes.length}
+                relationCount={version?.relationCount ?? relations.length}
+                warningCount={validation.warnings.length}
+                onPublished={(result) => {
+                  setPublishedResult(result)
+                  setShowPublish(false)
+                  setBlockedOverride(null)
+                  refreshAfterMutation()
+                }}
+                onValidationBlocked={(issues) => {
+                  setBlockedOverride({
+                    blocking: issues,
+                    warnings: validationQuery.data?.warnings ?? [],
+                  })
+                }}
+                onReload={() => {
+                  setBlockedOverride(null)
+                  setShowPublish(false)
+                  refreshAfterMutation()
+                }}
+                onClose={() => setShowPublish(false)}
+              />
+            ) : null}
+          </aside>
 
-          <h2>Relations</h2>
-          {revision !== '' ? (
-            <RelationForm
-              key={editingRelation?.key ?? 'new-relation'}
-              versionId={id}
-              revision={revision}
-              relation={editingRelation}
+          <section
+            className="atlas-pane atlas-pane--canvas"
+            aria-labelledby="atlas-graph-heading"
+          >
+            <h2 id="atlas-graph-heading" className="atlas-pane__title">
+              Authoring graph
+            </h2>
+            <div className="atlas-canvas">
+              <AuthoringGraph
+                graph={{
+                  nodes,
+                  relations,
+                  groups: graphQuery.data?.groups ?? [],
+                }}
+                relationTypes={relationTypes}
+                selectedKey={selectedKey}
+                selectedRelationKey={selectedRelationKey}
+                onSelect={(key) => setSelectedKey(key)}
+                onSelectRelation={(key) => setSelectedRelationKey(key)}
+                onPin={(key, pin) => {
+                  setPinError(null)
+                  pinMutation.mutate({ key, pin })
+                }}
+              />
+            </div>
+            {pinError ? (
+              <Notice tone="error" title="Failed to save the pin">
+                {pinError}
+              </Notice>
+            ) : null}
+
+            <h2 className="atlas-pane__title atlas-pane__title--spaced">
+              Relations
+            </h2>
+            {revision !== '' ? (
+              <RelationForm
+                key={editingRelation?.key ?? 'new-relation'}
+                versionId={id}
+                revision={revision}
+                relation={editingRelation}
+                nodes={nodes}
+                nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
+                relationTypes={relationTypes}
+                onSaved={(row) => {
+                  setSelectedRelationKey(row.key)
+                  refreshAfterMutation()
+                }}
+                onDeleted={() => {
+                  setSelectedRelationKey(null)
+                  refreshAfterMutation()
+                }}
+              />
+            ) : null}
+            <RelationTable
+              relations={relations}
               nodes={nodes}
               nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
               relationTypes={relationTypes}
-              onSaved={(row) => {
-                setSelectedRelationKey(row.key)
-                refreshAfterMutation()
+              onEdit={(key) => setSelectedRelationKey(key)}
+              onDelete={(key) => {
+                setRelationDeleteError(null)
+                relationDeleteMutation.mutate(key)
               }}
-              onDeleted={() => {
-                setSelectedRelationKey(null)
-                refreshAfterMutation()
+              onInspect={(key) => {
+                const target = relations.find((row) => row.key === key)
+                if (target) {
+                  setSelectedKey(target.sourceKey)
+                }
               }}
             />
-          ) : null}
-          <RelationTable
-            relations={relations}
-            nodes={nodes}
-            nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
-            relationTypes={relationTypes}
-            onEdit={(key) => setSelectedRelationKey(key)}
-            onDelete={(key) => {
-              setRelationDeleteError(null)
-              relationDeleteMutation.mutate(key)
-            }}
-            onInspect={(key) => {
-              const target = relations.find((row) => row.key === key)
-              if (target) {
-                setSelectedKey(target.sourceKey)
-              }
-            }}
-          />
-          {relationDeleteError ? (
-            <Notice tone="error" title="Failed to delete the relation">
-              {relationDeleteError}
-            </Notice>
-          ) : null}
+            {relationDeleteError ? (
+              <Notice tone="error" title="Failed to delete the relation">
+                {relationDeleteError}
+              </Notice>
+            ) : null}
+          </section>
 
-          <ValidationPanel
-            issues={
-              blockedOverride ??
-              validationQuery.data ?? { blocking: [], warnings: [] }
-            }
-            onGoTo={(issue) => {
-              if (issue.nodeKey) {
-                setSelectedKey(issue.nodeKey)
-              } else if (issue.relationKey) {
-                setSelectedRelationKey(issue.relationKey)
-              }
-            }}
-            onPublish={() => setShowPublish(true)}
-          />
-          {showPublish && revision !== '' ? (
-            <PublishDialog
-              versionId={id}
-              revision={revision}
-              versionLabel={version?.label ?? `version ${id}`}
-              nodeCount={version?.nodeCount ?? nodes.length}
-              relationCount={version?.relationCount ?? relations.length}
-              warningCount={
-                (blockedOverride ?? validationQuery.data)?.warnings.length ?? 0
-              }
-              onPublished={(result) => {
-                setPublishedResult(result)
-                setShowPublish(false)
-                setBlockedOverride(null)
-                refreshAfterMutation()
-              }}
-              onValidationBlocked={(issues) => {
-                setBlockedOverride({
-                  blocking: issues,
-                  warnings: validationQuery.data?.warnings ?? [],
-                })
-              }}
-              onReload={() => {
-                setBlockedOverride(null)
-                setShowPublish(false)
-                refreshAfterMutation()
-              }}
-              onClose={() => setShowPublish(false)}
-            />
-          ) : null}
-        </>
+          <aside
+            className="atlas-pane atlas-pane--drawer"
+            aria-labelledby="atlas-node-settings-heading"
+          >
+            <h2 id="atlas-node-settings-heading" className="atlas-pane__title">
+              Node settings
+            </h2>
+            {selected !== null && revision !== '' ? (
+              <NodeForm
+                key={selected.publicKey}
+                versionId={id}
+                revision={revision}
+                node={selected}
+                nodeTypes={taxonomyQuery.data?.nodeTypes ?? []}
+                groups={graphQuery.data?.groups ?? []}
+                onSaved={refreshAfterMutation}
+                onDeleted={() => {
+                  setSelectedKey(null)
+                  refreshAfterMutation()
+                }}
+              />
+            ) : (
+              <EmptyState
+                icon={NetworkIcon}
+                title="No nodes in this version yet."
+              />
+            )}
+          </aside>
+        </div>
       ) : null}
     </main>
   )

@@ -1,6 +1,5 @@
 import { useState } from 'react'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
   Dialog,
   Notice,
@@ -16,8 +15,8 @@ import {
   useTimeline,
   useUpdateTimelineRecord,
 } from '@/lib/api/hooks/useTimeline'
-import { useAuth } from '@/lib/auth/AuthProvider'
 import { LocaleTabs } from '@/pages/HomePage'
+import { LoadingState } from '@/components/ui/states'
 
 const MAX_LABEL = 200
 
@@ -26,7 +25,6 @@ const MAX_LABEL = 200
  * updatedAt as If-Match; 428/409 surface as reload-latest conflicts. The
  * backend owns lifecycle and validation rules. */
 export function TimelinePage() {
-  const { user } = useAuth()
   const [locale, setLocale] = useState<'en' | 'fa'>('en')
   const [newLabel, setNewLabel] = useState('')
   const [newType, setNewType] = useState('job')
@@ -192,11 +190,12 @@ export function TimelinePage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Timeline</h1>
       <LocaleTabs locale={locale} onChange={setLocale} />
 
-      {timeline.isPending ? <p role="status">Loading timeline…</p> : null}
+      {timeline.isPending ? (
+        <LoadingState label="Loading timeline…" variant="table" />
+      ) : null}
       {error ? (
         <Notice tone="error" title="Action failed">
           {error}{' '}

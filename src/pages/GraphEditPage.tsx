@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import { Notice, SelectField, TextField } from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
 import {
@@ -17,7 +16,7 @@ import {
   useGraphValidation,
   useSaveGraphPayload,
 } from '@/lib/api/hooks/useGraph'
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 /** Per-version graph editor (ADMIN-210 / PU-12-graph).
  * Complete graph version editing with:
@@ -25,7 +24,6 @@ import { useAuth } from '@/lib/auth/AuthProvider'
  * 2. Record relation validation & management for every node.
  * 3. Directional edge & group editing with server-side validator integration. */
 export function GraphEditPage() {
-  const { user } = useAuth()
   const params = useParams()
   const versionId = Number(params.versionId)
   const detail = useGraphDetail(versionId)
@@ -295,7 +293,6 @@ export function GraphEditPage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <p>
         <Link to="/graph">← Graph versions</Link>
       </p>
@@ -320,7 +317,9 @@ export function GraphEditPage() {
           </button>
         </Notice>
       ) : null}
-      {detail.isPending ? <p role="status">Loading version…</p> : null}
+      {detail.isPending ? (
+        <LoadingState label="Loading version…" variant="cards" />
+      ) : null}
       {detail.error ? (
         <Notice tone="error" title="Version unavailable">
           The backend did not answer.{' '}
@@ -344,10 +343,7 @@ export function GraphEditPage() {
           ) : null}
 
           {/* Accessible Node Table & Keyboard Positioning (Drag Alternative) */}
-          <section
-            aria-labelledby="nodes-table-title"
-            style={{ marginTop: '1.5rem' }}
-          >
+          <section aria-labelledby="nodes-table-title" className="mt-6">
             <h2 id="nodes-table-title">Node table & keyboard positioning</h2>
             <p className="muted">
               Fully accessible tabular editor for node attributes and 2D/3D
@@ -426,13 +422,7 @@ export function GraphEditPage() {
                           />
                         </td>
                         <td>
-                          <div
-                            style={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(2, 1fr)',
-                              gap: '4px',
-                            }}
-                          >
+                          <div className="grid grid-cols-2 gap-1">
                             <button
                               type="button"
                               className="admin-button admin-button--secondary"
@@ -495,16 +485,7 @@ export function GraphEditPage() {
             </div>
 
             {/* Add Node Form */}
-            <form
-              onSubmit={handleAddNode}
-              style={{
-                marginTop: '1rem',
-                display: 'flex',
-                gap: '1rem',
-                alignItems: 'flex-end',
-                flexWrap: 'wrap',
-              }}
-            >
+            <form onSubmit={handleAddNode} className="admin-filter-bar">
               <TextField
                 id="new-node-id"
                 label="New Node ID"
@@ -533,14 +514,7 @@ export function GraphEditPage() {
           </section>
 
           {/* Record Relation Validation & Management */}
-          <section
-            aria-labelledby="related-title"
-            style={{
-              marginTop: '2rem',
-              borderTop: '1px solid var(--border, #ccc)',
-              paddingTop: '1.5rem',
-            }}
-          >
+          <section aria-labelledby="related-title" className="admin-section">
             <h2 id="related-title">Related records</h2>
             <p className="muted">
               Map graph nodes to published domain records (projects,
@@ -604,23 +578,9 @@ export function GraphEditPage() {
 
             {/* Add Related Record Form */}
             {current.nodes.length > 0 ? (
-              <div
-                style={{
-                  marginTop: '1rem',
-                  padding: '1rem',
-                  border: '1px solid var(--border, #ccc)',
-                  borderRadius: '4px',
-                }}
-              >
+              <div className="admin-panel">
                 <h3>Add related record</h3>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    alignItems: 'flex-end',
-                    flexWrap: 'wrap',
-                  }}
-                >
+                <div className="admin-filter-bar">
                   <SelectField
                     id="related-node-select"
                     label="Select node"
@@ -667,20 +627,13 @@ export function GraphEditPage() {
           </section>
 
           {/* Edges & Relations */}
-          <section
-            aria-labelledby="edges-title"
-            style={{
-              marginTop: '2rem',
-              borderTop: '1px solid var(--border, #ccc)',
-              paddingTop: '1.5rem',
-            }}
-          >
+          <section aria-labelledby="edges-title" className="admin-section">
             <h2 id="edges-title">Edges</h2>
             <ul>
               {current.edges.map((edge, index) => {
                 const edgeId = String(edge.id ?? index)
                 return (
-                  <li key={edgeId} style={{ marginBottom: '0.5rem' }}>
+                  <li key={edgeId} className="mb-2">
                     {String(edge.source)}→{String(edge.target)}{' '}
                     <span className="muted">
                       ({String(edge.relationType ?? 'relates')})
@@ -704,16 +657,7 @@ export function GraphEditPage() {
               })}
             </ul>
 
-            <form
-              onSubmit={handleAddEdge}
-              style={{
-                marginTop: '1rem',
-                display: 'flex',
-                gap: '1rem',
-                alignItems: 'flex-end',
-                flexWrap: 'wrap',
-              }}
-            >
+            <form onSubmit={handleAddEdge} className="admin-filter-bar">
               <TextField
                 id="new-edge-source"
                 label="Source node ID"
@@ -746,14 +690,7 @@ export function GraphEditPage() {
           </section>
 
           {/* Groups */}
-          <section
-            aria-labelledby="groups-title"
-            style={{
-              marginTop: '2rem',
-              borderTop: '1px solid var(--border, #ccc)',
-              paddingTop: '1.5rem',
-            }}
-          >
+          <section aria-labelledby="groups-title" className="admin-section">
             <h2 id="groups-title">Groups</h2>
             <ul>
               {current.groups.map((group, index) => (
@@ -766,7 +703,7 @@ export function GraphEditPage() {
           </section>
 
           {/* Save & Activate Actions */}
-          <p style={{ marginTop: '2rem' }}>
+          <p className="admin-actions mt-8">
             <button
               type="button"
               className="admin-button"
@@ -788,14 +725,7 @@ export function GraphEditPage() {
           </p>
 
           {/* Validation Report */}
-          <section
-            aria-labelledby="validation-title"
-            style={{
-              marginTop: '2rem',
-              borderTop: '1px solid var(--border, #ccc)',
-              paddingTop: '1.5rem',
-            }}
-          >
+          <section aria-labelledby="validation-title" className="admin-section">
             <h2 id="validation-title">Validation</h2>
             <button
               type="button"
