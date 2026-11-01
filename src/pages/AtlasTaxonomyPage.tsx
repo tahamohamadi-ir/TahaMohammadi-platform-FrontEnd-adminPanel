@@ -12,6 +12,7 @@ import {
   type AtlasRelationTypeRow,
 } from '@/lib/api/atlas'
 import { AdminApiError } from '@/lib/api/auth'
+import { LoadingState } from '@/components/ui/states'
 
 /** Stable key for the Atlas taxonomy — shared with the editor host. */
 export const ATLAS_TAXONOMY_QUERY_KEY = ['atlas', 'taxonomy'] as const
@@ -66,7 +67,7 @@ export function AtlasTaxonomyPage() {
     <main className="page">
       <h1>Atlas taxonomy</h1>
       {taxonomyQuery.isPending ? (
-        <p role="status">Loading Atlas taxonomy…</p>
+        <LoadingState label="Loading Atlas taxonomy…" variant="table" />
       ) : null}
       {taxonomyQuery.error ? (
         <Notice tone="error" title="Failed to load the Atlas taxonomy">

@@ -249,7 +249,10 @@ test.describe('PU-25 hermetic admin journey', () => {
     ).toBe(404)
 
     // ---- Publish through the real transition control. -------------------
-    await page.getByRole('button', { name: 'Publish' }).first().click()
+    await page
+      .getByRole('button', { name: 'Publish', exact: true })
+      .first()
+      .click()
     await page.getByRole('button', { name: 'Confirm publish' }).click()
     await expect(
       page.getByText('published', { exact: false }).first(),

@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import { Notice, SelectField, TextField } from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
 import {
@@ -18,7 +17,7 @@ import {
   useLocalizedSiteSettings,
   useUpdateLocalizedSiteSettings,
 } from '@/lib/api/hooks/useSiteSettings'
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 /** Locale switch shared by composition-style pages. */
 export function LocaleTabs({
@@ -29,14 +28,14 @@ export function LocaleTabs({
   onChange: (locale: 'en' | 'fa') => void
 }) {
   return (
-    <div role="tablist" aria-label="Locale" className="admin-nav">
+    <div role="tablist" aria-label="Locale" className="admin-tabs">
       {(['en', 'fa'] as const).map((value) => (
         <button
           key={value}
           type="button"
           role="tab"
           aria-selected={locale === value}
-          className="admin-nav__link"
+          className="admin-tab"
           onClick={() => onChange(value)}
         >
           {value === 'en' ? 'English' : 'فارسی'}
@@ -51,7 +50,6 @@ export function LocaleTabs({
  * Module keys come from the backend's canonical set — the page never invents a slot or fake featured records.
  * Audience entry paths (research and employment) are managed per locale without hardcoded assumptions. */
 export function HomePage() {
-  const { user } = useAuth()
   const [locale, setLocale] = useState<'en' | 'fa'>('en')
   const [draft, setDraft] = useState<HomeModuleIn[] | null>(null)
   const [message, setMessage] = useState<string | null>(null)
@@ -259,7 +257,6 @@ export function HomePage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Home composition</h1>
       <LocaleTabs
         locale={locale}
@@ -291,7 +288,9 @@ export function HomePage() {
         </Notice>
       ) : null}
 
-      {modules.isPending ? <p role="status">Loading composition…</p> : null}
+      {modules.isPending ? (
+        <LoadingState label="Loading composition…" variant="lines" />
+      ) : null}
       {modules.error ? (
         <Notice tone="error" title="Composition unavailable">
           The backend did not answer.{' '}

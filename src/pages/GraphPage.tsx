@@ -1,29 +1,49 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import { Dialog, Notice, SelectField } from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
 import {
   useActivateGraphVersion,
   useCreateGraphVersion,
+  useDuplicateGraphVersion,
   useGraphVersions,
 } from '@/lib/api/hooks/useGraph'
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 /** Graph versions (ADMIN-210): drafts are editable and activatable; the
  * active version is immutable (backend 409 IMMUTABLE_ACTIVE / ALREADY_ACTIVE
- * are surfaced verbatim). Node/edge/group editing lives in the per-version
- * editor. */
+ * are surfaced verbatim). Any version can be duplicated into a new draft,
+ * which is how the live graph gets edited. Node/edge/group editing lives in
+ * the per-version editor. */
 export function GraphPage() {
-  const { user } = useAuth()
   const [locale, setLocale] = useState('en')
   const [activateTarget, setActivateTarget] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [duplicated, setDuplicated] = useState<{
+    from: number
+    to: number
+  } | null>(null)
 
   const versions = useGraphVersions()
   const create = useCreateGraphVersion()
   const activate = useActivateGraphVersion()
+  const duplicate = useDuplicateGraphVersion()
+
+  async function handleDuplicate(versionId: number) {
+    setError(null)
+    setDuplicated(null)
+    try {
+      const created = await duplicate.mutateAsync(versionId)
+      setDuplicated({ from: versionId, to: created.id })
+    } catch (caught) {
+      setError(
+        caught instanceof AdminApiError
+          ? caught.message
+          : 'Duplicate failed. Try again.',
+      )
+    }
+  }
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -57,12 +77,19 @@ export function GraphPage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Graph editor</h1>
 
       {error ? (
         <Notice tone="error" title="Action failed">
           {error}
+        </Notice>
+      ) : null}
+      {duplicated ? (
+        <Notice tone="success" title={`Draft #${duplicated.to} created`}>
+          Copied from version #{duplicated.from}.{' '}
+          <Link to={`/graph/${duplicated.to}`}>
+            Edit draft #{duplicated.to}
+          </Link>
         </Notice>
       ) : null}
 
@@ -88,7 +115,9 @@ export function GraphPage() {
         </p>
       </form>
 
-      {versions.isPending ? <p role="status">Loading versions…</p> : null}
+      {versions.isPending ? (
+        <LoadingState label="Loading versions…" variant="table" />
+      ) : null}
       {versions.error ? (
         <Notice tone="error" title="Versions unavailable">
           The backend did not answer.{' '}
@@ -129,7 +158,7 @@ export function GraphPage() {
                   {version.status === 'draft' ? (
                     <>
                       <Link
-                        className="admin-nav__link"
+                        className="admin-button admin-button--secondary"
                         to={`/graph/${version.id}`}
                       >
                         Edit
@@ -144,7 +173,16 @@ export function GraphPage() {
                     </>
                   ) : (
                     <span className="muted">Immutable while active</span>
-                  )}
+                  )}{' '}
+                  <button
+                    type="button"
+                    className="admin-button admin-button--secondary"
+                    aria-label={`Duplicate #${version.id} as draft`}
+                    disabled={duplicate.isPending}
+                    onClick={() => void handleDuplicate(version.id)}
+                  >
+                    Duplicate as draft
+                  </button>
                 </td>
               </tr>
             ))}

@@ -4,6 +4,7 @@ import type { GraphPayloadIn } from '@/lib/api/graph'
 import {
   activateGraphVersion,
   createGraphVersion,
+  duplicateGraphVersion,
   fetchGraphDetail,
   fetchGraphValidation,
   fetchGraphVersions,
@@ -34,6 +35,14 @@ export function useCreateGraphVersion() {
   const invalidate = useInvalidateGraph()
   return useMutation({
     mutationFn: (locale: string) => createGraphVersion(locale),
+    onSuccess: invalidate,
+  })
+}
+
+export function useDuplicateGraphVersion() {
+  const invalidate = useInvalidateGraph()
+  return useMutation({
+    mutationFn: (versionId: number) => duplicateGraphVersion(versionId),
     onSuccess: invalidate,
   })
 }

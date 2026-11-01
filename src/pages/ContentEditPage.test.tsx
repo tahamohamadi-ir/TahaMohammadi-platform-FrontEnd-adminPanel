@@ -336,6 +336,44 @@ describe('ContentEditPage (ADMIN-160/170)', () => {
     })
   })
 
+  it('archives through the transition with status archived', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    fireEvent.click(await screen.findByRole('button', { name: /^archive$/i }))
+    await waitFor(() => {
+      const transitionCall = vi
+        .mocked(fetch)
+        .mock.calls.find(
+          ([input, init]) =>
+            String(input).includes('/content/article/7/transition') &&
+            (init as RequestInit | undefined)?.method === 'POST',
+        )
+      expect(transitionCall).toBeTruthy()
+      expect(JSON.parse(String(transitionCall![1]?.body)).to).toBe('archived')
+    })
+  })
+
+  it('keeps publish, schedule, and archive off the metadata status control', async () => {
+    stubDefault()
+    renderEdit('/content/article/7')
+    const status = await screen.findByLabelText(/^status$/i)
+    expect(
+      within(status).getByRole('option', { name: 'draft' }),
+    ).toBeInTheDocument()
+    expect(
+      within(status).getByRole('option', { name: 'review' }),
+    ).toBeInTheDocument()
+    expect(
+      within(status).queryByRole('option', { name: 'published' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(status).queryByRole('option', { name: 'scheduled' }),
+    ).not.toBeInTheDocument()
+    expect(
+      within(status).queryByRole('option', { name: 'archived' }),
+    ).not.toBeInTheDocument()
+  })
+
   it('schedules through a dialog with the datetime input (ADMIN-240)', async () => {
     stubDefault()
     renderEdit('/content/article/7')
@@ -598,6 +636,88 @@ describe('ContentEditPage story connection (PU-09-host)', () => {
       ).toBe(true)
     })
     expect(await screen.findByText(/changed elsewhere/i)).toBeInTheDocument()
+  })
+
+  it('saves a published story as draft and keeps edits typed during the save', async () => {
+    let finishSave: (response: Response) => void = () => {}
+    const pendingSave = new Promise<Response>((resolve) => {
+      finishSave = resolve
+    })
+    stubStory((url, init) => {
+      if (
+        /\/api\/v1\/admin\/content\/article\/7$/.test(url) &&
+        init?.method !== 'PUT'
+      ) {
+        return jsonResponse({
+          ...DETAIL,
+          fields: { excerpt: 'Hi', storyId: 11 },
+        })
+      }
+      if (
+        url.includes('/api/v1/admin/composition/11') &&
+        init?.method !== 'PUT'
+      ) {
+        return jsonResponse({
+          ...STORY_COMPOSITION,
+          status: 'published',
+          publishedAt: '2026-09-03T00:00:00.000Z',
+        })
+      }
+      if (
+        url.includes('/api/v1/admin/composition/11') &&
+        init?.method === 'PUT'
+      ) {
+        return pendingSave as unknown as Response
+      }
+      return null
+    })
+    renderEdit('/content/article/7')
+    fireEvent.click(await screen.findByRole('button', { name: /edit blocks/i }))
+    const markdown = await screen.findByLabelText(/markdown/i)
+    fireEvent.change(markdown, { target: { value: 'First draft' } })
+    fireEvent.click(screen.getByRole('button', { name: /^save story$/i }))
+    await waitFor(() => {
+      const putCall = vi
+        .mocked(fetch)
+        .mock.calls.find(
+          ([callUrl, init]) =>
+            String(callUrl).endsWith('/api/v1/admin/composition/11') &&
+            (init as RequestInit | undefined)?.method === 'PUT',
+        )
+      expect(putCall).toBeTruthy()
+      expect(JSON.parse(String(putCall![1]?.body))).toMatchObject({
+        status: 'draft',
+        sections: [
+          {
+            blocks: [{ settings: { markdown: 'First draft' } }],
+          },
+        ],
+      })
+    })
+    fireEvent.change(screen.getByLabelText(/markdown/i), {
+      target: { value: 'Newer local' },
+    })
+    finishSave(
+      jsonResponse({
+        ...STORY_COMPOSITION,
+        status: 'draft',
+        updatedAt: '2026-09-04T00:00:00.000Z',
+        sections: [
+          {
+            ...STORY_COMPOSITION.sections[0],
+            blocks: [
+              {
+                ...STORY_COMPOSITION.sections[0]!.blocks[0],
+                settings: { markdown: 'First draft' },
+              },
+            ],
+          },
+        ],
+      }),
+    )
+    await waitFor(() => {
+      expect(screen.getByLabelText(/markdown/i)).toHaveValue('Newer local')
+    })
   })
 })
 

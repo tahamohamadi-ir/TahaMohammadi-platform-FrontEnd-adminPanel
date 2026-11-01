@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
   activateGraphVersion,
   createGraphVersion,
+  duplicateGraphVersion,
   fetchGraphDetail,
   fetchGraphValidation,
   fetchGraphVersions,
@@ -83,6 +84,18 @@ describe('graph API client (ADMIN-210)', () => {
     const [, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
     expect(init.method).toBe('POST')
     expect(JSON.parse(String(init.body))).toEqual({ locale: 'en' })
+  })
+
+  it('duplicates a version into a new draft', async () => {
+    vi.mocked(fetch).mockResolvedValue(
+      jsonResponse({ ...VERSION, id: 9, status: 'draft' }, 201),
+    )
+    const created = await duplicateGraphVersion(1)
+    const [url, init] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
+    expect(url).toBe('/api/v1/admin/graph/versions/1/duplicate')
+    expect(init.method).toBe('POST')
+    expect(created.id).toBe(9)
+    expect(created.status).toBe('draft')
   })
 
   it('fetches the full detail payload', async () => {

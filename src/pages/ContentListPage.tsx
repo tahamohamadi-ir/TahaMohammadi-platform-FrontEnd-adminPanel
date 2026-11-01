@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import {
   Dialog,
   Notice,
@@ -14,6 +13,7 @@ import { useContentList } from '@/lib/api/hooks/useContent'
 import { AdminApiError } from '@/lib/api/auth'
 import { bulkArchiveContent } from '@/lib/api/content'
 import { CONTENT_STATUSES } from '@/lib/api/content'
+import { LoadingState } from '@/components/ui/states'
 
 const ENTITY_LABELS: Record<string, string> = {
   article: 'Articles',
@@ -98,7 +98,6 @@ export function ContentListPage({ entity }: { entity: string }) {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>{entityLabel(entity)}</h1>
       <p>
         <Link className="admin-button" to={`/content/${entity}/new`}>
@@ -145,7 +144,9 @@ export function ContentListPage({ entity }: { entity: string }) {
         />
       </div>
 
-      {list.isPending ? <p role="status">Loading rows…</p> : null}
+      {list.isPending ? (
+        <LoadingState label="Loading rows…" variant="table" />
+      ) : null}
 
       {list.error ? (
         <Notice tone="error" title="List unavailable">

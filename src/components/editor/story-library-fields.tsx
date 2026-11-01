@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 
 import { fetchContentDetail, listContent } from '@/lib/api/content'
 import { fetchMediaItem, fetchMediaList } from '@/lib/api/media'
+import { LoadingState } from '@/components/ui/states'
 
 // Backend ALLOWED_RELATED_FAMILIES mapped to admin ENTITY_MODELS names.
 const RELATED_ENTITIES: Record<string, string> = {
@@ -177,7 +178,7 @@ function LibrarySearch({
         }}
       />
       {!current ? (
-        <p role="status">Loading library…</p>
+        <LoadingState label="Loading library…" variant="lines" />
       ) : current.error ? (
         <p role="alert">
           {current.error}{' '}

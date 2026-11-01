@@ -336,7 +336,7 @@ test('Atlas authoring journey: clone, edit, relate, pin, validate, publish', asy
 
   // Validation gates publish; a clean draft publishes.
   await expect(page.getByText(/No validation issues/)).toBeVisible()
-  await page.getByRole('button', { name: 'Publish' }).click()
+  await page.getByRole('button', { name: 'Publish', exact: true }).click()
   await page.getByRole('button', { name: 'Confirm publish' }).click()
   await expect(page.getByText('This version is published')).toBeVisible()
   await expect(page.getByText(/Publication job 42/)).toBeVisible()

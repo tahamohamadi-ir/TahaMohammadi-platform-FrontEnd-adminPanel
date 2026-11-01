@@ -12,3 +12,45 @@
   outline: 3px solid var(--admin-color-brand);
   outline-offset: 3px;
 }
+
+/* Token colours (Phase 6). CSS outranks the SVG presentation attributes,
+ * which stay as the no-CSS fallback and keep the hierarchy/plain stroke
+ * distinction the tests read. */
+.atlas-graph {
+  color: var(--foreground);
+}
+
+.atlas-graph line[data-hierarchy='false'] {
+  stroke: var(--graph-edge);
+}
+
+.atlas-graph line[data-hierarchy='true'] {
+  stroke: var(--graph-edge-hierarchy);
+}
+
+.atlas-graph line[data-selected='true'] {
+  stroke: var(--primary);
+}
+
+.atlas-graph rect,
+.atlas-graph ellipse {
+  stroke: var(--graph-group);
+}
+
+.atlas-graph
+  [role='graphics-symbol']
+  circle:not([data-hit], [data-focus-ring]) {
+  fill: var(--graph-node-fill);
+  stroke: var(--graph-node);
+}
+
+.atlas-graph
+  [role='graphics-symbol'][data-selected='true']
+  circle:not([data-hit], [data-focus-ring]) {
+  fill: var(--graph-node-selected);
+  stroke: var(--foreground);
+}
+
+.atlas-graph text {
+  font-family: inherit;
+}

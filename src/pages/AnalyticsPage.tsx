@@ -1,14 +1,13 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 
-import { AdminNav, ADMIN_NAV_ITEMS, filterNavItems } from '@/components/Nav'
 import { Notice, SelectField, TextField } from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
 import {
   fetchAnalyticsReport,
   type AnalyticsReportOut,
 } from '@/lib/api/analytics'
-import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 function defaultFromDate(): string {
   const d = new Date()
@@ -23,7 +22,6 @@ function defaultToDate(): string {
 /** First-party aggregate analytics dashboard (PU-22-analytics, §I07).
  * Shows date/locale event counts with metric definitions and empty/error/not-connected states. */
 export function AnalyticsPage() {
-  const { user } = useAuth()
   const [fromDate, setFromDate] = useState<string>(defaultFromDate)
   const [toDate, setToDate] = useState<string>(defaultToDate)
   const [locale, setLocale] = useState<string>('all')
@@ -46,24 +44,14 @@ export function AnalyticsPage() {
 
   return (
     <main className="page">
-      <AdminNav items={filterNavItems(ADMIN_NAV_ITEMS, user)} />
       <h1>Analytics</h1>
 
       {/* Metric Definitions & Privacy Notice */}
       <section
         aria-labelledby="analytics-definitions-heading"
-        style={{
-          padding: '1rem',
-          backgroundColor: 'var(--surface-muted, #f8f9fa)',
-          border: '1px solid var(--border, #e9ecef)',
-          borderRadius: '6px',
-          marginBottom: '1.5rem',
-        }}
+        className="admin-panel max-w-4xl bg-muted"
       >
-        <h2
-          id="analytics-definitions-heading"
-          style={{ fontSize: '1.1rem', marginTop: 0 }}
-        >
+        <h2 id="analytics-definitions-heading" className="text-base">
           Metric definitions & privacy notice
         </h2>
         <p>
@@ -73,17 +61,11 @@ export function AnalyticsPage() {
           retries, and bots may inflate counts; metrics do not represent unique
           human beings.
         </p>
-        <details style={{ marginTop: '0.5rem' }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 600 }}>
+        <details className="mt-2">
+          <summary className="cursor-pointer font-semibold">
             Event type definitions
           </summary>
-          <ul
-            style={{
-              margin: '0.5rem 0',
-              paddingLeft: '1.2rem',
-              fontSize: '0.9rem',
-            }}
-          >
+          <ul className="my-2 ps-5 text-sm">
             <li>
               <code>page_view</code>: Canonical route visit.
             </li>
@@ -112,15 +94,7 @@ export function AnalyticsPage() {
       </section>
 
       {/* Filter Controls */}
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'flex-end',
-          marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-        }}
-      >
+      <div className="admin-filter-bar">
         <TextField
           id="analytics-from"
           label="From date"
@@ -151,14 +125,13 @@ export function AnalyticsPage() {
           className="admin-button admin-button--secondary"
           onClick={() => void analyticsQuery.refetch()}
           disabled={analyticsQuery.isFetching}
-          style={{ marginBottom: '0.25rem' }}
         >
           {analyticsQuery.isFetching ? 'Updating…' : 'Apply filters'}
         </button>
       </div>
 
       {analyticsQuery.isPending ? (
-        <p role="status">Loading analytics report…</p>
+        <LoadingState label="Loading analytics report…" variant="cards" />
       ) : null}
 
       {/* Not-Connected State */}
@@ -187,35 +160,19 @@ export function AnalyticsPage() {
       {/* Report Data */}
       {analyticsQuery.data && !isNotConnected ? (
         <>
-          <div
-            style={{
-              display: 'flex',
-              gap: '2rem',
-              padding: '1rem',
-              backgroundColor: 'var(--surface-muted, #f8f9fa)',
-              border: '1px solid var(--border, #e9ecef)',
-              borderRadius: '6px',
-              marginBottom: '1.5rem',
-            }}
-          >
-            <div>
-              <div className="muted" style={{ fontSize: '0.85rem' }}>
-                Primary Metric
-              </div>
-              <strong style={{ fontSize: '1.2rem' }}>
+          <div className="mb-6 grid gap-4 sm:grid-cols-3">
+            <div className="admin-panel my-0">
+              <div className="muted admin-small">Primary Metric</div>
+              <strong className="text-xl">
                 {analyticsQuery.data.metric.replace('_', ' ')}
               </strong>
             </div>
-            <div>
-              <div className="muted" style={{ fontSize: '0.85rem' }}>
-                Total Events Count
-              </div>
-              <strong style={{ fontSize: '1.2rem' }}>{totalEvents}</strong>
+            <div className="admin-panel my-0">
+              <div className="muted admin-small">Total Events Count</div>
+              <strong className="text-xl">{totalEvents}</strong>
             </div>
-            <div>
-              <div className="muted" style={{ fontSize: '0.85rem' }}>
-                Reporting Range
-              </div>
+            <div className="admin-panel my-0">
+              <div className="muted admin-small">Reporting Range</div>
               <div>
                 {analyticsQuery.data.from} to {analyticsQuery.data.to} (
                 {analyticsQuery.data.timezone})
@@ -246,11 +203,7 @@ export function AnalyticsPage() {
               <tbody>
                 {analyticsQuery.data.rows.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={6}
-                      className="muted"
-                      style={{ textAlign: 'center', padding: '2rem' }}
-                    >
+                    <td colSpan={6} className="muted py-8 text-center">
                       No events recorded for the selected date range and locale.
                     </td>
                   </tr>

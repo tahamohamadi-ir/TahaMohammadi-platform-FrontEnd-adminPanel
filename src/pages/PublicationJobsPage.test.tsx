@@ -104,7 +104,7 @@ describe('PublicationJobsPage (PU-12-jobs)', () => {
       await screen.findByRole('heading', { name: /publication jobs/i }),
     ).toBeInTheDocument()
     expect(screen.getByText(/save vs\. site deployment/i)).toBeInTheDocument()
-    expect(screen.getByText('job-uuid-1')).toBeInTheDocument()
+    expect(await screen.findByText('job-uuid-1')).toBeInTheDocument()
     expect(screen.getByText('completed')).toBeInTheDocument()
     expect(screen.getByText('job-uuid-2')).toBeInTheDocument()
     expect(screen.getByText('failed')).toBeInTheDocument()

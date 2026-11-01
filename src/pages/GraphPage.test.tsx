@@ -79,6 +79,14 @@ describe('GraphPage versions (ADMIN-210)', () => {
           ) {
             return Promise.resolve(jsonResponse(VERSIONS[0], 201))
           }
+          if (init?.method === 'POST' && url.endsWith('/duplicate')) {
+            return Promise.resolve(
+              jsonResponse(
+                { ...VERSIONS[1], id: 9, status: 'draft', nodeCount: 5 },
+                201,
+              ),
+            )
+          }
           if (url.includes('/activate')) {
             return Promise.resolve(jsonResponse({ id: 2, status: 'active' }))
           }
@@ -146,5 +154,40 @@ describe('GraphPage versions (ADMIN-210)', () => {
     expect(
       within(activeRow).queryByRole('button', { name: /activate/i }),
     ).not.toBeInTheDocument()
+  })
+
+  it('duplicates the active version as a new draft', async () => {
+    renderGraph()
+    await screen.findByRole('table')
+    const activeRow = screen.getByText('active').closest('tr')!
+    fireEvent.click(
+      within(activeRow).getByRole('button', {
+        name: 'Duplicate #1 as draft',
+      }),
+    )
+    await waitFor(() => {
+      expect(
+        vi
+          .mocked(fetch)
+          .mock.calls.some(
+            ([url, init]) =>
+              String(url).endsWith(
+                '/api/v1/admin/graph/versions/1/duplicate',
+              ) && (init as RequestInit | undefined)?.method === 'POST',
+          ),
+      ).toBe(true)
+    })
+    expect(
+      await screen.findByRole('link', { name: 'Edit draft #9' }),
+    ).toHaveAttribute('href', '/graph/9')
+  })
+
+  it('offers duplication on draft rows too', async () => {
+    renderGraph()
+    await screen.findByRole('table')
+    const draftRow = screen.getByText('draft').closest('tr')!
+    expect(
+      within(draftRow).getByRole('button', { name: 'Duplicate #2 as draft' }),
+    ).toBeInTheDocument()
   })
 })

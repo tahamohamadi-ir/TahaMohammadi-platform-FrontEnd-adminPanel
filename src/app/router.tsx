@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { AppShell } from '@/components/shell/AppShell'
 import { AnalyticsPage } from '@/pages/AnalyticsPage'
 import { AtlasEditorPage } from '@/pages/AtlasEditorPage'
 import { AtlasPreviewPage } from '@/pages/AtlasPreviewPage'
@@ -36,141 +37,30 @@ export function AppRouter() {
       <Route path="/" element={<Navigate to="dashboard" replace />} />
       <Route path="sign-in" element={<SignInPage />} />
       <Route
-        path="dashboard"
         element={
           <ProtectedRoute requireStaff>
-            <DashboardPage />
+            <AppShell />
           </ProtectedRoute>
         }
-      />
-      <Route
-        path="settings"
-        element={
-          <ProtectedRoute requireStaff>
-            <SettingsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="home"
-        element={
-          <ProtectedRoute requireStaff>
-            <HomePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="timeline"
-        element={
-          <ProtectedRoute requireStaff>
-            <TimelinePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="approvals"
-        element={
-          <ProtectedRoute requireStaff>
-            <ApprovalQueuePage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="publication-jobs"
-        element={
-          <ProtectedRoute requireStaff>
-            <PublicationJobsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="analytics"
-        element={
-          <ProtectedRoute requireStaff>
-            <AnalyticsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="graph"
-        element={
-          <ProtectedRoute requireStaff>
-            <GraphPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="graph/:versionId"
-        element={
-          <ProtectedRoute requireStaff>
-            <GraphEditPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="media"
-        element={
-          <ProtectedRoute requireStaff>
-            <MediaPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="content/:entity"
-        element={
-          <ProtectedRoute requireStaff>
-            <ContentListPageRoute />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="content/:entity/new"
-        element={
-          <ProtectedRoute requireStaff>
-            <ContentEditPageRoute />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="content/:entity/:id"
-        element={
-          <ProtectedRoute requireStaff>
-            <ContentEditPageRoute />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="atlas"
-        element={
-          <ProtectedRoute requireStaff>
-            <AtlasVersionsPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="atlas/:versionId"
-        element={
-          <ProtectedRoute requireStaff>
-            <AtlasEditorPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="atlas/taxonomy"
-        element={
-          <ProtectedRoute requireStaff>
-            <AtlasTaxonomyPage />
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="atlas/:versionId/preview"
-        element={
-          <ProtectedRoute requireStaff>
-            <AtlasPreviewPage />
-          </ProtectedRoute>
-        }
-      />
+      >
+        <Route path="dashboard" element={<DashboardPage />} />
+        <Route path="settings" element={<SettingsPage />} />
+        <Route path="home" element={<HomePage />} />
+        <Route path="timeline" element={<TimelinePage />} />
+        <Route path="approvals" element={<ApprovalQueuePage />} />
+        <Route path="publication-jobs" element={<PublicationJobsPage />} />
+        <Route path="analytics" element={<AnalyticsPage />} />
+        <Route path="graph" element={<GraphPage />} />
+        <Route path="graph/:versionId" element={<GraphEditPage />} />
+        <Route path="media" element={<MediaPage />} />
+        <Route path="content/:entity" element={<ContentListPageRoute />} />
+        <Route path="content/:entity/new" element={<ContentEditPageRoute />} />
+        <Route path="content/:entity/:id" element={<ContentEditPageRoute />} />
+        <Route path="atlas" element={<AtlasVersionsPage />} />
+        <Route path="atlas/:versionId" element={<AtlasEditorPage />} />
+        <Route path="atlas/taxonomy" element={<AtlasTaxonomyPage />} />
+        <Route path="atlas/:versionId/preview" element={<AtlasPreviewPage />} />
+      </Route>
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   )
