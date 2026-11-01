@@ -1,0 +1,185 @@
+name: Deploy production
+
+# Rebuilds and redeploys ONLY the admin panel's `admin` service in the
+# shared `taha-cms-prod` Docker Compose stack. cms/web/db/mailpit/Caddy are
+# never restarted: the existing compose file, its network wiring and Caddy
+# routing are reused as-is. Modelled on the public site's
+# deploy-production.yml (same secrets, same host layout).
+#
+# Every push to main runs verify only (the same gates as ci.yml). The
+# deploy job requires a manual "Run workflow" dispatch, so nothing reaches
+# the live admin without someone deliberately triggering it.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-production-admin
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify release candidate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Production build
+        run: npm run build
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: End-to-end tests
+        run: npm run test:e2e
+
+  deploy:
+    name: Deploy admin panel to production
+    needs: verify
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      PROD_SSH_PRIVATE_KEY: ${{ secrets.PROD_SSH_PRIVATE_KEY }}
+      PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+      PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+      PROD_SSH_PORT: ${{ secrets.PROD_SSH_PORT }}
+      PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+      PROD_APP_DIR: ${{ secrets.PROD_APP_DIR }}
+    steps:
+      - name: Check production deployment configuration
+        id: prod
+        shell: bash
+        run: |
+          required=(
+            PROD_SSH_PRIVATE_KEY
+            PROD_SSH_KNOWN_HOSTS
+            PROD_SSH_HOST
+            PROD_SSH_PORT
+            PROD_SSH_USER
+            PROD_APP_DIR
+          )
+          for name in "${required[@]}"; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::Production deployment skipped: repository secret $name is not configured. See deploy/README.md."
+              exit 1
+            fi
+          done
+
+      - name: Configure production SSH access
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$PROD_SSH_PRIVATE_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          printf '%s\n' "$PROD_SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Build image and recreate the admin service only
+        env:
+          DEPLOY_SHA: ${{ github.sha }}
+        run: |
+          ssh -i ~/.ssh/id_ed25519 -o BatchMode=yes -o StrictHostKeyChecking=yes -o ServerAliveInterval=30 -o ServerAliveCountMax=10 -p "$PROD_SSH_PORT" "$PROD_SSH_USER@$PROD_SSH_HOST" \
+            "PROD_APP_DIR='$PROD_APP_DIR' DEPLOY_SHA='$DEPLOY_SHA' bash -se" <<'REMOTE'
+          set -euo pipefail
+
+          compose_file=/home/deploy/prod/docker-compose.prod.yml
+          env_file=/home/deploy/.env.prod
+          compose() {
+            docker compose -p taha-cms-prod --env-file "$env_file" -f "$compose_file" "$@"
+          }
+
+          # 0. Serialize with the backend deploy, which edits the same
+          #    .env.prod. (GitHub concurrency groups do not span repos.)
+          exec 9>/home/deploy/.deploy-prod.lock
+          flock -w 900 9
+
+          # 1. Checkout the exact deployed commit into a dedicated build
+          #    directory. This never touches /home/deploy/prod (the running
+          #    compose stack's config) or any other service's checkout: the
+          #    admin/ subfolder keeps it apart from the public site's src/
+          #    even when PROD_APP_DIR holds the same value.
+          mkdir -p "$PROD_APP_DIR/admin"
+          cd "$PROD_APP_DIR/admin"
+          if [ -d "src/.git" ]; then
+            git -C src reset --hard HEAD
+            git -C src fetch --prune origin "$DEPLOY_SHA"
+          else
+            git clone https://github.com/tahamohamadi-ir/TahaMohammadi-platform-FrontEnd-adminPanel.git src
+            git -C src fetch --prune origin "$DEPLOY_SHA"
+          fi
+          fetched_sha=$(git -C src rev-parse FETCH_HEAD)
+          test "$fetched_sha" = "$DEPLOY_SHA"
+          git -C src checkout --detach "$DEPLOY_SHA"
+
+          # 2. Build the admin image (static SPA served by nginx on 8080).
+          release_id="prod-${DEPLOY_SHA:0:8}"
+          docker build -q -f src/deploy/Dockerfile.prod -t "taha-admin-prod:${release_id}" src
+
+          # 3. RELEASE_ID is shared by every app image in the compose file
+          #    (taha-{cms,web,admin}-prod:${RELEASE_ID}). Fail before
+          #    changing anything if that convention no longer holds.
+          RELEASE_ID="$release_id" compose config --images | grep -xF "taha-admin-prod:${release_id}" >/dev/null
+
+          # 4. Tag the images every service is running right now with the
+          #    CURRENT release id (so restoring it is a complete rollback),
+          #    and cms/web's also with the NEW one, so every service still
+          #    resolves to an existing image after the bump. No content
+          #    changes; tags only.
+          old_release=$(sed -n 's/^RELEASE_ID=//p' "$env_file" | tail -n 1)
+          echo "Current RELEASE_ID (rollback target): ${old_release:-<unset>}"
+          for svc in cms web admin; do
+            cid=$(compose ps -q "$svc")
+            [ -n "$cid" ] || continue
+            image=$(docker inspect --format '{{.Image}}' "$cid")
+            if [ -n "$old_release" ]; then
+              docker tag "$image" "taha-${svc}-prod:${old_release}"
+            fi
+            if [ "$svc" != admin ]; then
+              docker tag "$image" "taha-${svc}-prod:${release_id}"
+            fi
+          done
+
+          # 5. Point RELEASE_ID at the new tag, replacing every existing
+          #    line (a prior manual edit once left two). mktemp keeps the
+          #    file 0600.
+          tmp=$(mktemp "${env_file}.XXXXXX")
+          grep -v '^RELEASE_ID=' "$env_file" > "$tmp" || true
+          printf 'RELEASE_ID=%s\n' "$release_id" >> "$tmp"
+          mv "$tmp" "$env_file"
+
+          # 6. Recreate only the admin service. --no-deps keeps everything
+          #    else untouched.
+          compose up -d --no-deps --force-recreate admin
+
+          # 7. Verify the new container serves the SPA at /admin/.
+          compose ps admin
+          for attempt in $(seq 1 20); do
+            if compose exec -T admin wget -q -O /dev/null http://127.0.0.1:8080/admin/; then
+              echo "Deployed taha-admin-prod:${release_id}"
+              exit 0
+            fi
+            echo "Waiting for admin (attempt $attempt)..."
+            sleep 3
+          done
+          echo "admin did not answer; see the rollback section in deploy/README.md" >&2
+          compose logs --tail 50 admin >&2
+          exit 1
+          REMOTE

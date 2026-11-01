@@ -1,0 +1,9 @@
+# Keep local state and secrets out of the image build context.
+.env
+.env.*
+!.env.example
+.git
+node_modules
+dist
+test-results
+playwright-report
