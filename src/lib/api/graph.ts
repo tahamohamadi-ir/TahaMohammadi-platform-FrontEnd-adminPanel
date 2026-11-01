@@ -13,6 +13,7 @@ export type GraphNode = {
   accessibleLabel?: string
   colorRole?: string
   iconRole?: string
+  summary?: string
   weight?: number
   position?: { x: number; y: number; z?: number }
   relatedRecords?: Array<{ family: string; id: string }>
@@ -48,12 +49,36 @@ export const GRAPH_RELATED_FAMILIES = [
   'creative-work',
 ] as const
 
+/** `includes` (parent -> child) builds the Home constellation: the public
+ * renderer derives rings by BFS depth from the identity node and ignores
+ * pinned positions. */
 export const GRAPH_RELATION_TYPES = [
+  'includes',
   'relates',
   'supports',
   'mentions',
   'cites',
   'prerequisite',
+] as const
+
+/** Node kinds the hierarchical Home graph uses; the backend stores any
+ * string, so a stored value outside this list stays editable as-is. */
+export const GRAPH_NODE_TYPES = [
+  'identity',
+  'field',
+  'project',
+  'experience',
+  'education',
+  'publication',
+  'topic',
+] as const
+
+export const GRAPH_COLOR_ROLES = [
+  'brand',
+  'research',
+  'signature',
+  'context',
+  'ink',
 ] as const
 
 export async function fetchGraphVersions(): Promise<GraphVersionOut[]> {
@@ -67,6 +92,17 @@ export async function createGraphVersion(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ locale }),
+  })
+}
+
+/** Copy any version (usually the active one) into a new DRAFT with the
+ * same nodes, edges and groups, so the live graph can be edited without
+ * rebuilding it by hand. Answers 201 with the new version. */
+export async function duplicateGraphVersion(
+  versionId: number,
+): Promise<GraphVersionOut> {
+  return adminJson<GraphVersionOut>(`/graph/versions/${versionId}/duplicate`, {
+    method: 'POST',
   })
 }
 

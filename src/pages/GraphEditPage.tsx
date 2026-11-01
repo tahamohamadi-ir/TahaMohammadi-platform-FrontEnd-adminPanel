@@ -1,9 +1,17 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 
-import { Notice, SelectField, TextField } from '@/components/ui/primitives'
+import {
+  Dialog,
+  Notice,
+  SelectField,
+  TextareaField,
+  TextField,
+} from '@/components/ui/primitives'
 import { AdminApiError } from '@/lib/api/auth'
 import {
+  GRAPH_COLOR_ROLES,
+  GRAPH_NODE_TYPES,
   GRAPH_RELATED_FAMILIES,
   GRAPH_RELATION_TYPES,
   type GraphEdge,
@@ -18,11 +26,22 @@ import {
 } from '@/lib/api/hooks/useGraph'
 import { LoadingState } from '@/components/ui/states'
 
+/** Preset options plus the stored value when it is outside the presets, so
+ * an older node type (e.g. `domain`) stays selected instead of rewritten. */
+function optionsWith(values: readonly string[], current: string) {
+  const list =
+    current && !values.includes(current) ? [current, ...values] : values
+  return list.map((value) => ({ value, label: value }))
+}
+
 /** Per-version graph editor (ADMIN-210 / PU-12-graph).
  * Complete graph version editing with:
  * 1. Accessible node table & keyboard positioning controls (alternative to drag-and-drop).
  * 2. Record relation validation & management for every node.
- * 3. Directional edge & group editing with server-side validator integration. */
+ * 3. Directional edge & group editing with server-side validator integration.
+ * 4. Hierarchical Home graph: typed nodes and a one-step "Add child" that
+ *    creates the child plus its `includes` edge (parent -> child). The public
+ *    renderer derives rings by depth from the identity node. */
 export function GraphEditPage() {
   const params = useParams()
   const versionId = Number(params.versionId)
@@ -41,12 +60,23 @@ export function GraphEditPage() {
   // New edge form state
   const [newEdgeSource, setNewEdgeSource] = useState('')
   const [newEdgeTarget, setNewEdgeTarget] = useState('')
-  const [newEdgeRelation, setNewEdgeRelation] = useState<string>('relates')
+  const [newEdgeRelation, setNewEdgeRelation] = useState<string>('includes')
 
   // New node form state
   const [newNodeId, setNewNodeId] = useState('')
   const [newNodeLabel, setNewNodeLabel] = useState('')
   const [newNodeAccessibleLabel, setNewNodeAccessibleLabel] = useState('')
+  const [newNodeType, setNewNodeType] = useState<string>('field')
+  const [newNodeColorRole, setNewNodeColorRole] = useState<string>('brand')
+  const [newNodeSummary, setNewNodeSummary] = useState('')
+
+  // Add-child dialog state (parent id while open)
+  const [childParent, setChildParent] = useState<string | null>(null)
+  const [childId, setChildId] = useState('')
+  const [childLabel, setChildLabel] = useState('')
+  const [childType, setChildType] = useState<string>('project')
+  const [childColorRole, setChildColorRole] = useState<string>('brand')
+  const [childError, setChildError] = useState<string | null>(null)
 
   // New related record state
   const [selectedNodeForRecord, setSelectedNodeForRecord] = useState('')
@@ -105,6 +135,7 @@ export function GraphEditPage() {
     const id = newNodeId.trim()
     const label = newNodeLabel.trim()
     const accessibleLabel = newNodeAccessibleLabel.trim() || label
+    const summary = newNodeSummary.trim()
 
     if (!id) {
       setError('Node ID is required.')
@@ -123,19 +154,84 @@ export function GraphEditPage() {
           id,
           label: label || id,
           accessibleLabel: accessibleLabel || `${id} node`,
-          type: 'domain',
-          colorRole: 'brand',
+          type: newNodeType,
+          colorRole: newNodeColorRole,
           iconRole: 'orbit',
           weight: 1,
           position: { x: 250, y: 250 },
           relatedRecords: [],
+          ...(summary ? { summary } : {}),
         },
       ],
     })
     setNewNodeId('')
     setNewNodeLabel('')
     setNewNodeAccessibleLabel('')
+    setNewNodeSummary('')
     setError(null)
+    setMessage(null)
+  }
+
+  function openAddChild(parent: GraphNode) {
+    setChildParent(parent.id)
+    setChildId('')
+    setChildLabel('')
+    setChildType('project')
+    setChildColorRole(String(parent.colorRole ?? 'brand'))
+    setChildError(null)
+  }
+
+  /** One step: the child node plus its `includes` edge parent -> child. */
+  function handleAddChild(e: React.FormEvent) {
+    e.preventDefault()
+    const parent = current.nodes.find((node) => node.id === childParent)
+    if (!parent) return
+    const id = childId.trim()
+    const label = childLabel.trim()
+    if (!id || !label) {
+      setChildError('Child ID and label are required.')
+      return
+    }
+    if (current.nodes.some((node) => node.id === id)) {
+      setChildError(`Node with ID "${id}" already exists.`)
+      return
+    }
+    // Positions are required by the validator but ignored by the Home
+    // renderer; fan siblings out under the parent so the table stays legible.
+    const siblings = current.edges.filter(
+      (edge) => edge.source === parent.id && edge.relationType === 'includes',
+    ).length
+    const origin = parent.position ?? { x: 250, y: 250 }
+    setDraft({
+      ...current,
+      nodes: [
+        ...current.nodes,
+        {
+          id,
+          label,
+          accessibleLabel: label,
+          type: childType,
+          colorRole: childColorRole,
+          iconRole: 'orbit',
+          weight: 1,
+          position: { x: origin.x + siblings * 80, y: origin.y + 120 },
+          relatedRecords: [],
+        },
+      ],
+      edges: [
+        ...current.edges,
+        {
+          id: `${parent.id}->${id}:includes`,
+          source: parent.id,
+          target: id,
+          relationType: 'includes',
+          directed: true,
+          weight: 1,
+        },
+      ],
+    })
+    setChildParent(null)
+    setChildError(null)
     setMessage(null)
   }
 
@@ -378,10 +474,30 @@ export function GraphEditPage() {
                       <tr key={nodeId}>
                         <td>
                           <strong>{nodeId}</strong>
-                          <br />
-                          <span className="muted">
-                            {String(node.type ?? 'domain')}
-                          </span>
+                          <SelectField
+                            id={`node-type-${nodeId}`}
+                            label={`Type (${nodeId})`}
+                            value={String(node.type ?? '')}
+                            onChange={(value) =>
+                              updateNode(index, { type: value })
+                            }
+                            options={optionsWith(
+                              GRAPH_NODE_TYPES,
+                              String(node.type ?? ''),
+                            )}
+                          />
+                          <SelectField
+                            id={`node-color-${nodeId}`}
+                            label={`Color role (${nodeId})`}
+                            value={String(node.colorRole ?? '')}
+                            onChange={(value) =>
+                              updateNode(index, { colorRole: value })
+                            }
+                            options={optionsWith(
+                              GRAPH_COLOR_ROLES,
+                              String(node.colorRole ?? ''),
+                            )}
+                          />
                         </td>
                         <td>
                           <TextField
@@ -398,6 +514,15 @@ export function GraphEditPage() {
                             value={String(node.accessibleLabel ?? '')}
                             onChange={(value) =>
                               updateNode(index, { accessibleLabel: value })
+                            }
+                          />
+                          <TextareaField
+                            id={`node-summary-${nodeId}`}
+                            label={`Summary (${nodeId})`}
+                            rows={2}
+                            value={String(node.summary ?? '')}
+                            onChange={(value) =>
+                              updateNode(index, { summary: value })
                             }
                           />
                         </td>
@@ -469,13 +594,24 @@ export function GraphEditPage() {
                           />
                         </td>
                         <td>
-                          <button
-                            type="button"
-                            className="admin-button admin-button--secondary"
-                            onClick={() => removeNode(index)}
-                          >
-                            Remove
-                          </button>
+                          <div className="admin-actions admin-actions--tight flex-col items-stretch">
+                            <button
+                              type="button"
+                              className="admin-button admin-button--secondary"
+                              aria-label={`Add child to ${nodeId}`}
+                              onClick={() => openAddChild(node)}
+                            >
+                              Add child
+                            </button>
+                            <button
+                              type="button"
+                              className="admin-button admin-button--secondary"
+                              aria-label={`Remove node ${nodeId}`}
+                              onClick={() => removeNode(index)}
+                            >
+                              Remove
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -504,6 +640,27 @@ export function GraphEditPage() {
                 value={newNodeAccessibleLabel}
                 onChange={setNewNodeAccessibleLabel}
               />
+              <SelectField
+                id="new-node-type"
+                label="Node type"
+                value={newNodeType}
+                onChange={setNewNodeType}
+                options={optionsWith(GRAPH_NODE_TYPES, newNodeType)}
+              />
+              <SelectField
+                id="new-node-color"
+                label="Node color role"
+                value={newNodeColorRole}
+                onChange={setNewNodeColorRole}
+                options={optionsWith(GRAPH_COLOR_ROLES, newNodeColorRole)}
+              />
+              <TextareaField
+                id="new-node-summary"
+                label="Node summary"
+                rows={2}
+                value={newNodeSummary}
+                onChange={setNewNodeSummary}
+              />
               <button
                 type="submit"
                 className="admin-button admin-button--secondary"
@@ -512,6 +669,53 @@ export function GraphEditPage() {
               </button>
             </form>
           </section>
+
+          <Dialog
+            title={`Add a child under ${childParent ?? ''}`}
+            open={childParent !== null}
+            onClose={() => setChildParent(null)}
+          >
+            <form noValidate onSubmit={handleAddChild}>
+              <p className="muted admin-small">
+                Creates the node and an <code>includes</code> edge from{' '}
+                <strong>{childParent}</strong> to it.
+              </p>
+              {childError ? (
+                <p role="alert" className="form-error mb-3">
+                  {childError}
+                </p>
+              ) : null}
+              <TextField
+                id="child-node-id"
+                label="Child ID"
+                value={childId}
+                onChange={setChildId}
+              />
+              <TextField
+                id="child-node-label"
+                label="Child label"
+                value={childLabel}
+                onChange={setChildLabel}
+              />
+              <SelectField
+                id="child-node-type"
+                label="Child type"
+                value={childType}
+                onChange={setChildType}
+                options={optionsWith(GRAPH_NODE_TYPES, childType)}
+              />
+              <SelectField
+                id="child-node-color"
+                label="Child color role"
+                value={childColorRole}
+                onChange={setChildColorRole}
+                options={optionsWith(GRAPH_COLOR_ROLES, childColorRole)}
+              />
+              <button type="submit" className="admin-button">
+                Create child
+              </button>
+            </form>
+          </Dialog>
 
           {/* Record Relation Validation & Management */}
           <section aria-labelledby="related-title" className="admin-section">

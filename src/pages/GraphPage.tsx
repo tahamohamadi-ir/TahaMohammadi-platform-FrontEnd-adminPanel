@@ -6,22 +6,44 @@ import { AdminApiError } from '@/lib/api/auth'
 import {
   useActivateGraphVersion,
   useCreateGraphVersion,
+  useDuplicateGraphVersion,
   useGraphVersions,
 } from '@/lib/api/hooks/useGraph'
 import { LoadingState } from '@/components/ui/states'
 
 /** Graph versions (ADMIN-210): drafts are editable and activatable; the
  * active version is immutable (backend 409 IMMUTABLE_ACTIVE / ALREADY_ACTIVE
- * are surfaced verbatim). Node/edge/group editing lives in the per-version
- * editor. */
+ * are surfaced verbatim). Any version can be duplicated into a new draft,
+ * which is how the live graph gets edited. Node/edge/group editing lives in
+ * the per-version editor. */
 export function GraphPage() {
   const [locale, setLocale] = useState('en')
   const [activateTarget, setActivateTarget] = useState<number | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [duplicated, setDuplicated] = useState<{
+    from: number
+    to: number
+  } | null>(null)
 
   const versions = useGraphVersions()
   const create = useCreateGraphVersion()
   const activate = useActivateGraphVersion()
+  const duplicate = useDuplicateGraphVersion()
+
+  async function handleDuplicate(versionId: number) {
+    setError(null)
+    setDuplicated(null)
+    try {
+      const created = await duplicate.mutateAsync(versionId)
+      setDuplicated({ from: versionId, to: created.id })
+    } catch (caught) {
+      setError(
+        caught instanceof AdminApiError
+          ? caught.message
+          : 'Duplicate failed. Try again.',
+      )
+    }
+  }
 
   async function handleCreate(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -60,6 +82,14 @@ export function GraphPage() {
       {error ? (
         <Notice tone="error" title="Action failed">
           {error}
+        </Notice>
+      ) : null}
+      {duplicated ? (
+        <Notice tone="success" title={`Draft #${duplicated.to} created`}>
+          Copied from version #{duplicated.from}.{' '}
+          <Link to={`/graph/${duplicated.to}`}>
+            Edit draft #{duplicated.to}
+          </Link>
         </Notice>
       ) : null}
 
@@ -143,7 +173,16 @@ export function GraphPage() {
                     </>
                   ) : (
                     <span className="muted">Immutable while active</span>
-                  )}
+                  )}{' '}
+                  <button
+                    type="button"
+                    className="admin-button admin-button--secondary"
+                    aria-label={`Duplicate #${version.id} as draft`}
+                    disabled={duplicate.isPending}
+                    onClick={() => void handleDuplicate(version.id)}
+                  >
+                    Duplicate as draft
+                  </button>
                 </td>
               </tr>
             ))}
