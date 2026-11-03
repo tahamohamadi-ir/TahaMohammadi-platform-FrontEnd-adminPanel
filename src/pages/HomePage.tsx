@@ -373,14 +373,13 @@ export function HomePage() {
           </ol>
 
           {missingCanonicalKeys.length > 0 ? (
-            <div style={{ margin: '1rem 0' }}>
+            <div className="admin-actions my-4">
               <span className="muted">Add missing canonical module: </span>
               {missingCanonicalKeys.map((key) => (
                 <button
                   key={key}
                   type="button"
                   className="admin-button admin-button--secondary"
-                  style={{ marginRight: '0.5rem', marginBottom: '0.5rem' }}
                   onClick={() => addCanonicalModule(key)}
                 >
                   + {key}
@@ -410,14 +409,7 @@ export function HomePage() {
         </section>
       ) : null}
 
-      <section
-        aria-labelledby="audience-heading"
-        style={{
-          marginTop: '2.5rem',
-          borderTop: '1px solid var(--border, #ccc)',
-          paddingTop: '1.5rem',
-        }}
-      >
+      <section aria-labelledby="audience-heading" className="admin-section">
         <h2 id="audience-heading">Audience entry links</h2>
         <p className="muted">
           Two dedicated audience paths for {locale.toUpperCase()}: Research
@@ -433,14 +425,7 @@ export function HomePage() {
         ) : null}
 
         <form onSubmit={(e) => void handleSaveAudienceLinks(e)}>
-          <fieldset
-            style={{
-              border: '1px solid var(--border, #ccc)',
-              padding: '1rem',
-              borderRadius: '4px',
-              marginBottom: '1rem',
-            }}
-          >
+          <fieldset>
             <legend>
               <strong>Research audience path</strong>
             </legend>
@@ -458,14 +443,7 @@ export function HomePage() {
             />
           </fieldset>
 
-          <fieldset
-            style={{
-              border: '1px solid var(--border, #ccc)',
-              padding: '1rem',
-              borderRadius: '4px',
-              marginBottom: '1rem',
-            }}
-          >
+          <fieldset>
             <legend>
               <strong>Employment audience path</strong>
             </legend>

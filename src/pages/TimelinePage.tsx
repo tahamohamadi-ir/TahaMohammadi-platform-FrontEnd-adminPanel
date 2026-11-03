@@ -16,7 +16,8 @@ import {
   useUpdateTimelineRecord,
 } from '@/lib/api/hooks/useTimeline'
 import { LocaleTabs } from '@/pages/HomePage'
-import { LoadingState } from '@/components/ui/states'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { CalendarIcon } from 'lucide-react'
 
 const MAX_LABEL = 200
 
@@ -277,7 +278,15 @@ export function TimelinePage() {
         </p>
       </form>
 
-      {timeline.data ? (
+      {timeline.data && rows.length === 0 ? (
+        <EmptyState
+          icon={CalendarIcon}
+          title="No timeline entries yet."
+          description="Add the first record with the form above."
+        />
+      ) : null}
+
+      {timeline.data && rows.length > 0 ? (
         <ol className="admin-timeline">
           {rows.map((row, index) => (
             <li key={row.id} className="admin-timeline__row">
@@ -295,7 +304,7 @@ export function TimelinePage() {
                       href={row.detail_url}
                       target="_blank"
                       rel="noreferrer"
-                      style={{ fontSize: '0.85rem' }}
+                      className="admin-small"
                     >
                       {row.detail_url}
                     </a>

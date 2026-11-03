@@ -200,3 +200,18 @@ describe('TimelinePage (ADMIN-200)', () => {
     })
   })
 })
+
+describe('TimelinePage empty state (Phase 6)', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+  })
+
+  it('shows a designed empty state when there are no rows', async () => {
+    stubTimeline(() => jsonResponse({ ...ROWS, items: [] }))
+    renderTimeline()
+    expect(
+      await screen.findByText('No timeline entries yet.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('list')).not.toBeInTheDocument()
+  })
+})

@@ -233,7 +233,7 @@ export function MediaPage() {
               { value: 'face', label: 'Face / Subject priority' },
             ]}
           />
-          <p style={{ display: 'flex', gap: '0.75rem' }}>
+          <p className="admin-actions">
             <button
               type="submit"
               className="admin-button"
@@ -312,7 +312,7 @@ export function MediaPage() {
                   key: 'actions',
                   header: 'Actions',
                   render: (row: MediaItemOut) => (
-                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <div className="admin-actions admin-actions--tight">
                       <button
                         type="button"
                         className="admin-button admin-button--secondary"
@@ -429,7 +429,7 @@ export function MediaPage() {
             label="Active / Available for content"
             defaultChecked={editActive}
           />
-          <p style={{ marginTop: '1rem' }}>
+          <p className="mt-4">
             <button
               type="submit"
               className="admin-button"

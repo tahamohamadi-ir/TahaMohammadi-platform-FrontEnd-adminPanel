@@ -17,6 +17,7 @@ import {
 import {
   AudienceLinksFieldset,
   CopyEntriesFieldset,
+  HomeHeroFieldset,
   NavLinksFieldset,
   ScenePresetsFieldset,
   type CopyEntryDraft,
@@ -241,18 +242,14 @@ export function LocalizedSettingsSection() {
             </span>
           </div>
 
+          <HomeHeroFieldset
+            data={data}
+            copyEntries={copyEntries}
+            setCopyEntries={setCopyEntries}
+          />
+
           <div className="admin-panel">
             <div className="grid gap-x-6 xl:grid-cols-2">
-              <TextField
-                id="locBrandName"
-                label="Locale display name"
-                defaultValue={data.brandName}
-              />
-              <TextField
-                id="locTagline"
-                label="Localized tagline"
-                defaultValue={data.tagline}
-              />
               <TextField
                 id="locSeoTitle"
                 label="SEO title"

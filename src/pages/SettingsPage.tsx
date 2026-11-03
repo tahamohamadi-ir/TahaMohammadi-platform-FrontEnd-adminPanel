@@ -15,6 +15,13 @@ export function SettingsPage() {
   return (
     <main className="page">
       <h1>Settings</h1>
+      <nav aria-label="On this page" className="admin-meta mb-6">
+        <span className="muted">On this page:</span>
+        <a href="#home-hero-title">Home hero</a>
+        <a href="#settings-form-title">Site settings</a>
+        <a href="#localized-settings-title">Localized settings</a>
+        <a href="#profile-title">Profile</a>
+      </nav>
       <ProfileSection user={user} />
       <SeedPolicySection seedPolicy={settings.data?.seedPolicy} />
       <SiteSettingsSection settings={settings} />

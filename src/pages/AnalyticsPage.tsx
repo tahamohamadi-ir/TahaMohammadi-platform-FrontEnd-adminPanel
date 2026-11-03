@@ -7,7 +7,8 @@ import {
   fetchAnalyticsReport,
   type AnalyticsReportOut,
 } from '@/lib/api/analytics'
-import { LoadingState } from '@/components/ui/states'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { BarChart3Icon } from 'lucide-react'
 
 function defaultFromDate(): string {
   const d = new Date()
@@ -203,8 +204,13 @@ export function AnalyticsPage() {
               <tbody>
                 {analyticsQuery.data.rows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="muted py-8 text-center">
-                      No events recorded for the selected date range and locale.
+                    <td colSpan={6}>
+                      <EmptyState
+                        icon={BarChart3Icon}
+                        title="No events recorded for the selected date range and locale."
+                        description="Widen the dates or switch the locale filter."
+                        className="my-1 border-0 bg-transparent py-6"
+                      />
                     </td>
                   </tr>
                 ) : (

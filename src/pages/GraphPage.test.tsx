@@ -191,3 +191,30 @@ describe('GraphPage versions (ADMIN-210)', () => {
     ).toBeInTheDocument()
   })
 })
+
+describe('GraphPage empty state (Phase 6)', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockImplementation((input: RequestInfo | URL) =>
+          Promise.resolve(
+            jsonResponse(String(input).includes('/auth/me') ? ME : []),
+          ),
+        ),
+    )
+  })
+
+  it('replaces the empty versions table with an empty state', async () => {
+    renderGraph()
+    expect(
+      await screen.findByText('No graph versions yet.'),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /create draft/i }),
+    ).toBeInTheDocument()
+  })
+})
