@@ -2,6 +2,7 @@ import { Navigate, useLocation } from 'react-router-dom'
 
 import { ForbiddenState } from '@/components/ForbiddenState'
 import { useAuth } from '@/lib/auth/AuthProvider'
+import { LoadingState } from '@/components/ui/states'
 
 interface ProtectedRouteProps {
   children: React.ReactNode
@@ -22,7 +23,7 @@ export function ProtectedRoute({
   if (status === 'loading') {
     return (
       <main className="page">
-        <p className="muted">Checking session…</p>
+        <LoadingState label="Checking session…" variant="lines" rows={3} />
       </main>
     )
   }

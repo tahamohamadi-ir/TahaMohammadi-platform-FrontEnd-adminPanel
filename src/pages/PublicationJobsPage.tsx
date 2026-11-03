@@ -3,7 +3,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
 import { Notice, SelectField } from '@/components/ui/primitives'
 import { AdminApiError, adminJson } from '@/lib/api/auth'
-import { LoadingState } from '@/components/ui/states'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { SendIcon } from 'lucide-react'
 
 export interface PublicationJobOut {
   id: string
@@ -183,8 +184,13 @@ export function PublicationJobsPage() {
             <tbody>
               {jobsQuery.data.items.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="muted">
-                    No publication jobs found.
+                  <td colSpan={8}>
+                    <EmptyState
+                      icon={SendIcon}
+                      title="No publication jobs found."
+                      description="Publishing or unpublishing content queues a job here."
+                      className="my-1 border-0 bg-transparent py-6"
+                    />
                   </td>
                 </tr>
               ) : (

@@ -205,6 +205,7 @@ export function SiteSettingsSection({
             <TextField
               id="tagline"
               label="Tagline"
+              description="Global default. The Home hero role line is the per-locale tagline under Home hero."
               defaultValue={data.tagline}
               error={fieldError('tagline')}
             />

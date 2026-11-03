@@ -64,16 +64,8 @@ export function ProfileFields({
         rows={6}
       />
 
-      <fieldset
-        style={{
-          border: '1px solid var(--border, #ccc)',
-          padding: '1rem',
-          margin: '1rem 0',
-        }}
-      >
-        <legend style={{ fontWeight: 'bold' }}>
-          Resource selection (§I03/F13)
-        </legend>
+      <fieldset>
+        <legend>Resource selection (§I03/F13)</legend>
         <FieldNumber
           id={`${prefix}-cvResourceId`}
           label="CV resource"

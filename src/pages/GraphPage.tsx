@@ -9,7 +9,8 @@ import {
   useDuplicateGraphVersion,
   useGraphVersions,
 } from '@/lib/api/hooks/useGraph'
-import { LoadingState } from '@/components/ui/states'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { NetworkIcon } from 'lucide-react'
 
 /** Graph versions (ADMIN-210): drafts are editable and activatable; the
  * active version is immutable (backend 409 IMMUTABLE_ACTIVE / ALREADY_ACTIVE
@@ -131,7 +132,15 @@ export function GraphPage() {
         </Notice>
       ) : null}
 
-      {versions.data ? (
+      {versions.data && versions.data.length === 0 ? (
+        <EmptyState
+          icon={NetworkIcon}
+          title="No graph versions yet."
+          description="Create a draft for a locale to start the content graph."
+        />
+      ) : null}
+
+      {versions.data && versions.data.length > 0 ? (
         <table className="admin-table">
           <caption className="admin-table__caption">Graph versions</caption>
           <thead>

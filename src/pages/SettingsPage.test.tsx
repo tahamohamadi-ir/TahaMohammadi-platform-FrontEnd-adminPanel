@@ -436,3 +436,117 @@ describe('SettingsPage (ADMIN-150)', () => {
     })
   })
 })
+
+describe('Home hero fields (Phase 6)', () => {
+  beforeEach(() => {
+    vi.unstubAllGlobals()
+    vi.stubGlobal('fetch', vi.fn())
+  })
+
+  const LOCALIZED = {
+    locale: 'en',
+    revision: 'rev-en-1',
+    brandName: 'Taha Mohammadi',
+    tagline: '',
+    footerText: '',
+    seo: { title: '', description: '' },
+    navLinks: [],
+    audienceLinks: [],
+    scene: {
+      graphPreset: 'atlas-v2',
+      portalPreset: 'arch-v2',
+      motion: 'full',
+      density: 'standard',
+    },
+    contentCopy: { 'hero.cta.cv': 'Download CV', 'other.key': 'Kept' },
+    status: 'draft',
+    publishedAt: null,
+    updatedAt: '2026-11-01T12:00:00.000Z',
+  }
+
+  function stubLocalized(onPut?: (body: Record<string, unknown>) => void) {
+    vi.mocked(fetch).mockImplementation(
+      (input: RequestInfo | URL, init?: RequestInit) => {
+        const url = String(input)
+        if (url.includes('/auth/me')) return Promise.resolve(jsonResponse(ME))
+        if (url.includes('/api/v1/admin/site/en')) {
+          if (init?.method === 'PUT') {
+            onPut?.(JSON.parse(String(init.body)))
+            return Promise.resolve(jsonResponse(LOCALIZED))
+          }
+          return Promise.resolve(jsonResponse(LOCALIZED))
+        }
+        if (url.includes('/api/v1/admin/site')) {
+          return Promise.resolve(jsonResponse(SETTINGS))
+        }
+        return Promise.resolve(new Response(null, { status: 404 }))
+      },
+    )
+  }
+
+  it('groups the Home hero copy under one labelled fieldset', async () => {
+    stubLocalized()
+    renderSettings()
+    const hero = await screen.findByRole('group', { name: /home hero/i })
+    expect(within(hero).getByLabelText(/hero name/i)).toHaveValue(
+      'Taha Mohammadi',
+    )
+    expect(within(hero).getByLabelText(/role line/i)).toHaveValue('')
+    expect(within(hero).getByLabelText(/research button/i)).toHaveValue('')
+    expect(within(hero).getByLabelText(/cv button/i)).toHaveValue('Download CV')
+    expect(within(hero).getByLabelText(/contact button/i)).toHaveValue('')
+    expect(within(hero).getByLabelText(/focus areas/i)).toHaveValue('')
+    // The managed-copy key stays visible so editors can match the CMS.
+    expect(within(hero).getByText('hero.cta.research')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /home hero/i })).toHaveAttribute(
+      'href',
+      '#home-hero-title',
+    )
+  })
+
+  it('warns which hero items the public Home hides while empty', async () => {
+    stubLocalized()
+    renderSettings()
+    const hero = await screen.findByRole('group', { name: /home hero/i })
+    const warning = within(hero).getByRole('status')
+    expect(warning).toHaveTextContent(/role line/i)
+    expect(warning).toHaveTextContent(/research button/i)
+    expect(warning).toHaveTextContent(/contact button/i)
+    expect(warning).toHaveTextContent(/focus areas/i)
+    expect(warning).not.toHaveTextContent(/cv button/i)
+  })
+
+  it('saves hero labels into managed copy and the tagline', async () => {
+    let body: Record<string, unknown> | null = null
+    stubLocalized((sent) => {
+      body = sent
+    })
+    renderSettings()
+    const hero = await screen.findByRole('group', { name: /home hero/i })
+    fireEvent.change(within(hero).getByLabelText(/role line/i), {
+      target: { value: 'Researcher and software engineer' },
+    })
+    fireEvent.change(within(hero).getByLabelText(/research button/i), {
+      target: { value: 'Explore research' },
+    })
+    fireEvent.change(within(hero).getByLabelText(/focus areas/i), {
+      target: { value: 'Focus areas' },
+    })
+    // Clearing a value removes the key instead of saving an empty label.
+    fireEvent.change(within(hero).getByLabelText(/cv button/i), {
+      target: { value: '' },
+    })
+    fireEvent.submit(
+      screen.getByRole('button', { name: /save draft/i }).closest('form')!,
+    )
+    await waitFor(() => {
+      expect(body).not.toBeNull()
+    })
+    expect(body!.tagline).toBe('Researcher and software engineer')
+    expect(body!.contentCopy).toEqual({
+      'other.key': 'Kept',
+      'hero.cta.research': 'Explore research',
+      'hero.focus_areas': 'Focus areas',
+    })
+  })
+})

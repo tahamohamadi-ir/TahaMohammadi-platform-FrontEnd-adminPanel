@@ -1,5 +1,9 @@
-import { SelectField, TextField } from '@/components/ui/primitives'
+import { useState } from 'react'
+
+import { Notice, SelectField, TextField } from '@/components/ui/primitives'
 import type { LocalizedSiteSettingsAdminOut } from '@/lib/api/settings'
+import { LinkIcon, TypeIcon } from 'lucide-react'
+import { EmptyState } from '@/components/ui/states'
 
 /* Fieldsets of the localized settings form (§I04). Uncontrolled fields are
  * read by name in LocalizedSettingsSection's submit handler; the two
@@ -13,6 +17,121 @@ export interface NavLinkDraft {
 export interface CopyEntryDraft {
   key: string
   value: string
+}
+
+/** Managed-copy keys the public Home hero reads (HeroV3Copy / home-content
+ * in public-site). Each one is hidden on the site while it is empty. */
+export const HOME_HERO_COPY = [
+  {
+    key: 'hero.cta.research',
+    label: 'Research button label',
+    short: 'Research button',
+    hint: 'Primary hero button; opens the Research page.',
+  },
+  {
+    key: 'hero.cta.cv',
+    label: 'CV button label',
+    short: 'CV button',
+    hint: 'Secondary hero button; opens the CV page.',
+  },
+  {
+    key: 'hero.cta.contact',
+    label: 'Contact button label',
+    short: 'Contact button',
+    hint: 'Secondary hero button; opens the Contact page.',
+  },
+  {
+    key: 'hero.focus_areas',
+    label: 'Focus areas heading',
+    short: 'Focus areas',
+    hint: 'Heading above the research-topic chips.',
+  },
+] as const
+
+/** Everything the public Home hero shows, in one place: the name, the role
+ * line (localized tagline) and the managed-copy labels. The labels edit the
+ * same entries as the managed-copy table; clearing one removes its key. */
+export function HomeHeroFieldset({
+  data,
+  copyEntries,
+  setCopyEntries,
+}: {
+  data: LocalizedSiteSettingsAdminOut
+  copyEntries: CopyEntryDraft[]
+  setCopyEntries: (next: CopyEntryDraft[]) => void
+}) {
+  const [brandName, setBrandName] = useState(data.brandName ?? '')
+  const [tagline, setTagline] = useState(data.tagline ?? '')
+  const valueOf = (key: string) =>
+    copyEntries.find((entry) => entry.key === key)?.value ?? ''
+
+  function setCopy(key: string, value: string) {
+    const at = copyEntries.findIndex((entry) => entry.key === key)
+    if (!value) {
+      if (at >= 0) setCopyEntries(copyEntries.filter((_, i) => i !== at))
+      return
+    }
+    if (at >= 0) {
+      const next = [...copyEntries]
+      next[at] = { key, value }
+      setCopyEntries(next)
+    } else {
+      setCopyEntries([...copyEntries, { key, value }])
+    }
+  }
+
+  const missing = [
+    ...(brandName.trim() ? [] : ['Hero name']),
+    ...(tagline.trim() ? [] : ['Role line']),
+    ...HOME_HERO_COPY.filter((item) => !valueOf(item.key).trim()).map(
+      (item) => item.short,
+    ),
+  ]
+
+  return (
+    <fieldset aria-labelledby="home-hero-title">
+      <legend id="home-hero-title">Home hero</legend>
+      <p className="muted admin-small">
+        The public Home reads the published settings: save the draft, then
+        publish localized settings.
+      </p>
+      {missing.length > 0 ? (
+        <Notice tone="warning" title="Hidden on the public Home until set">
+          {missing.join(' · ')}
+        </Notice>
+      ) : null}
+      <div className="grid items-start gap-x-6 lg:grid-cols-2">
+        <TextField
+          id="locBrandName"
+          label="Hero name (locale display name)"
+          description="The large heading of the Home hero."
+          value={brandName}
+          onChange={setBrandName}
+        />
+        <TextField
+          id="locTagline"
+          label="Hero role line (localized tagline)"
+          description="Shown under the name."
+          value={tagline}
+          onChange={setTagline}
+        />
+        {HOME_HERO_COPY.map((item) => (
+          <div key={item.key}>
+            <TextField
+              id={`hero-copy-${item.key.replace(/\./g, '-')}`}
+              label={item.label}
+              description={item.hint}
+              value={valueOf(item.key)}
+              onChange={(value) => setCopy(item.key, value)}
+            />
+            <p className="muted admin-small -mt-3 mb-4">
+              Managed copy key <code>{item.key}</code>
+            </p>
+          </div>
+        ))}
+      </div>
+    </fieldset>
+  )
 }
 
 export function ScenePresetsFieldset({
@@ -118,7 +237,11 @@ export function NavLinksFieldset({
         (maximum 20 links).
       </p>
       {navLinks.length === 0 ? (
-        <p className="admin-empty">No navigation links defined.</p>
+        <EmptyState
+          icon={LinkIcon}
+          title="No navigation links defined."
+          description="The public header and footer fall back to their defaults."
+        />
       ) : (
         <div
           className="admin-table-scroll"
@@ -243,7 +366,11 @@ export function CopyEntriesFieldset({
         CMS dictionary.
       </p>
       {copyEntries.length === 0 ? (
-        <p className="admin-empty">No copy entries defined.</p>
+        <EmptyState
+          icon={TypeIcon}
+          title="No copy entries defined."
+          description="Add a key and its text, or fill the Home hero fields above."
+        />
       ) : (
         <div
           className="admin-table-scroll"

@@ -24,7 +24,8 @@ import {
   useGraphValidation,
   useSaveGraphPayload,
 } from '@/lib/api/hooks/useGraph'
-import { LoadingState } from '@/components/ui/states'
+import { EmptyState, LoadingState } from '@/components/ui/states'
+import { LinkIcon } from 'lucide-react'
 
 /** Preset options plus the stored value when it is outside the presets, so
  * an older node type (e.g. `domain`) stays selected instead of rewritten. */
@@ -771,8 +772,13 @@ export function GraphEditPage() {
                     (n) => !(n.relatedRecords ?? []).length,
                   ) ? (
                     <tr>
-                      <td colSpan={4} className="muted">
-                        No related records configured.
+                      <td colSpan={4}>
+                        <EmptyState
+                          icon={LinkIcon}
+                          title="No related records configured."
+                          description="Attach a published record to a node with the form below."
+                          className="my-1 border-0 bg-transparent py-6"
+                        />
                       </td>
                     </tr>
                   ) : null}
